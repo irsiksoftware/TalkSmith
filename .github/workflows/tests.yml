@@ -45,7 +45,7 @@ jobs:
 
     - name: Run integration tests
       run: |
-        pytest tests/integration -m "integration and not slow and not gpu" --cov-append --cov=config --cov=pipeline --cov-report=xml
+        pytest tests/integration -m "integration and not slow and not gpu" --cov-append --cov=config --cov=pipeline --cov-report=xml || [ $? -eq 5 ]
       shell: bash
 
     - name: Upload coverage to Codecov
