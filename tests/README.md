@@ -7,21 +7,20 @@ Comprehensive test suite for the TalkSmith transcription and diarization pipelin
 ```
 tests/
 ├── conftest.py              # Shared pytest fixtures
+├── test_config.py           # ✅ Configuration system tests
+├── test_config_*.py         # ✅ Additional config tests (edge cases, imports, stress)
 ├── unit/                    # Unit tests for individual modules
-│   ├── test_transcribe_fw.py
-│   ├── test_diarize_whisperx.py
-│   ├── test_preprocess.py
-│   ├── test_export.py
-│   ├── test_postprocess_speakers.py
-│   └── test_check_gpu.py
+│   ├── test_logger.py       # ✅ Logging utility tests
+│   ├── test_error_handling.py  # ✅ Error handling framework
+│   ├── test_performance.py  # ✅ Performance metrics framework
+│   ├── test_transcribe.py   # 📋 Placeholder for transcription tests
+│   ├── test_diarization.py  # 📋 Placeholder for diarization tests
+│   ├── test_exports.py      # 📋 Placeholder for export tests
+│   └── test_check_gpu.py    # 📋 Placeholder for GPU tests
 ├── integration/             # Integration tests
-│   ├── test_pipeline_e2e.py
-│   └── test_cli.py
-├── fixtures/                # Test data and fixtures
-│   ├── generate_fixtures.py
-│   └── README.md
+│   └── test_full_pipeline.py  # 📋 Placeholder for E2E tests
 └── utils/                   # Test utilities
-    └── test_helpers.py
+    └── __init__.py
 ```
 
 ## Running Tests

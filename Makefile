@@ -35,7 +35,7 @@ test-fast:
 	pytest -m "not slow and not gpu" -x -v
 
 coverage:
-	pytest --cov=pipeline --cov=cli --cov-report=html --cov-report=term-missing
+	pytest --cov=config --cov=pipeline --cov-report=html --cov-report=term-missing
 
 coverage-report:
 	@echo "Opening coverage report..."
@@ -43,9 +43,9 @@ coverage-report:
 
 lint:
 	@echo "Running flake8..."
-	flake8 pipeline cli tests --max-line-length=100
+	flake8 config pipeline tests --max-line-length=100
 	@echo "Running mypy..."
-	mypy pipeline cli --ignore-missing-imports
+	mypy config pipeline --ignore-missing-imports
 	@echo "Checking with black..."
 	black --check .
 	@echo "Checking with isort..."
