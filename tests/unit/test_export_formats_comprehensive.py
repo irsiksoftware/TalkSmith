@@ -141,7 +141,10 @@ class TestExportTxt:
         """Test TXT export without timestamps."""
         output_file = temp_dir / "output.txt"
         export_txt(
-            sample_segments, output_file, include_timestamps=False, include_speakers=True
+            sample_segments,
+            output_file,
+            include_timestamps=False,
+            include_speakers=True,
         )
         content = output_file.read_text(encoding="utf-8")
         assert "[" not in content  # No timestamp markers
@@ -151,7 +154,10 @@ class TestExportTxt:
         """Test TXT export without speaker labels."""
         output_file = temp_dir / "output.txt"
         export_txt(
-            sample_segments, output_file, include_timestamps=True, include_speakers=False
+            sample_segments,
+            output_file,
+            include_timestamps=True,
+            include_speakers=False,
         )
         content = output_file.read_text(encoding="utf-8")
         assert "SPEAKER_00:" not in content
@@ -468,7 +474,12 @@ class TestEdgeCases:
     def test_overlapping_segments(self, temp_dir):
         """Test export handles overlapping speech segments."""
         segments = [
-            {"start": 0.0, "end": 2.0, "text": "First speaker", "speaker": "SPEAKER_00"},
+            {
+                "start": 0.0,
+                "end": 2.0,
+                "text": "First speaker",
+                "speaker": "SPEAKER_00",
+            },
             {
                 "start": 1.5,
                 "end": 3.0,
