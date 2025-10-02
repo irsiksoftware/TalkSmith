@@ -73,7 +73,10 @@ For more information, visit: https://github.com/DakotaIrsik/TalkSmith
         "--input", "-i", required=True, type=str, help="Input audio file path"
     )
     transcribe_parser.add_argument(
-        "--output", "-o", type=str, help="Output directory (default: data/outputs/<slug>)"
+        "--output",
+        "-o",
+        type=str,
+        help="Output directory (default: data/outputs/<slug>)",
     )
     transcribe_parser.add_argument(
         "--model",
@@ -84,7 +87,10 @@ For more information, visit: https://github.com/DakotaIrsik/TalkSmith
         "--language", type=str, help="Language code (e.g., en, es, fr)"
     )
     transcribe_parser.add_argument(
-        "--device", type=str, choices=["cuda", "cpu"], help="Device to use (cuda or cpu)"
+        "--device",
+        type=str,
+        choices=["cuda", "cpu"],
+        help="Device to use (cuda or cpu)",
     )
 
     # Diarize command
@@ -95,7 +101,10 @@ For more information, visit: https://github.com/DakotaIrsik/TalkSmith
         "--input", "-i", required=True, type=str, help="Input audio file path"
     )
     diarize_parser.add_argument(
-        "--output", "-o", type=str, help="Output directory (default: data/outputs/<slug>)"
+        "--output",
+        "-o",
+        type=str,
+        help="Output directory (default: data/outputs/<slug>)",
     )
     diarize_parser.add_argument("--model", type=str, help="Whisper model size")
     diarize_parser.add_argument(
@@ -158,7 +167,10 @@ For more information, visit: https://github.com/DakotaIrsik/TalkSmith
         "--input", "-i", required=True, type=str, help="Input segments JSON file"
     )
     plan_parser.add_argument(
-        "--output", "-o", type=str, help="Output file path (default: <input>_outline.md)"
+        "--output",
+        "-o",
+        type=str,
+        help="Output file path (default: <input>_outline.md)",
     )
 
     return parser
