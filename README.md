@@ -2,6 +2,11 @@
 
 > **Local, free, GPU-accelerated transcription and diarization pipeline for long-form multi-speaker audio**
 
+⚠️ **Project Status: Early Development / Planning Phase**
+This README documents the planned architecture and features. Implementation is in progress. See [Roadmap](#-roadmap) for current status.
+
+---
+
 TalkSmith is a comprehensive solution for transcribing and diarizing hour-long+ recordings with multiple speakers—completely free and running entirely on your local hardware. Built for professionals who need accurate, speaker-labeled transcripts without recurring cloud costs or privacy concerns.
 
 ## 🎯 What It Does
@@ -69,33 +74,35 @@ TalkSmith replaces expensive cloud transcription services with a one-time setup 
 
 ## 🎮 Quick Start
 
-### Prerequisites
+> ⚠️ **Implementation in progress** - Installation and usage instructions below represent the planned interface. Check [Roadmap](#-roadmap) for current implementation status.
+
+### Target Prerequisites
 - **GPU:** NVIDIA GPU with CUDA support (tested on dual RTX 3060s, 12GB VRAM each)
 - **OS:** Windows, Linux, or macOS (CPU-only mode on macOS)
 - **Python:** 3.10 or 3.11
 - **FFmpeg:** Required for audio processing
 
-### Installation
+### Planned Installation
 
 ```bash
 # 1. Clone the repository
 git clone https://github.com/DakotaIrsik/TalkSmith.git
 cd TalkSmith
 
-# 2. Create environment (Windows PowerShell)
+# 2. Create environment (Windows PowerShell) - Coming soon
 .\scripts\make_env.ps1
 
-# 2. Create environment (Linux/macOS)
+# 2. Create environment (Linux/macOS) - Coming soon
 ./scripts\make_env.sh
 
-# 3. Verify GPU setup
+# 3. Verify GPU setup - Coming soon
 python scripts/check_gpu.py
 
-# 4. (Optional) Prefetch models
+# 4. (Optional) Prefetch models - Coming soon
 .\scripts\prefetch_models.ps1 --sizes medium.en,large-v3
 ```
 
-### Basic Usage
+### Planned Basic Usage
 
 ```bash
 # Transcribe a single file
@@ -111,16 +118,18 @@ python pipeline/diarize_whisperx.py path/to/audio.wav
 python pipeline/outline_from_segments.py path/to/segments.json
 ```
 
-### Using the CLI
+### Planned CLI Interface
 
 ```bash
-# Unified CLI interface (coming soon)
+# Unified CLI interface (in development)
 python cli/main.py transcribe --input audio.wav --diarize --export srt,json
 python cli/main.py batch --input-dir ./recordings --model large-v3
 python cli/main.py plan --segments segments.json --output plan.md
 ```
 
 ## 🏗️ Architecture
+
+> **Note:** This represents the planned directory structure. Implementation is in progress.
 
 ```
 TalkSmith/
@@ -148,7 +157,9 @@ TalkSmith/
 
 ## 🔧 Configuration
 
-All settings are centralized in `settings.ini`:
+> **Note:** Configuration system is planned. This shows the intended design.
+
+All settings will be centralized in `settings.ini`:
 
 ```ini
 [Paths]
@@ -174,7 +185,9 @@ WHISPER_MODEL=medium.en python pipeline/transcribe_fw.py audio.wav
 
 ## 📊 Performance
 
-Benchmarks on dual RTX 3060 setup (12GB VRAM each):
+> **Note:** These are target performance metrics based on preliminary testing. Full benchmarks will be published after implementation.
+
+Target benchmarks on dual RTX 3060 setup (12GB VRAM each):
 
 | Audio Length | Model | Single GPU RTF* | Dual GPU RTF* | Speedup |
 |--------------|-------|----------------|---------------|---------|
@@ -197,7 +210,7 @@ Benchmarks on dual RTX 3060 setup (12GB VRAM each):
 
 See our [GitHub Issues](https://github.com/DakotaIrsik/TalkSmith/issues) for detailed planning:
 
-**Phase 1: Foundation (P0)**
+**Phase 1: Foundation (P0)** - *In Progress*
 - [x] Repository structure and documentation
 - [ ] GPU and CUDA verification
 - [ ] Python environment setup
@@ -223,11 +236,11 @@ See our [GitHub Issues](https://github.com/DakotaIrsik/TalkSmith/issues) for det
 
 ## 🤝 Contributing
 
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+We welcome contributions! Contribution guidelines coming soon.
 
 ## 📄 License
 
-[License TBD] - See [LICENSE](LICENSE) for details.
+License TBD - Will be added in a future release.
 
 ## 🙏 Acknowledgments
 
