@@ -113,11 +113,42 @@ python pipeline/outline_from_segments.py path/to/segments.json
 
 ### Using the CLI
 
+The TalkSmith CLI provides a unified interface for all transcription tasks:
+
+**Windows (PowerShell/CMD):**
+```powershell
+# Transcribe a single file
+python cli/main.py transcribe audio.wav
+
+# Transcribe with speaker diarization and export to SRT + JSON
+python cli/main.py transcribe audio.wav --diarize --export srt,json
+
+# Batch process all files in a directory
+python cli/main.py batch recordings/ --diarize --model large-v3
+
+# Preprocess audio (denoise, normalize)
+python cli/main.py preprocess noisy_audio.wav --denoise --normalize
+
+# Export transcript to multiple formats
+python cli/main.py export segments.json --formats txt,srt,vtt
+```
+
+**Linux/macOS (Bash):**
 ```bash
-# Unified CLI interface (coming soon)
-python cli/main.py transcribe --input audio.wav --diarize --export srt,json
-python cli/main.py batch --input-dir ./recordings --model large-v3
-python cli/main.py plan --segments segments.json --output plan.md
+# Transcribe a single file
+python cli/main.py transcribe audio.wav
+
+# Transcribe with speaker diarization and export to SRT + JSON
+python cli/main.py transcribe audio.wav --diarize --export srt,json
+
+# Batch process all files in a directory
+python cli/main.py batch recordings/ --diarize --model large-v3
+
+# Preprocess audio (denoise, normalize)
+python cli/main.py preprocess noisy_audio.wav --denoise --normalize
+
+# Export transcript to multiple formats
+python cli/main.py export segments.json --formats txt,srt,vtt
 ```
 
 ## 🏗️ Architecture
