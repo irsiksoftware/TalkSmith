@@ -40,11 +40,21 @@ jobs:
 
     - name: Run unit tests
       run: |
-        pytest tests/unit -m "unit and not gpu" --cov=pipeline --cov=cli --cov-report=xml --cov-report=term
+        if [ -d "cli" ]; then
+          pytest tests/unit -m "unit and not gpu" --cov=pipeline --cov=cli --cov-report=xml --cov-report=term
+        else
+          pytest tests/unit -m "unit and not gpu" --cov=pipeline --cov-report=xml --cov-report=term
+        fi
+      shell: bash
 
     - name: Run integration tests
       run: |
-        pytest tests/integration -m "integration and not slow and not gpu" --cov-append --cov=pipeline --cov=cli --cov-report=xml
+        if [ -d "cli" ]; then
+          pytest tests/integration -m "integration and not slow and not gpu" --cov-append --cov=pipeline --cov=cli --cov-report=xml
+        else
+          pytest tests/integration -m "integration and not slow and not gpu" --cov-append --cov=pipeline --cov-report=xml
+        fi
+      shell: bash
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
@@ -74,8 +84,18 @@ jobs:
       run: black --check .
 
     - name: Run flake8
-      run: flake8 pipeline cli tests --max-line-length=100
+      run: |
+        if [ -d "cli" ]; then
+          flake8 pipeline cli tests --max-line-length=100
+        else
+          flake8 pipeline tests --max-line-length=100
+        fi
 
     - name: Run mypy
-      run: mypy pipeline cli --ignore-missing-imports
+      run: |
+        if [ -d "cli" ]; then
+          mypy pipeline cli --ignore-missing-imports
+        else
+          mypy pipeline --ignore-missing-imports
+        fi
       continue-on-error: true
