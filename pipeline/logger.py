@@ -7,15 +7,18 @@ Provides JSON-formatted logging with support for:
 - Contextual information (file, function, line number)
 - Custom fields for metrics tracking
 - Non-zero exit codes on errors
+- Retry/backoff for transient errors
 """
 
 import json
 import logging
 import sys
+import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional, Tuple, Type
 from logging.handlers import RotatingFileHandler
+from functools import wraps
 
 from config.settings import get_config
 
@@ -314,6 +317,150 @@ class BatchLogSummary:
             )
 
 
+class TransientError(Exception):
+    """Exception for transient errors that should be retried."""
+    pass
+
+
+def with_retry(
+    max_attempts: int = 3,
+    backoff_factor: float = 2.0,
+    initial_delay: float = 1.0,
+    transient_exceptions: Tuple[Type[Exception], ...] = (TransientError, ConnectionError, TimeoutError),
+    logger: Optional[TalkSmithLogger] = None
+):
+    """
+    Decorator for retrying operations with exponential backoff.
+
+    Args:
+        max_attempts: Maximum number of retry attempts (default: 3)
+        backoff_factor: Multiplier for delay between retries (default: 2.0)
+        initial_delay: Initial delay in seconds before first retry (default: 1.0)
+        transient_exceptions: Tuple of exception types to retry on
+        logger: Optional logger for logging retry attempts
+
+    Returns:
+        Decorated function with retry logic
+
+    Example:
+        @with_retry(max_attempts=3, logger=my_logger)
+        def fetch_data():
+            # Code that may fail transiently
+            pass
+    """
+    def decorator(func: Callable) -> Callable:
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            delay = initial_delay
+            last_exception = None
+
+            for attempt in range(1, max_attempts + 1):
+                try:
+                    return func(*args, **kwargs)
+                except transient_exceptions as e:
+                    last_exception = e
+
+                    if attempt == max_attempts:
+                        if logger:
+                            logger.error(
+                                f"Failed after {max_attempts} attempts",
+                                function=func.__name__,
+                                attempts=attempt,
+                                error=str(e)
+                            )
+                        raise
+
+                    if logger:
+                        logger.warning(
+                            f"Attempt {attempt}/{max_attempts} failed, retrying in {delay}s",
+                            function=func.__name__,
+                            attempt=attempt,
+                            delay=delay,
+                            error=str(e)
+                        )
+
+                    time.sleep(delay)
+                    delay *= backoff_factor
+
+            # Should not reach here, but just in case
+            if last_exception:
+                raise last_exception
+
+        return wrapper
+    return decorator
+
+
+def retry_operation(
+    operation: Callable,
+    max_attempts: int = 3,
+    backoff_factor: float = 2.0,
+    initial_delay: float = 1.0,
+    transient_exceptions: Tuple[Type[Exception], ...] = (TransientError, ConnectionError, TimeoutError),
+    logger: Optional[TalkSmithLogger] = None,
+    operation_name: Optional[str] = None
+) -> Any:
+    """
+    Retry an operation with exponential backoff (functional approach).
+
+    Args:
+        operation: Callable to execute
+        max_attempts: Maximum number of retry attempts
+        backoff_factor: Multiplier for delay between retries
+        initial_delay: Initial delay in seconds before first retry
+        transient_exceptions: Tuple of exception types to retry on
+        logger: Optional logger for logging retry attempts
+        operation_name: Name of operation for logging
+
+    Returns:
+        Result of the operation
+
+    Raises:
+        Exception: The last exception if all retries fail
+
+    Example:
+        result = retry_operation(
+            lambda: fetch_data(),
+            max_attempts=3,
+            logger=my_logger
+        )
+    """
+    delay = initial_delay
+    last_exception = None
+    op_name = operation_name or operation.__name__
+
+    for attempt in range(1, max_attempts + 1):
+        try:
+            return operation()
+        except transient_exceptions as e:
+            last_exception = e
+
+            if attempt == max_attempts:
+                if logger:
+                    logger.error(
+                        f"Operation '{op_name}' failed after {max_attempts} attempts",
+                        operation=op_name,
+                        attempts=attempt,
+                        error=str(e)
+                    )
+                raise
+
+            if logger:
+                logger.warning(
+                    f"Operation '{op_name}' attempt {attempt}/{max_attempts} failed, retrying in {delay}s",
+                    operation=op_name,
+                    attempt=attempt,
+                    delay=delay,
+                    error=str(e)
+                )
+
+            time.sleep(delay)
+            delay *= backoff_factor
+
+    # Should not reach here, but just in case
+    if last_exception:
+        raise last_exception
+
+
 if __name__ == '__main__':
     # Example usage
     logger = get_logger(__name__, slug='example-2025-01-15')
@@ -335,3 +482,18 @@ if __name__ == '__main__':
 
     exit_code = batch.get_exit_code()
     print(f"Exit code: {exit_code}")
+
+    # Retry example
+    @with_retry(max_attempts=3, logger=logger)
+    def fetch_api_data():
+        # Simulate transient failure
+        import random
+        if random.random() < 0.7:
+            raise TransientError("API temporarily unavailable")
+        return {"status": "success"}
+
+    try:
+        result = fetch_api_data()
+        print(f"API call result: {result}")
+    except TransientError:
+        print("API call failed after all retries")

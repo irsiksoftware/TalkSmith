@@ -15,7 +15,10 @@ from pipeline.logger import (
     JSONFormatter,
     TalkSmithLogger,
     get_logger,
-    BatchLogSummary
+    BatchLogSummary,
+    TransientError,
+    with_retry,
+    retry_operation
 )
 
 
@@ -339,3 +342,172 @@ class TestLoggerIntegration:
         assert summary.successful == 3
         assert summary.failed == 1
         assert summary.get_exit_code() == 1
+
+
+class TestRetryMechanism:
+    """Test retry and backoff functionality."""
+
+    def test_with_retry_decorator_success(self):
+        """Test retry decorator with successful operation."""
+        logger = TalkSmithLogger(name='test')
+        call_count = {'count': 0}
+
+        @with_retry(max_attempts=3, logger=logger)
+        def operation():
+            call_count['count'] += 1
+            return "success"
+
+        result = operation()
+        assert result == "success"
+        assert call_count['count'] == 1
+
+    def test_with_retry_decorator_transient_error(self):
+        """Test retry decorator with transient errors."""
+        logger = TalkSmithLogger(name='test')
+        call_count = {'count': 0}
+
+        @with_retry(max_attempts=3, initial_delay=0.01, logger=logger)
+        def operation():
+            call_count['count'] += 1
+            if call_count['count'] < 3:
+                raise TransientError("Temporary failure")
+            return "success"
+
+        result = operation()
+        assert result == "success"
+        assert call_count['count'] == 3
+
+    def test_with_retry_decorator_permanent_failure(self):
+        """Test retry decorator with permanent failure."""
+        logger = TalkSmithLogger(name='test')
+        call_count = {'count': 0}
+
+        @with_retry(max_attempts=3, initial_delay=0.01, logger=logger)
+        def operation():
+            call_count['count'] += 1
+            raise TransientError("Permanent failure")
+
+        with pytest.raises(TransientError):
+            operation()
+
+        assert call_count['count'] == 3
+
+    def test_with_retry_non_transient_error(self):
+        """Test retry decorator doesn't retry non-transient errors."""
+        logger = TalkSmithLogger(name='test')
+        call_count = {'count': 0}
+
+        @with_retry(max_attempts=3, logger=logger)
+        def operation():
+            call_count['count'] += 1
+            raise ValueError("Non-transient error")
+
+        with pytest.raises(ValueError):
+            operation()
+
+        # Should fail immediately without retry
+        assert call_count['count'] == 1
+
+    def test_with_retry_custom_exceptions(self):
+        """Test retry with custom exception types."""
+        logger = TalkSmithLogger(name='test')
+        call_count = {'count': 0}
+
+        class CustomError(Exception):
+            pass
+
+        @with_retry(
+            max_attempts=3,
+            initial_delay=0.01,
+            transient_exceptions=(CustomError,),
+            logger=logger
+        )
+        def operation():
+            call_count['count'] += 1
+            if call_count['count'] < 2:
+                raise CustomError("Custom error")
+            return "success"
+
+        result = operation()
+        assert result == "success"
+        assert call_count['count'] == 2
+
+    def test_retry_operation_function(self):
+        """Test retry_operation function."""
+        logger = TalkSmithLogger(name='test')
+        call_count = {'count': 0}
+
+        def operation():
+            call_count['count'] += 1
+            if call_count['count'] < 2:
+                raise TransientError("Temporary failure")
+            return "success"
+
+        result = retry_operation(
+            operation,
+            max_attempts=3,
+            initial_delay=0.01,
+            logger=logger
+        )
+
+        assert result == "success"
+        assert call_count['count'] == 2
+
+    def test_retry_operation_with_lambda(self):
+        """Test retry_operation with lambda."""
+        logger = TalkSmithLogger(name='test')
+        call_count = {'count': 0}
+
+        def increment_and_check():
+            call_count['count'] += 1
+            if call_count['count'] < 3:
+                raise ConnectionError("Connection failed")
+            return call_count['count']
+
+        result = retry_operation(
+            lambda: increment_and_check(),
+            max_attempts=5,
+            initial_delay=0.01,
+            logger=logger,
+            operation_name='test_connection'
+        )
+
+        assert result == 3
+        assert call_count['count'] == 3
+
+    def test_retry_backoff_timing(self):
+        """Test that backoff delays increase exponentially."""
+        import time
+        logger = TalkSmithLogger(name='test')
+        call_times = []
+
+        @with_retry(
+            max_attempts=3,
+            initial_delay=0.1,
+            backoff_factor=2.0,
+            logger=logger
+        )
+        def operation():
+            call_times.append(time.time())
+            if len(call_times) < 3:
+                raise TransientError("Temporary failure")
+            return "success"
+
+        result = operation()
+        assert result == "success"
+        assert len(call_times) == 3
+
+        # Check delays between attempts (with some tolerance)
+        if len(call_times) >= 2:
+            delay1 = call_times[1] - call_times[0]
+            assert 0.08 < delay1 < 0.15  # ~0.1s with tolerance
+
+        if len(call_times) >= 3:
+            delay2 = call_times[2] - call_times[1]
+            assert 0.18 < delay2 < 0.25  # ~0.2s with tolerance
+
+    def test_transient_error_exception(self):
+        """Test TransientError exception type."""
+        error = TransientError("Test error")
+        assert isinstance(error, Exception)
+        assert str(error) == "Test error"
