@@ -242,7 +242,7 @@ class TestConfigErrorRecovery:
 
         # Should raise error on corrupted file
         with pytest.raises(configparser.MissingSectionHeaderError):
-            config = TalkSmithConfig(str(config_path))
+            TalkSmithConfig(str(config_path))
 
     def test_empty_config_file(self, temp_dir):
         """Test handling of empty config file."""
@@ -314,7 +314,6 @@ class TestConfigCaseSensitivity:
 
         # ConfigParser is case-sensitive for sections by default
         val1 = config.get("Test", "key", fallback="default")
-        val2 = config.get("test", "key", fallback="default")
 
         # Both should be retrievable
         assert val1 in ["value1", "value2"]
