@@ -13,13 +13,11 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Optional
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from config.settings import get_config
-from pipeline.logger import get_logger, BatchLogSummary
+from pipeline.logger import BatchLogSummary, get_logger  # noqa: E402
 
 
 def setup_parser() -> argparse.ArgumentParser:
@@ -330,7 +328,7 @@ def cmd_export(args) -> int:
     except ValueError as e:
         logger.error(f"Export error: {e}")
         return 1
-    except Exception as e:
+    except Exception:
         logger.exception("Unexpected error during export")
         return 1
 
@@ -405,7 +403,7 @@ def main() -> int:
         except KeyboardInterrupt:
             print("\nOperation cancelled by user")
             return 130  # Standard exit code for Ctrl+C
-        except Exception as e:
+        except Exception:
             logger = get_logger(__name__)
             logger.exception(f"Unexpected error in {args.command} command")
             return 1

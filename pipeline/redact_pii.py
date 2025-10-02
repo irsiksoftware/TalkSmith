@@ -38,42 +38,51 @@ class PIIRedactor:
 
     def redact_emails(self, text: str) -> str:
         """Redact email addresses."""
+
         def replace_email(match):
             email = match.group(0)
             if self.is_whitelisted(email):
                 return email
             return "[EMAIL_REDACTED]"
+
         return re.sub(self.EMAIL_PATTERN, replace_email, text)
 
     def redact_phones(self, text: str) -> str:
         """Redact phone numbers."""
+
         def replace_phone(match):
             phone = match.group(0)
             if self.is_whitelisted(phone):
                 return phone
             return "[PHONE_REDACTED]"
+
         return re.sub(self.PHONE_PATTERN, replace_phone, text)
 
     def redact_ssn(self, text: str) -> str:
         """Redact Social Security Numbers."""
+
         def replace_ssn(match):
             ssn = match.group(0)
             if self.is_whitelisted(ssn):
                 return ssn
             return "[SSN_REDACTED]"
+
         return re.sub(self.SSN_PATTERN, replace_ssn, text)
 
     def redact_credit_cards(self, text: str) -> str:
         """Redact credit card numbers."""
+
         def replace_cc(match):
             cc = match.group(0)
             if self.is_whitelisted(cc):
                 return cc
             return "[CREDIT_CARD_REDACTED]"
+
         return re.sub(self.CREDIT_CARD_PATTERN, replace_cc, text)
 
     def redact_ip_addresses(self, text: str) -> str:
         """Redact IP addresses."""
+
         def replace_ip(match):
             ip = match.group(0)
             if self.is_whitelisted(ip):
@@ -82,6 +91,7 @@ class PIIRedactor:
             if re.match(r"^[0-2]\.[0-9]\.[0-9]", ip):
                 return ip
             return "[IP_REDACTED]"
+
         return re.sub(self.IP_ADDRESS_PATTERN, replace_ip, text)
 
     def redact_all(self, text: str) -> str:
@@ -122,7 +132,9 @@ class PIIRedactor:
             text = f.read()
         redacted_text = self.redact_all(text)
         if output_path is None:
-            output_path = input_file.parent / f"{input_file.stem}_redacted{input_file.suffix}"
+            output_path = (
+                input_file.parent / f"{input_file.stem}_redacted{input_file.suffix}"
+            )
         else:
             output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
