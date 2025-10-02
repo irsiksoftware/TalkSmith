@@ -1,11 +1,9 @@
 """Stress tests for configuration system."""
 
 import os
-import tempfile
-from pathlib import Path
 import pytest
 
-from config.settings import TalkSmithConfig, get_config
+from config.settings import TalkSmithConfig
 
 
 class TestConfigStress:
@@ -210,7 +208,7 @@ class TestConfigMemoryEfficiency:
 
     def test_singleton_memory_efficiency(self):
         """Test singleton pattern doesn't create extra instances."""
-        from config import get_config
+        from config.settings import get_config
 
         # Get config 100 times
         configs = [get_config() for _ in range(100)]

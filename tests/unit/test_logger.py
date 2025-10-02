@@ -5,8 +5,6 @@ Unit tests for pipeline.logger module.
 import json
 import logging
 import tempfile
-from pathlib import Path
-from logging.handlers import RotatingFileHandler
 from unittest.mock import patch, MagicMock
 
 import pytest
