@@ -64,14 +64,23 @@ class FasterWhisperTranscriber:
         Returns:
             Dictionary with transcription results
         """
+        self.logger.log_start(
+            "transcription", audio_file=audio_path, language=language or "auto"
+        )
         start_time = time.time()
 
-        segments, info = self.model.transcribe(
-            audio_path,
-            language=language,
-            word_timestamps=word_timestamps,
-            vad_filter=True,
-        )
+        try:
+            segments, info = self.model.transcribe(
+                audio_path,
+                language=language,
+                word_timestamps=word_timestamps,
+                vad_filter=True,
+            )
+        except Exception as e:
+            self.logger.error(
+                f"Transcription failed", audio_file=audio_path, error=str(e)
+            )
+            raise
 
         # Convert segments generator to list and extract data
         segments_list = []
@@ -118,6 +127,26 @@ class FasterWhisperTranscriber:
             "device": self.device,
         }
 
+        self.logger.log_complete(
+            "transcription",
+            duration=audio_duration,
+            processing_time=elapsed_time,
+            rtf=rtf,
+            language=info.language,
+            segments_count=len(segments_list),
+        )
+        self.logger.log_metrics(
+            {
+                "rtf": rtf,
+                "duration": audio_duration,
+                "processing_time": elapsed_time,
+                "model_size": self.model_size,
+                "device": self.device,
+                "language": info.language,
+                "language_probability": info.language_probability,
+            }
+        )
+
         return result
 
 
@@ -152,8 +181,14 @@ def transcribe_file(
     else:
         output_dir = audio_path.parent
 
+    # Initialize logger with slug
+    slug = audio_path.stem
+    logger = get_logger(__name__, slug=slug)
+
     # Initialize transcriber
-    transcriber = FasterWhisperTranscriber(model_size=model_size, device=device)
+    transcriber = FasterWhisperTranscriber(
+        model_size=model_size, device=device, logger=logger
+    )
 
     # Transcribe
     print(f"Transcribing {audio_path.name} with {model_size} model...")
@@ -213,6 +248,7 @@ def main():
 
     args = parser.parse_args()
 
+    logger = get_logger(__name__)
     try:
         transcribe_file(
             args.audio,
@@ -222,6 +258,7 @@ def main():
             language=args.language,
         )
     except Exception as e:
+        logger.exception("Transcription failed")
         print(f"Error: {e}")
         return 1
 
