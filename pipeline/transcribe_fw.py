@@ -8,7 +8,7 @@ import argparse
 import json
 import time
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from faster_whisper import WhisperModel
 
@@ -40,7 +40,7 @@ class FasterWhisperTranscriber:
         self.logger = logger or get_logger(__name__)
 
         self.logger.info(
-            f"Initializing transcriber",
+            "Initializing transcriber",
             model_size=model_size,
             device=device,
             compute_type=compute_type,
