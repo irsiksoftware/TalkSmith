@@ -43,7 +43,12 @@ def validate_segments(segments: List[Dict[str, Any]]) -> None:
             raise ValueError(f"Segment {i} has start time after end time")
 
 
-def export_txt(segments: List[Dict[str, Any]], output_path: Path, include_timestamps: bool = True, include_speakers: bool = True) -> None:
+def export_txt(
+    segments: List[Dict[str, Any]],
+    output_path: Path,
+    include_timestamps: bool = True,
+    include_speakers: bool = True,
+) -> None:
     """Export segments to plain text format."""
     validate_segments(segments)
     output_path = Path(output_path)
@@ -52,14 +57,18 @@ def export_txt(segments: List[Dict[str, Any]], output_path: Path, include_timest
         for segment in segments:
             line_parts = []
             if include_timestamps:
-                line_parts.append(f"[{format_timestamp_vtt(segment['start'])} --> {format_timestamp_vtt(segment['end'])}]")
+                start_ts = format_timestamp_vtt(segment["start"])
+                end_ts = format_timestamp_vtt(segment["end"])
+                line_parts.append(f"[{start_ts} --> {end_ts}]")
             if include_speakers and "speaker" in segment:
                 line_parts.append(f"{segment['speaker']}:")
             line_parts.append(segment["text"])
             f.write(" ".join(line_parts) + "\n")
 
 
-def export_srt(segments: List[Dict[str, Any]], output_path: Path, include_speakers: bool = True) -> None:
+def export_srt(
+    segments: List[Dict[str, Any]], output_path: Path, include_speakers: bool = True
+) -> None:
     """Export segments to SRT subtitle format."""
     validate_segments(segments)
     output_path = Path(output_path)
@@ -67,12 +76,20 @@ def export_srt(segments: List[Dict[str, Any]], output_path: Path, include_speake
     with open(output_path, "w", encoding="utf-8") as f:
         for i, segment in enumerate(segments, start=1):
             f.write(f"{i}\n")
-            f.write(f"{format_timestamp_srt(segment['start'])} --> {format_timestamp_srt(segment['end'])}\n")
-            text = f"{segment['speaker']}: {segment['text']}" if include_speakers and "speaker" in segment else segment["text"]
+            start_ts = format_timestamp_srt(segment["start"])
+            end_ts = format_timestamp_srt(segment["end"])
+            f.write(f"{start_ts} --> {end_ts}\n")
+            text = (
+                f"{segment['speaker']}: {segment['text']}"
+                if include_speakers and "speaker" in segment
+                else segment["text"]
+            )
             f.write(f"{text}\n\n")
 
 
-def export_vtt(segments: List[Dict[str, Any]], output_path: Path, include_speakers: bool = True) -> None:
+def export_vtt(
+    segments: List[Dict[str, Any]], output_path: Path, include_speakers: bool = True
+) -> None:
     """Export segments to WebVTT subtitle format."""
     validate_segments(segments)
     output_path = Path(output_path)
@@ -82,18 +99,29 @@ def export_vtt(segments: List[Dict[str, Any]], output_path: Path, include_speake
         for segment in segments:
             if include_speakers and "speaker" in segment:
                 f.write(f"{segment['speaker']}\n")
-            f.write(f"{format_timestamp_vtt(segment['start'])} --> {format_timestamp_vtt(segment['end'])}\n")
+            start_ts = format_timestamp_vtt(segment["start"])
+            end_ts = format_timestamp_vtt(segment["end"])
+            f.write(f"{start_ts} --> {end_ts}\n")
             f.write(f"{segment['text']}\n\n")
 
 
-def export_json(segments: List[Dict[str, Any]], output_path: Path, pretty: bool = True, include_words: bool = True) -> None:
+def export_json(
+    segments: List[Dict[str, Any]],
+    output_path: Path,
+    pretty: bool = True,
+    include_words: bool = True,
+) -> None:
     """Export segments to JSON format."""
     validate_segments(segments)
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     export_data = {"segments": []}
     for segment in segments:
-        segment_data = {"start": segment["start"], "end": segment["end"], "text": segment["text"]}
+        segment_data = {
+            "start": segment["start"],
+            "end": segment["end"],
+            "text": segment["text"],
+        }
         if "speaker" in segment:
             segment_data["speaker"] = segment["speaker"]
         if include_words and "words" in segment:
@@ -103,13 +131,23 @@ def export_json(segments: List[Dict[str, Any]], output_path: Path, pretty: bool 
         json.dump(export_data, f, indent=2 if pretty else None, ensure_ascii=False)
 
 
-def export_all(segments: List[Dict[str, Any]], output_dir: Path, base_name: str, formats: Optional[List[str]] = None) -> Dict[str, Path]:
+def export_all(
+    segments: List[Dict[str, Any]],
+    output_dir: Path,
+    base_name: str,
+    formats: Optional[List[str]] = None,
+) -> Dict[str, Path]:
     """Export segments to multiple formats at once."""
     if formats is None:
         formats = ["txt", "srt", "vtt", "json"]
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    format_handlers = {"txt": (export_txt, ".txt"), "srt": (export_srt, ".srt"), "vtt": (export_vtt, ".vtt"), "json": (export_json, ".json")}
+    format_handlers = {
+        "txt": (export_txt, ".txt"),
+        "srt": (export_srt, ".srt"),
+        "vtt": (export_vtt, ".vtt"),
+        "json": (export_json, ".json"),
+    }
     output_files = {}
     for fmt in formats:
         if fmt not in format_handlers:

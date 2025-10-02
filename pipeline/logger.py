@@ -472,8 +472,10 @@ def retry_operation(
                 raise
 
             if logger:
+                msg = f"Operation '{op_name}' attempt {attempt}/{max_attempts} "
+                msg += f"failed, retrying in {delay}s"
                 logger.warning(
-                    f"Operation '{op_name}' attempt {attempt}/{max_attempts} failed, retrying in {delay}s",
+                    msg,
                     operation=op_name,
                     attempt=attempt,
                     delay=delay,
