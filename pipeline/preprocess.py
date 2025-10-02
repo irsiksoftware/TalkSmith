@@ -94,9 +94,7 @@ class AudioPreprocessor:
         logger.log_start("audio_preprocessing", input_file=str(input_path))
 
         if output_path is None:
-            output_path = Path(
-                tempfile.mktemp(suffix=".wav", prefix="preprocessed_")
-            )
+            output_path = Path(tempfile.mktemp(suffix=".wav", prefix="preprocessed_"))
 
         metrics = {
             "input_file": str(input_path),
@@ -187,9 +185,7 @@ class AudioPreprocessor:
         self, audio: np.ndarray, sample_rate: int
     ) -> Tuple[np.ndarray, float]:
         """Trim silence from beginning and end of audio."""
-        logger.info(
-            f"Trimming silence (threshold: {self.silence_threshold_db} dB)"
-        )
+        logger.info(f"Trimming silence (threshold: {self.silence_threshold_db} dB)")
 
         # Convert to mono if stereo
         if len(audio.shape) > 1:
@@ -251,9 +247,7 @@ class AudioPreprocessor:
             filtered = signal.filtfilt(b, a, audio)
             return filtered
         except ImportError:
-            logger.warning(
-                "scipy not available, skipping high-pass filter"
-            )
+            logger.warning("scipy not available, skipping high-pass filter")
             return audio
 
 
@@ -302,11 +296,12 @@ def main():
     )
     parser.add_argument("input", type=Path, help="Input audio file")
     parser.add_argument(
-        "-o", "--output", type=Path, help="Output file (default: <input>_preprocessed.wav)"
+        "-o",
+        "--output",
+        type=Path,
+        help="Output file (default: <input>_preprocessed.wav)",
     )
-    parser.add_argument(
-        "--denoise", action="store_true", help="Enable denoising"
-    )
+    parser.add_argument("--denoise", action="store_true", help="Enable denoising")
     parser.add_argument(
         "--denoise-method",
         choices=["noisereduce", "ffmpeg"],
