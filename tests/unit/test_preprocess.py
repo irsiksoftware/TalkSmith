@@ -123,9 +123,7 @@ class TestAudioPreprocessor:
         try:
             import scipy  # noqa: F401
 
-            preprocessor = AudioPreprocessor(
-                high_pass_filter=True, hpf_cutoff=80
-            )
+            preprocessor = AudioPreprocessor(high_pass_filter=True, hpf_cutoff=80)
             output_path, metrics = preprocessor.process(sample_audio_path)
 
             assert "high_pass_filter" in metrics["steps_applied"]
@@ -133,14 +131,10 @@ class TestAudioPreprocessor:
         except ImportError:
             pytest.skip("scipy not available")
 
-    @pytest.mark.skipif(
-        not NOISEREDUCE_AVAILABLE, reason="noisereduce not available"
-    )
+    @pytest.mark.skipif(not NOISEREDUCE_AVAILABLE, reason="noisereduce not available")
     def test_denoise_noisereduce(self, sample_audio_path):
         """Test denoising with noisereduce."""
-        preprocessor = AudioPreprocessor(
-            denoise=True, denoise_method="noisereduce"
-        )
+        preprocessor = AudioPreprocessor(denoise=True, denoise_method="noisereduce")
         output_path, metrics = preprocessor.process(sample_audio_path)
 
         assert "denoise_noisereduce" in metrics["steps_applied"]
@@ -193,9 +187,7 @@ class TestPreprocessAudioFunction:
 
     def test_preprocess_audio_basic(self, sample_audio_path):
         """Test basic preprocessing."""
-        output_path, metrics = preprocess_audio(
-            sample_audio_path, loudnorm=True
-        )
+        output_path, metrics = preprocess_audio(sample_audio_path, loudnorm=True)
 
         assert output_path.exists()
         assert "loudness_normalization" in metrics["steps_applied"]
