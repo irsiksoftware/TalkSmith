@@ -1,4 +1,5 @@
 """Unit tests for error handling across modules."""
+
 import pytest
 from pathlib import Path
 

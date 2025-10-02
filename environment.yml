@@ -1,0 +1,80 @@
+name: talksmith
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+
+dependencies:
+  - python=3.11
+  - pip>=23.0
+
+  # PyTorch with CUDA (adjust cuda version as needed)
+  - pytorch::pytorch>=2.1.0
+  - pytorch::torchaudio>=2.1.0
+  - pytorch::pytorch-cuda=11.8
+
+  # Audio processing
+  - conda-forge::ffmpeg>=6.0
+  - conda-forge::libsndfile>=1.2.0
+
+  # Scientific computing
+  - numpy>=1.24.0,<2.0.0
+  - scipy>=1.11.0
+  - pandas>=2.1.0
+
+  # Utilities
+  - tqdm>=4.66.0
+  - click>=8.1.7
+
+  # Testing
+  - pytest>=7.4.0
+  - pytest-cov>=4.1.0
+
+  # Development
+  - black>=23.9.0
+  - isort>=5.12.0
+  - flake8>=6.1.0
+
+  # Install remaining packages via pip
+  - pip:
+      # Whisper and Transcription
+      - faster-whisper>=0.10.0
+      - whisperx>=3.1.1
+
+      # Speaker Diarization
+      - pyannote.audio>=3.1.0
+      - resemblyzer>=0.1.1.dev0
+
+      # Audio Processing
+      - soundfile>=0.12.1
+      - librosa>=0.10.1
+      - noisereduce>=3.0.0
+      - ffmpeg-python>=0.2.0
+
+      # Utilities
+      - rich>=13.5.0
+
+      # Configuration and Validation
+      - pydantic>=2.4.0
+      - pydantic-settings>=2.0.0
+      - python-dotenv>=1.0.0
+
+      # Export Formats
+      - webvtt-py>=0.5.0
+      - srt>=3.5.3
+
+      # API and Cloud Sync (Optional)
+      - google-auth>=2.23.0
+      - google-auth-oauthlib>=1.1.0
+      - google-api-python-client>=2.100.0
+
+      # Testing
+      - pytest-asyncio>=0.21.0
+      - pytest-mock>=3.12.0
+
+      # Development
+      - mypy>=1.5.0
+
+      # Logging
+      - loguru>=0.7.2
