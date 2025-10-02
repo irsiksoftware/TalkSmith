@@ -13,7 +13,6 @@ Usage:
 """
 
 import argparse
-import subprocess
 import tempfile
 from pathlib import Path
 from typing import Optional, Tuple
@@ -28,7 +27,6 @@ try:
 except ImportError:
     NOISEREDUCE_AVAILABLE = False
 
-from config.settings import get_config
 from pipeline.logger import get_logger
 
 logger = get_logger(__name__)
@@ -349,7 +347,7 @@ def main():
     )
 
     print(f"\nPreprocessed audio saved to: {output_path}")
-    print(f"\nMetrics:")
+    print("\nMetrics:")
     for key, value in metrics.items():
         if key != "steps_applied":
             print(f"  {key}: {value}")

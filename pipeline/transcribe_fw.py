@@ -12,6 +12,8 @@ from typing import Dict, List, Optional
 
 from faster_whisper import WhisperModel
 
+from pipeline.logger import get_logger
+
 
 class FasterWhisperTranscriber:
     """Transcriber using faster-whisper for GPU-accelerated processing."""
@@ -21,6 +23,7 @@ class FasterWhisperTranscriber:
         model_size: str = "base",
         device: str = "cuda",
         compute_type: str = "float16",
+        logger=None,
     ):
         """
         Initialize the transcriber.
@@ -29,10 +32,19 @@ class FasterWhisperTranscriber:
             model_size: Model size (base, small, medium.en, large-v3)
             device: Device to use (cuda or cpu)
             compute_type: Compute precision (float16, int8, etc.)
+            logger: Optional logger instance
         """
         self.model_size = model_size
         self.device = device
         self.compute_type = compute_type
+        self.logger = logger or get_logger(__name__)
+
+        self.logger.info(
+            f"Initializing transcriber",
+            model_size=model_size,
+            device=device,
+            compute_type=compute_type,
+        )
         self.model = WhisperModel(model_size, device=device, compute_type=compute_type)
 
     def transcribe(

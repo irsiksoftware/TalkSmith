@@ -5,5 +5,11 @@
 pytest>=7.4.0
 pytest-cov>=4.1.0
 
+# Audio Processing
+numpy>=1.24.0
+soundfile>=0.12.1
+noisereduce>=3.0.0
+scipy>=1.10.0
+
 # Configuration (built-in to Python, but listed for clarity)
 # configparser - included in Python standard library
