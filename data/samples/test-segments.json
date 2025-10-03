@@ -1,0 +1,46 @@
+{
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 3.5,
+      "text": "Welcome to TalkSmith, the local transcription pipeline.",
+      "speaker": "SPEAKER_00"
+    },
+    {
+      "start": 3.8,
+      "end": 7.2,
+      "text": "This is a sample transcript with speaker diarization.",
+      "speaker": "SPEAKER_00"
+    },
+    {
+      "start": 7.5,
+      "end": 11.0,
+      "text": "That sounds great! How does the logging system work?",
+      "speaker": "SPEAKER_01"
+    },
+    {
+      "start": 11.3,
+      "end": 16.8,
+      "text": "It uses structured JSON logging with per-file outputs and batch summaries.",
+      "speaker": "SPEAKER_00"
+    },
+    {
+      "start": 17.0,
+      "end": 21.5,
+      "text": "The system also supports retry logic with exponential backoff for transient errors.",
+      "speaker": "SPEAKER_00"
+    },
+    {
+      "start": 22.0,
+      "end": 25.3,
+      "text": "Impressive! And it all runs locally with no cloud costs?",
+      "speaker": "SPEAKER_01"
+    },
+    {
+      "start": 25.6,
+      "end": 29.0,
+      "text": "Exactly. Complete privacy with GPU acceleration.",
+      "speaker": "SPEAKER_00"
+    }
+  ]
+}
