@@ -126,12 +126,14 @@ def generate_outline(
             chunk_text = " ".join(s["text"].strip() for s in current_chunk)
             summary = extract_key_phrases(chunk_text, max_summary_words)
 
-            outline_entries.append({
-                "timestamp": chunk_start,
-                "timestamp_formatted": format_timestamp_anchor(chunk_start),
-                "speaker": chunk_speaker,
-                "summary": summary,
-            })
+            outline_entries.append(
+                {
+                    "timestamp": chunk_start,
+                    "timestamp_formatted": format_timestamp_anchor(chunk_start),
+                    "speaker": chunk_speaker,
+                    "summary": summary,
+                }
+            )
 
             last_outline_time = chunk_start
             current_chunk = []
@@ -147,12 +149,14 @@ def generate_outline(
         chunk_text = " ".join(s["text"].strip() for s in current_chunk)
         summary = extract_key_phrases(chunk_text, max_summary_words)
 
-        outline_entries.append({
-            "timestamp": chunk_start,
-            "timestamp_formatted": format_timestamp_anchor(chunk_start),
-            "speaker": chunk_speaker,
-            "summary": summary,
-        })
+        outline_entries.append(
+            {
+                "timestamp": chunk_start,
+                "timestamp_formatted": format_timestamp_anchor(chunk_start),
+                "speaker": chunk_speaker,
+                "summary": summary,
+            }
+        )
 
     if logger:
         logger.info(

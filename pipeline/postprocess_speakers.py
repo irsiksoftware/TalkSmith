@@ -39,8 +39,7 @@ def normalize_speaker_names(
     # Sort speakers to ensure consistent ordering
     unique_speakers.sort()
     speaker_mapping = {
-        original: f"{prefix} {i + 1}"
-        for i, original in enumerate(unique_speakers)
+        original: f"{prefix} {i + 1}" for i, original in enumerate(unique_speakers)
     }
 
     if logger:
@@ -59,7 +58,9 @@ def normalize_speaker_names(
         normalized_segments.append(normalized_segment)
 
     if logger:
-        logger.info(f"Speaker normalization complete", segment_count=len(normalized_segments))
+        logger.info(
+            "Speaker normalization complete", segment_count=len(normalized_segments)
+        )
 
     return normalized_segments
 
@@ -103,7 +104,9 @@ def merge_short_utterances(
         ):
             # Merge short utterance with current segment OR same speaker with small gap
             current_segment["end"] = segment["end"]
-            current_segment["text"] = current_segment["text"].strip() + " " + segment["text"].strip()
+            current_segment["text"] = (
+                current_segment["text"].strip() + " " + segment["text"].strip()
+            )
             if "words" in segment and "words" in current_segment:
                 current_segment["words"].extend(segment["words"])
             merge_count += 1
@@ -166,7 +169,9 @@ def postprocess_speakers(
         processed = normalize_speaker_names(processed, speaker_prefix, logger)
 
     if logger:
-        logger.info("Speaker post-processing complete", final_segment_count=len(processed))
+        logger.info(
+            "Speaker post-processing complete", final_segment_count=len(processed)
+        )
 
     return processed
 
@@ -209,7 +214,8 @@ def main():
         "--min-utterance-ms",
         type=int,
         default=1000,
-        help="Merge utterances shorter than this duration in milliseconds (default: 1000, 0 to disable)",
+        help="Merge utterances shorter than this duration in milliseconds "
+        "(default: 1000, 0 to disable)",
     )
 
     args = parser.parse_args()
