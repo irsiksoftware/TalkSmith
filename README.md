@@ -98,8 +98,8 @@ cd TalkSmith
 # 3. Verify GPU setup - Coming soon
 python scripts/check_gpu.py
 
-# 4. (Optional) Prefetch models - Coming soon
-.\scripts\prefetch_models.ps1 --sizes medium.en,large-v3
+# 4. (Optional) Prefetch models - ✅ IMPLEMENTED
+.\scripts\prefetch_models.ps1 -Sizes "medium.en,large-v3"
 ```
 
 ### Planned Basic Usage
@@ -254,6 +254,84 @@ result = retry_operation(
 )
 ```
 
+## 🗂️ Model Cache Management
+
+**✅ IMPLEMENTED** - Prefetch and cache models for offline use
+
+TalkSmith includes utilities to prefetch Whisper and diarization models, enabling fully offline transcription and reducing first-run latency.
+
+### Prefetch Models
+
+**Windows (PowerShell):**
+```powershell
+# Download default models (medium.en, large-v3)
+.\scripts\prefetch_models.ps1
+
+# Download specific models
+.\scripts\prefetch_models.ps1 -Sizes "small.en,medium.en,large-v3"
+
+# Skip diarization models (no HF token required)
+.\scripts\prefetch_models.ps1 -SkipDiarization
+
+# With HuggingFace token for diarization
+.\scripts\prefetch_models.ps1 -HfToken "hf_xxxxx"
+
+# Custom cache directory
+.\scripts\prefetch_models.ps1 -CacheDir "D:\Models"
+```
+
+**Linux/macOS (Bash):**
+```bash
+# Download default models
+./scripts/prefetch_models.sh
+
+# Download specific models
+./scripts/prefetch_models.sh --sizes "small.en,medium.en,large-v3"
+
+# Skip diarization models
+./scripts/prefetch_models.sh --skip-diarization
+
+# With HuggingFace token
+./scripts/prefetch_models.sh --hf-token "hf_xxxxx"
+
+# Custom cache directory
+./scripts/prefetch_models.sh --cache-dir "/mnt/models"
+```
+
+### Available Whisper Models
+
+| Model | Parameters | Disk Size | VRAM (FP16) | Use Case |
+|-------|-----------|-----------|-------------|----------|
+| `tiny.en` | 39M | ~75 MB | ~1 GB | Testing, very fast |
+| `base.en` | 74M | ~150 MB | ~1 GB | Lightweight |
+| `small.en` | 244M | ~500 MB | ~2 GB | Good accuracy, faster |
+| `medium.en` | 769M | ~1.5 GB | ~5 GB | **Recommended for English** |
+| `large-v3` | 1550M | ~3 GB | ~10 GB | **Best accuracy** |
+
+*Non-`.en` models also available for multi-language support*
+
+### Model Selection Guidelines
+
+- **English-only content:** Use `.en` models (faster, more accurate)
+- **Production/critical work:** `large-v3` or `medium.en`
+- **Rapid iteration/testing:** `small.en` or `base.en`
+- **Multi-language:** Use non-`.en` variants
+
+### Cache Configuration
+
+Models are cached in `.cache/` by default (configurable in `config/settings.ini`):
+
+```ini
+[Paths]
+cache_dir = .cache
+
+[Models]
+whisper_model = large-v3
+diarization_model = pyannote/speaker-diarization-3.1
+```
+
+See [DECISIONS.md](DECISIONS.md) for detailed model selection rationale and version pinning strategy.
+
 ## 📊 Performance
 
 > **Note:** These are target performance metrics based on preliminary testing. Full benchmarks will be published after implementation.
@@ -300,6 +378,7 @@ See our [GitHub Issues](https://github.com/DakotaIrsik/TalkSmith/issues) for det
 - [ ] CLI wrapper
 
 **Phase 3: Advanced (P2)**
+- [x] Model cache management and version pinning
 - [ ] Alternative diarization (no HF token)
 - [ ] Benchmark suite
 - [ ] Google Drive sync
