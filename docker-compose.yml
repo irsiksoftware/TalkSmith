@@ -1,0 +1,59 @@
+# TalkSmith Docker Compose Configuration
+# Simplifies running TalkSmith with GPU acceleration
+#
+# Usage:
+#   docker compose up -d        # Start container in background
+#   docker compose run talksmith python cli/main.py export --help
+#   docker compose down         # Stop and remove container
+
+version: '3.8'
+
+services:
+  talksmith:
+    build:
+      context: .
+      dockerfile: Dockerfile.cuda
+    image: talksmith:cuda
+    container_name: talksmith
+
+    # GPU configuration - requires nvidia-docker2 or nvidia-container-toolkit
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all  # Use all available GPUs
+              capabilities: [gpu]
+
+    # Volume mounts for data persistence
+    volumes:
+      # Mount data directory for inputs/outputs
+      - ./data:/app/data
+      # Mount cache directory to persist downloaded models
+      - ./cache:/app/.cache
+      # Optional: Mount config for runtime configuration
+      - ./config/settings.ini:/app/config/settings.ini:ro
+
+    # Environment variables (optional overrides)
+    environment:
+      - CUDA_VISIBLE_DEVICES=0,1  # Specify which GPUs to use (0,1 for dual GPU)
+      # Optional: HuggingFace token for diarization models
+      # - HF_TOKEN=${HF_TOKEN}
+      # Optional: Override config settings
+      # - TALKSMITH_MODELS_WHISPER_MODEL=large-v3
+      # - TALKSMITH_LOGGING_LEVEL=DEBUG
+
+    # Keep container running for interactive use
+    stdin_open: true
+    tty: true
+
+    # Network mode (optional)
+    # network_mode: bridge
+
+    # Restart policy
+    restart: unless-stopped
+
+# Optional: Named volumes for better management
+volumes:
+  model_cache:
+    driver: local
