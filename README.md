@@ -68,6 +68,7 @@ TalkSmith replaces expensive cloud transcription services with a one-time setup 
 - ✅ **Comprehensive testing** - Unit, integration, and CI/CD automation
 - ✅ **Speaker post-processing** - Normalize speaker labels and merge utterances
 - ✅ **Outline generation** - Timestamped outlines with auto topic detection
+- ✅ **WhisperX diarization** - GPU-accelerated diarization with pyannote.audio
 
 ### Advanced Features (Planned)
 - 💾 **Multi-GPU parallelism** (utilize multiple RTX 3060s concurrently)
@@ -141,8 +142,8 @@ python scripts/check_gpu.py
 # Transcribe a single file (not yet implemented)
 python pipeline/transcribe_fw.py path/to/audio.wav --model-size medium.en
 
-# Transcribe with diarization - WhisperX (not yet implemented)
-python pipeline/diarize_whisperx.py path/to/audio.wav
+# Transcribe with diarization - WhisperX - ✅ IMPLEMENTED
+python pipeline/diarize_whisperx.py path/to/audio.wav --hf-token YOUR_HF_TOKEN
 
 # Transcribe with token-free diarization - ✅ IMPLEMENTED
 python pipeline/diarize_alt.py path/to/audio.wav -o segments.json
@@ -187,7 +188,7 @@ python cli/main.py plan --segments segments.json --output plan.md
 TalkSmith/
 ├── pipeline/           # Core processing modules
 │   ├── transcribe_fw.py       # faster-whisper transcription (planned)
-│   ├── diarize_whisperx.py    # WhisperX + pyannote diarization (planned)
+│   ├── diarize_whisperx.py    # ✅ WhisperX + pyannote diarization
 │   ├── diarize_alt.py         # ✅ No-token alternative diarization
 │   ├── preprocess.py          # Audio preprocessing (planned)
 │   ├── postprocess_speakers.py # ✅ Speaker normalization and utterance merging
@@ -588,10 +589,10 @@ See our [GitHub Issues](https://github.com/DakotaIrsik/TalkSmith/issues) for det
 - [x] Structured JSON logging utility
 - [x] Export formats (TXT, SRT, VTT, JSON)
 - [x] CLI wrapper (export, batch commands)
+- [x] Diarization (WhisperX + pyannote)
 - [ ] GPU and CUDA verification
 - [ ] Python environment setup
 - [ ] Core transcription pipeline (faster-whisper)
-- [ ] Diarization (WhisperX + pyannote)
 - [ ] Batch processing with resume
 
 **Phase 2: Enhancement (P1)**
