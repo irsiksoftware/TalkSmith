@@ -164,7 +164,7 @@ class AlternativeDiarizer:
         timestamps = []
 
         for i in range(0, len(wav) - window_samples, hop_samples):
-            window = wav[i:i + window_samples]
+            window = wav[i : i + window_samples]
 
             # Skip silent/very quiet windows
             if np.abs(window).max() < 0.01:
