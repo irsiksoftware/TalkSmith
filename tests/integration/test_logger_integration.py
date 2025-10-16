@@ -343,17 +343,17 @@ class TestRealWorldScenarios:
         """Test workflow with both retryable and permanent errors."""
         logger = get_logger(__name__)
         results = []
-        item_3_attempts = {"count": 0}
+        attempt_counts = {1: 0, 2: 0, 3: 0, 4: 0}
 
         @with_retry(max_attempts=3, initial_delay=0.01, logger=logger)
         def process_item(item_id):
+            attempt_counts[item_id] += 1
             if item_id == 2:
                 # Permanent error - won't be retried
                 raise ValueError("Invalid format")
             elif item_id == 3:
-                # Transient error on first attempt
-                item_3_attempts["count"] += 1
-                if item_3_attempts["count"] < 2:
+                # Transient error on first 2 attempts
+                if attempt_counts[item_id] < 3:
                     raise TransientError("Temporary failure")
             return {"id": item_id, "status": "done"}
 
@@ -366,7 +366,7 @@ class TestRealWorldScenarios:
                 logger.error(f"Permanent error for item {i}", item_id=i)
             except TransientError:
                 # Should not reach here due to retry
-                pass
+                logger.error(f"Failed after all retries", attempts=attempt_counts[i])
 
         # Items 1, 3, 4 should succeed; item 2 fails permanently
         assert len(results) == 3
