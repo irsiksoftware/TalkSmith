@@ -114,8 +114,10 @@ def batch_command(args: argparse.Namespace) -> int:
         cmd = [
             sys.executable,
             str(launcher_path),
-            "--input-dir", args.input_dir,
-            "--output-dir", args.output_dir,
+            "--input-dir",
+            args.input_dir,
+            "--output-dir",
+            args.output_dir,
         ]
 
         if args.gpus:
@@ -351,20 +353,20 @@ def main():
     batch_parser.add_argument(
         "--multi-gpu",
         action="store_true",
-        help="Enable multi-GPU processing (requires launcher_multigpu.py)"
+        help="Enable multi-GPU processing (requires launcher_multigpu.py)",
     )
     batch_parser.add_argument(
         "--gpus",
-        help="Comma-separated GPU IDs for multi-GPU mode (e.g., '0,1,2') or 'auto'"
+        help="Comma-separated GPU IDs for multi-GPU mode (e.g., '0,1,2') or 'auto'",
     )
     batch_parser.add_argument(
         "--model-size",
         default="base",
-        help="Model size for transcription in multi-GPU mode (default: base)"
+        help="Model size for transcription in multi-GPU mode (default: base)",
     )
     batch_parser.add_argument(
         "--language",
-        help="Language code for transcription in multi-GPU mode (e.g., 'en')"
+        help="Language code for transcription in multi-GPU mode (e.g., 'en')",
     )
 
     # Demo command
