@@ -1,0 +1,59 @@
+name: Discord Release Notification
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Discord notification
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_COMMIT_CHANNEL: ${{ secrets.DISCORD_COMMIT_CHANNEL }}
+        run: |
+          RELEASE_NAME="${{ github.event.release.name }}"
+          RELEASE_TAG="${{ github.event.release.tag_name }}"
+          RELEASE_URL="${{ github.event.release.html_url }}"
+          RELEASE_BODY=$(echo '${{ github.event.release.body }}' | head -c 1000)
+          AUTHOR="${{ github.event.release.author.login }}"
+          REPO="${{ github.repository }}"
+
+          EMBED_JSON=$(cat <<EOF
+          {
+            "embeds": [{
+              "title": "🚀 New Release: ${RELEASE_NAME}",
+              "description": "${RELEASE_BODY}",
+              "color": 5763719,
+              "fields": [
+                {
+                  "name": "Repository",
+                  "value": "${REPO}",
+                  "inline": true
+                },
+                {
+                  "name": "Tag",
+                  "value": "${RELEASE_TAG}",
+                  "inline": true
+                },
+                {
+                  "name": "Author",
+                  "value": "${AUTHOR}",
+                  "inline": true
+                },
+                {
+                  "name": "Release URL",
+                  "value": "[View Release](${RELEASE_URL})"
+                }
+              ],
+              "timestamp": "${{ github.event.release.published_at }}"
+            }]
+          }
+          EOF
+          )
+
+          curl -X POST "https://discord.com/api/v10/channels/${DISCORD_COMMIT_CHANNEL}/messages" \
+            -H "Authorization: Bot ${DISCORD_BOT_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "${EMBED_JSON}"

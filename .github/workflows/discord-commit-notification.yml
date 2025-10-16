@@ -1,0 +1,54 @@
+name: Discord Commit Notification
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Discord notification
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_COMMIT_CHANNEL: ${{ secrets.DISCORD_COMMIT_CHANNEL }}
+        run: |
+          COMMIT_MSG=$(echo '${{ github.event.head_commit.message }}' | head -n 1)
+          COMMIT_URL="${{ github.event.head_commit.url }}"
+          AUTHOR="${{ github.event.head_commit.author.name }}"
+          REPO="${{ github.repository }}"
+          BRANCH="${{ github.ref_name }}"
+
+          EMBED_JSON=$(cat <<EOF
+          {
+            "embeds": [{
+              "title": "New Commit to ${REPO}",
+              "description": "${COMMIT_MSG}",
+              "color": 3447003,
+              "fields": [
+                {
+                  "name": "Author",
+                  "value": "${AUTHOR}",
+                  "inline": true
+                },
+                {
+                  "name": "Branch",
+                  "value": "${BRANCH}",
+                  "inline": true
+                },
+                {
+                  "name": "Commit",
+                  "value": "[View Commit](${COMMIT_URL})"
+                }
+              ],
+              "timestamp": "${{ github.event.head_commit.timestamp }}"
+            }]
+          }
+          EOF
+          )
+
+          curl -X POST "https://discord.com/api/v10/channels/${DISCORD_COMMIT_CHANNEL}/messages" \
+            -H "Authorization: Bot ${DISCORD_BOT_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "${EMBED_JSON}"

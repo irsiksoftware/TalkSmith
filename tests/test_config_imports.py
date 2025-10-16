@@ -185,6 +185,7 @@ class TestConfigPathHandling:
     def test_path_with_trailing_separator(self):
         """Test paths with trailing separators are handled correctly."""
         from config.settings import TalkSmithConfig
+        import os
 
         config = TalkSmithConfig()
         config.set("Paths", "test_path", "data/test/")

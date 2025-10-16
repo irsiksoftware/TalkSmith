@@ -59,7 +59,11 @@ def export_txt(
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     if logger:
-        logger.debug(f"Exporting to TXT: {output_path}", format="txt", segment_count=len(segments))
+        logger.debug(
+            f"Exporting to TXT: {output_path}",
+            format="txt",
+            segment_count=len(segments),
+        )
 
     with open(output_path, "w", encoding="utf-8") as f:
         for segment in segments:
@@ -74,7 +78,11 @@ def export_txt(
             f.write(" ".join(line_parts) + "\n")
 
     if logger:
-        logger.debug(f"TXT export complete: {output_path}", format="txt", output_file=str(output_path))
+        logger.debug(
+            f"TXT export complete: {output_path}",
+            format="txt",
+            output_file=str(output_path),
+        )
 
 
 def export_srt(
@@ -89,7 +97,11 @@ def export_srt(
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     if logger:
-        logger.debug(f"Exporting to SRT: {output_path}", format="srt", segment_count=len(segments))
+        logger.debug(
+            f"Exporting to SRT: {output_path}",
+            format="srt",
+            segment_count=len(segments),
+        )
 
     with open(output_path, "w", encoding="utf-8") as f:
         for i, segment in enumerate(segments, start=1):
@@ -105,7 +117,11 @@ def export_srt(
             f.write(f"{text}\n\n")
 
     if logger:
-        logger.debug(f"SRT export complete: {output_path}", format="srt", output_file=str(output_path))
+        logger.debug(
+            f"SRT export complete: {output_path}",
+            format="srt",
+            output_file=str(output_path),
+        )
 
 
 def export_vtt(
@@ -120,7 +136,11 @@ def export_vtt(
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     if logger:
-        logger.debug(f"Exporting to VTT: {output_path}", format="vtt", segment_count=len(segments))
+        logger.debug(
+            f"Exporting to VTT: {output_path}",
+            format="vtt",
+            segment_count=len(segments),
+        )
 
     with open(output_path, "w", encoding="utf-8") as f:
         f.write("WEBVTT\n\n")
@@ -133,7 +153,11 @@ def export_vtt(
             f.write(f"{segment['text']}\n\n")
 
     if logger:
-        logger.debug(f"VTT export complete: {output_path}", format="vtt", output_file=str(output_path))
+        logger.debug(
+            f"VTT export complete: {output_path}",
+            format="vtt",
+            output_file=str(output_path),
+        )
 
 
 def export_json(
@@ -149,7 +173,11 @@ def export_json(
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     if logger:
-        logger.debug(f"Exporting to JSON: {output_path}", format="json", segment_count=len(segments))
+        logger.debug(
+            f"Exporting to JSON: {output_path}",
+            format="json",
+            segment_count=len(segments),
+        )
 
     export_data = {"segments": []}
     for segment in segments:
@@ -167,7 +195,11 @@ def export_json(
         json.dump(export_data, f, indent=2 if pretty else None, ensure_ascii=False)
 
     if logger:
-        logger.debug(f"JSON export complete: {output_path}", format="json", output_file=str(output_path))
+        logger.debug(
+            f"JSON export complete: {output_path}",
+            format="json",
+            output_file=str(output_path),
+        )
 
 
 def export_all(
@@ -184,7 +216,9 @@ def export_all(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     if logger:
-        logger.info(f"Exporting to {len(formats)} formats", formats=formats, base_name=base_name)
+        logger.info(
+            f"Exporting to {len(formats)} formats", formats=formats, base_name=base_name
+        )
 
     format_handlers = {
         "txt": (export_txt, ".txt"),
@@ -202,6 +236,9 @@ def export_all(
         output_files[fmt] = output_path
 
     if logger:
-        logger.info(f"Export complete: {len(output_files)} files created", output_count=len(output_files))
+        logger.info(
+            f"Export complete: {len(output_files)} files created",
+            output_count=len(output_files),
+        )
 
     return output_files

@@ -1,7 +1,7 @@
 """
-TalkSmith CLI module.
+TalkSmith CLI package.
 
-Provides command-line interface for TalkSmith transcription pipeline.
+Unified command-line interface for TalkSmith transcription pipeline.
 """
 
 __version__ = "0.1.0"

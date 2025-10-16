@@ -16,12 +16,10 @@ def temp_dir() -> Generator[Path, None, None]:
 
 
 @pytest.fixture
-def sample_audio_path(temp_dir: Path, sample_audio_data: np.ndarray) -> Path:
-    """Create a sample audio file path with valid audio data."""
-    import soundfile as sf
-
+def sample_audio_path(temp_dir: Path) -> Path:
+    """Create a sample audio file path (not actual audio, just path)."""
     audio_path = temp_dir / "sample.wav"
-    sf.write(audio_path, sample_audio_data, 16000)
+    audio_path.touch()
     return audio_path
 
 

@@ -2,6 +2,7 @@
 
 import subprocess
 from unittest.mock import patch, MagicMock
+import pytest
 
 from scripts.check_gpu import (
     get_system_info,
