@@ -245,9 +245,7 @@ class BatchTranscriber:
         """Worker function for parallel processing."""
         return self._transcribe_file(Path(audio_file_path))
 
-    def _calculate_eta(
-        self, processed: int, total: int, elapsed_time: float
-    ) -> str:
+    def _calculate_eta(self, processed: int, total: int, elapsed_time: float) -> str:
         """Calculate estimated time remaining."""
         if processed == 0:
             return "unknown"
@@ -314,7 +312,9 @@ class BatchTranscriber:
         print(f"Language: {self.language or 'auto-detect'}")
         print(f"Output formats: {', '.join(self.formats)}")
         print(f"Output directory: {self.output_dir}")
-        print(f"Parallel: {self.parallel} (workers: {self.workers if self.parallel else 1})")
+        print(
+            f"Parallel: {self.parallel} (workers: {self.workers if self.parallel else 1})"
+        )
         print(f"Resume: {self.resume}")
         print(f"Retry failed: {self.retry_failed}")
         print()
