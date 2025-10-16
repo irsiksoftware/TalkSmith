@@ -98,8 +98,8 @@ cd TalkSmith
 # 3. Verify GPU setup - Coming soon
 python scripts/check_gpu.py
 
-# 4. (Optional) Prefetch models - Coming soon
-.\scripts\prefetch_models.ps1 --sizes medium.en,large-v3
+# 4. (Optional) Prefetch models - ✅ IMPLEMENTED
+.\scripts\prefetch_models.ps1 -Sizes "medium.en,large-v3"
 ```
 
 ### Planned Basic Usage
@@ -191,68 +191,6 @@ log_dir = data/outputs/{slug}/logs
 Override via environment variables (format: `TALKSMITH_<SECTION>_<KEY>`):
 ```bash
 TALKSMITH_MODELS_WHISPER_MODEL=medium.en python pipeline/transcribe_fw.py audio.wav
-```
-
-See [docs/configuration.md](docs/configuration.md) for complete documentation.
-
-## 📝 Logging
-
-**✅ IMPLEMENTED** - Structured JSON logging with metrics tracking and retry/backoff
-
-TalkSmith includes a comprehensive logging utility (`pipeline/logger.py`) that provides:
-- **JSON-formatted logs** for easy parsing and analysis
-- **Per-file log outputs** to `data/outputs/<slug>/logs/*.log`
-- **Console and file output** with rotation support
-- **Custom metrics tracking** for performance monitoring
-- **Batch operation summaries** with success/failure tracking
-- **Retry/backoff for transient errors** with exponential backoff
-
-### Basic Logging
-
-```python
-from pipeline.logger import get_logger
-
-# Create logger with slug for file-specific logging
-logger = get_logger(__name__, slug='interview-2025-01-15')
-
-# Log with custom fields
-logger.info("Starting transcription", audio_file='test.wav')
-
-# Log metrics
-logger.log_metrics({
-    'rtf': 0.12,
-    'duration': 3600,
-    'model': 'large-v3'
-})
-
-# Track batch operations
-from pipeline.logger import BatchLogSummary
-batch = BatchLogSummary(logger)
-batch.record_success('file1.wav')
-batch.record_failure('file2.wav', 'File not found')
-batch.print_summary()
-```
-
-### Retry and Error Handling
-
-```python
-from pipeline.logger import get_logger, with_retry, retry_operation, TransientError
-
-logger = get_logger(__name__)
-
-# Using decorator for retry with exponential backoff
-@with_retry(max_attempts=3, initial_delay=1.0, backoff_factor=2.0, logger=logger)
-def fetch_model():
-    # Code that may fail transiently (network issues, API limits, etc.)
-    return download_model()
-
-# Using functional approach
-result = retry_operation(
-    lambda: api_call(),
-    max_attempts=5,
-    logger=logger,
-    operation_name='api_fetch'
-)
 ```
 
 See [docs/configuration.md](docs/configuration.md) for complete documentation.

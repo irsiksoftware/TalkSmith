@@ -2,7 +2,10 @@
 
 import json
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pipeline.logger import TalkSmithLogger
 
 
 def format_timestamp_srt(seconds: float) -> str:
@@ -48,11 +51,16 @@ def export_txt(
     output_path: Path,
     include_timestamps: bool = True,
     include_speakers: bool = True,
+    logger: Optional["TalkSmithLogger"] = None,
 ) -> None:
     """Export segments to plain text format."""
     validate_segments(segments)
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if logger:
+        logger.debug(f"Exporting to TXT: {output_path}", format="txt", segment_count=len(segments))
+
     with open(output_path, "w", encoding="utf-8") as f:
         for segment in segments:
             line_parts = []
@@ -65,14 +73,24 @@ def export_txt(
             line_parts.append(segment["text"])
             f.write(" ".join(line_parts) + "\n")
 
+    if logger:
+        logger.debug(f"TXT export complete: {output_path}", format="txt", output_file=str(output_path))
+
 
 def export_srt(
-    segments: List[Dict[str, Any]], output_path: Path, include_speakers: bool = True
+    segments: List[Dict[str, Any]],
+    output_path: Path,
+    include_speakers: bool = True,
+    logger: Optional["TalkSmithLogger"] = None,
 ) -> None:
     """Export segments to SRT subtitle format."""
     validate_segments(segments)
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if logger:
+        logger.debug(f"Exporting to SRT: {output_path}", format="srt", segment_count=len(segments))
+
     with open(output_path, "w", encoding="utf-8") as f:
         for i, segment in enumerate(segments, start=1):
             f.write(f"{i}\n")
@@ -86,14 +104,24 @@ def export_srt(
             )
             f.write(f"{text}\n\n")
 
+    if logger:
+        logger.debug(f"SRT export complete: {output_path}", format="srt", output_file=str(output_path))
+
 
 def export_vtt(
-    segments: List[Dict[str, Any]], output_path: Path, include_speakers: bool = True
+    segments: List[Dict[str, Any]],
+    output_path: Path,
+    include_speakers: bool = True,
+    logger: Optional["TalkSmithLogger"] = None,
 ) -> None:
     """Export segments to WebVTT subtitle format."""
     validate_segments(segments)
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if logger:
+        logger.debug(f"Exporting to VTT: {output_path}", format="vtt", segment_count=len(segments))
+
     with open(output_path, "w", encoding="utf-8") as f:
         f.write("WEBVTT\n\n")
         for segment in segments:
@@ -104,17 +132,25 @@ def export_vtt(
             f.write(f"{start_ts} --> {end_ts}\n")
             f.write(f"{segment['text']}\n\n")
 
+    if logger:
+        logger.debug(f"VTT export complete: {output_path}", format="vtt", output_file=str(output_path))
+
 
 def export_json(
     segments: List[Dict[str, Any]],
     output_path: Path,
     pretty: bool = True,
     include_words: bool = True,
+    logger: Optional["TalkSmithLogger"] = None,
 ) -> None:
     """Export segments to JSON format."""
     validate_segments(segments)
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if logger:
+        logger.debug(f"Exporting to JSON: {output_path}", format="json", segment_count=len(segments))
+
     export_data = {"segments": []}
     for segment in segments:
         segment_data = {
@@ -130,18 +166,26 @@ def export_json(
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(export_data, f, indent=2 if pretty else None, ensure_ascii=False)
 
+    if logger:
+        logger.debug(f"JSON export complete: {output_path}", format="json", output_file=str(output_path))
+
 
 def export_all(
     segments: List[Dict[str, Any]],
     output_dir: Path,
     base_name: str,
     formats: Optional[List[str]] = None,
+    logger: Optional["TalkSmithLogger"] = None,
 ) -> Dict[str, Path]:
     """Export segments to multiple formats at once."""
     if formats is None:
         formats = ["txt", "srt", "vtt", "json"]
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
+
+    if logger:
+        logger.info(f"Exporting to {len(formats)} formats", formats=formats, base_name=base_name)
+
     format_handlers = {
         "txt": (export_txt, ".txt"),
         "srt": (export_srt, ".srt"),
@@ -154,6 +198,10 @@ def export_all(
             raise ValueError(f"Unknown format: {fmt}")
         handler, extension = format_handlers[fmt]
         output_path = output_dir / f"{base_name}{extension}"
-        handler(segments, output_path)
+        handler(segments, output_path, logger=logger)
         output_files[fmt] = output_path
+
+    if logger:
+        logger.info(f"Export complete: {len(output_files)} files created", output_count=len(output_files))
+
     return output_files
