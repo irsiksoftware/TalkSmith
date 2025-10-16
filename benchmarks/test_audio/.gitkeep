@@ -1,0 +1,6 @@
+# Test audio files directory
+# Place your test audio files here:
+# - sample_1min.wav (1-minute sample)
+# - sample_5min.wav (5-minute sample)
+# - sample_30min.wav (30-minute sample)
+# - ground_truth.json (reference transcripts for WER calculation)
