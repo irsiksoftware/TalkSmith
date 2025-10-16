@@ -1,0 +1,83 @@
+# TalkSmith CUDA-enabled Dockerfile
+# Provides GPU-accelerated transcription and diarization in a reproducible container
+#
+# Build: docker build -f Dockerfile.cuda -t talksmith:cuda .
+# Run: docker run --gpus all -v ./data:/app/data talksmith:cuda
+
+FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    CUDA_HOME=/usr/local/cuda \
+    PATH=/opt/conda/bin:$PATH
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # Build essentials
+    build-essential \
+    cmake \
+    git \
+    wget \
+    curl \
+    ca-certificates \
+    # Audio processing
+    ffmpeg \
+    libsndfile1 \
+    libsndfile1-dev \
+    # Cleanup
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Miniconda
+RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh && \
+    /bin/bash /tmp/miniconda.sh -b -p /opt/conda && \
+    rm /tmp/miniconda.sh && \
+    /opt/conda/bin/conda clean -a -y
+
+# Set working directory
+WORKDIR /app
+
+# Copy environment configuration
+COPY environment.yml .
+COPY requirements.txt .
+COPY requirements-dev.txt .
+
+# Create conda environment and install dependencies
+# Using mamba for faster dependency resolution
+RUN conda install -n base -c conda-forge mamba -y && \
+    mamba env create -f environment.yml && \
+    conda clean -a -y
+
+# Activate environment by default
+ENV PATH=/opt/conda/envs/talksmith/bin:$PATH
+ENV CONDA_DEFAULT_ENV=talksmith
+
+# Copy application code
+COPY . .
+
+# Create necessary directories
+RUN mkdir -p data/inputs data/outputs data/samples .cache/models
+
+# Prefetch default models to container image (optional - can be done at runtime)
+# Uncomment the following lines to bake models into the image (increases image size)
+# ENV HF_HOME=/app/.cache/huggingface
+# RUN python -c "from faster_whisper import WhisperModel; WhisperModel('medium.en', device='cpu', compute_type='int8')"
+# RUN python -c "from faster_whisper import WhisperModel; WhisperModel('large-v3', device='cpu', compute_type='int8')"
+
+# Set default command to show help
+CMD ["python", "cli/main.py", "--help"]
+
+# Health check (optional)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import torch; assert torch.cuda.is_available()" || exit 1
+
+# Labels for metadata
+LABEL org.opencontainers.image.title="TalkSmith" \
+      org.opencontainers.image.description="GPU-accelerated transcription and diarization pipeline" \
+      org.opencontainers.image.version="0.1.0" \
+      org.opencontainers.image.url="https://github.com/DakotaIrsik/TalkSmith" \
+      maintainer="Dakota Irsik"
