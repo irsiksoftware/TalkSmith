@@ -91,7 +91,22 @@ TalkSmith replaces expensive cloud transcription services with a one-time setup 
 - **Python:** 3.10 or 3.11
 - **FFmpeg:** Required for audio processing
 
-### Planned Installation
+## 🚀 Installation
+
+### Prerequisites
+
+Before installing TalkSmith, ensure you have:
+
+- **Python:** Version 3.10 or 3.11
+- **GPU (Recommended):** NVIDIA GPU with CUDA support (e.g., RTX 3060, 12GB+ VRAM)
+  - For CPU-only installation, use the `cpu` option in setup scripts
+- **FFmpeg:** Required for audio processing
+  - **Windows:** `choco install ffmpeg` or download from [ffmpeg.org](https://ffmpeg.org/download.html)
+  - **Linux:** `sudo apt install ffmpeg` (Ubuntu/Debian) or equivalent
+  - **macOS:** `brew install ffmpeg`
+- **Git:** For cloning the repository
+
+### Installation Methods
 
 **Option 1: Docker (Recommended for Linux/GPU)** - ✅ IMPLEMENTED
 
@@ -115,25 +130,154 @@ docker compose down
 
 See [Docker Setup](#-docker-setup-cuda) for detailed instructions.
 
-**Option 2: Native Installation**
+**Option 2: Native Installation** - ✅ IMPLEMENTED
+
+#### Windows (PowerShell)
+
+```powershell
+# 1. Clone the repository
+git clone https://github.com/DakotaIrsik/TalkSmith.git
+cd TalkSmith
+
+# 2. Run environment setup script
+.\scripts\make_env.ps1
+
+# For CPU-only installation:
+.\scripts\make_env.ps1 -CudaVersion cpu
+
+# For conda environment (requires Anaconda/Miniconda):
+.\scripts\make_env.ps1 -EnvType conda
+
+# 3. Activate the environment
+.\venv\Scripts\Activate.ps1
+# OR for conda: conda activate talksmith
+
+# 4. Verify installation
+python scripts\check_gpu.py
+python scripts\check_ffmpeg.py
+
+# 5. (Optional) Prefetch models for offline use
+.\scripts\prefetch_models.ps1 -Sizes "medium.en,large-v3"
+```
+
+#### Linux/macOS (Bash)
 
 ```bash
 # 1. Clone the repository
 git clone https://github.com/DakotaIrsik/TalkSmith.git
 cd TalkSmith
 
-# 2. Create environment (Windows PowerShell) - Coming soon
-.\scripts\make_env.ps1
+# 2. Make scripts executable and run setup
+chmod +x scripts/make_env.sh
+./scripts/make_env.sh
 
-# 2. Create environment (Linux/macOS) - Coming soon
-./scripts\make_env.sh
+# For CPU-only installation:
+./scripts/make_env.sh venv 3.11 cpu
 
-# 3. Verify GPU setup - Coming soon
+# For conda environment (requires Anaconda/Miniconda):
+./scripts/make_env.sh conda
+
+# 3. Activate the environment
+source venv/bin/activate
+# OR for conda: conda activate talksmith
+
+# 4. Verify installation
 python scripts/check_gpu.py
+python scripts/check_ffmpeg.py
 
-# 4. (Optional) Prefetch models - ✅ IMPLEMENTED
-.\scripts\prefetch_models.ps1 -Sizes "medium.en,large-v3"
+# 5. (Optional) Prefetch models for offline use
+./scripts/prefetch_models.sh --sizes "medium.en,large-v3"
 ```
+
+### What the Setup Script Does
+
+The `make_env.ps1` (Windows) and `make_env.sh` (Linux/macOS) scripts automate the following:
+
+1. **Environment Creation:** Creates a Python virtual environment or Conda environment
+2. **Dependency Installation:** Installs PyTorch with CUDA support and all TalkSmith dependencies
+3. **FFmpeg Verification:** Checks that FFmpeg is installed and accessible
+4. **CUDA Verification:** Tests GPU availability through PyTorch
+5. **Import Testing:** Validates that all required Python packages are importable
+
+### Troubleshooting Installation Issues
+
+#### FFmpeg Not Found
+
+If the setup script reports FFmpeg is not installed:
+
+- **Windows:** Install via Chocolatey (`choco install ffmpeg`) or download binaries from [ffmpeg.org](https://ffmpeg.org/download.html)
+- **Linux:** `sudo apt install ffmpeg` (Ubuntu/Debian), `sudo yum install ffmpeg` (RHEL/CentOS)
+- **macOS:** `brew install ffmpeg`
+
+After installation, restart your terminal and verify: `ffmpeg -version`
+
+#### CUDA Not Available
+
+If PyTorch reports CUDA is not available but you have an NVIDIA GPU:
+
+1. **Verify NVIDIA drivers:** Run `nvidia-smi` to check driver installation
+2. **Check CUDA version compatibility:** Ensure your driver supports the CUDA version in PyTorch
+3. **Reinstall PyTorch with correct CUDA version:**
+   ```powershell
+   # Example: Install PyTorch with CUDA 11.8
+   pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu118
+   ```
+
+#### Import Errors
+
+If the setup script reports import errors:
+
+1. **Activate the environment first:**
+   - Windows: `.\venv\Scripts\Activate.ps1`
+   - Linux/macOS: `source venv/bin/activate`
+2. **Reinstall dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. **Check Python version:** TalkSmith requires Python 3.10 or 3.11
+   ```bash
+   python --version
+   ```
+
+#### Virtual Environment Creation Failed
+
+If virtual environment creation fails:
+
+1. **Ensure Python is installed:** `python --version`
+2. **Install venv module (Linux):** `sudo apt install python3-venv`
+3. **Try alternative Python command:**
+   - Use `python3` instead of `python`
+   - Use specific version: `python3.11 -m venv venv`
+
+### Next Steps After Installation
+
+Once installation is complete:
+
+1. **Verify setup:**
+   ```bash
+   python scripts/check_gpu.py
+   python scripts/check_ffmpeg.py
+   ```
+
+2. **Prefetch models (optional but recommended):**
+   ```bash
+   # Windows
+   .\scripts\prefetch_models.ps1 -Sizes "medium.en,large-v3"
+
+   # Linux/macOS
+   ./scripts/prefetch_models.sh --sizes "medium.en,large-v3"
+   ```
+
+3. **Try the CLI:**
+   ```bash
+   python cli/main.py demo
+   python cli/main.py export --help
+   ```
+
+4. **Read the documentation:**
+   - [Configuration Guide](docs/configuration.md)
+   - [Diarization Guide](docs/diarization.md)
+   - [Testing Guide](TESTING.md)
 
 ### Planned Basic Usage
 
@@ -588,8 +732,8 @@ See our [GitHub Issues](https://github.com/DakotaIrsik/TalkSmith/issues) for det
 - [x] Structured JSON logging utility
 - [x] Export formats (TXT, SRT, VTT, JSON)
 - [x] CLI wrapper (export, batch commands)
-- [ ] GPU and CUDA verification
-- [ ] Python environment setup
+- [x] GPU and CUDA verification
+- [x] Python environment setup (make_env.ps1/sh with verification)
 - [ ] Core transcription pipeline (faster-whisper)
 - [ ] Diarization (WhisperX + pyannote)
 - [ ] Batch processing with resume

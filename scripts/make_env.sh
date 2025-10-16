@@ -98,10 +98,58 @@ else
     echo ""
     echo "[6/6] Installing TalkSmith dependencies..."
     pip install -r requirements.txt
+fi
 
-    echo ""
-    echo "Verifying CUDA availability..."
+echo ""
+echo "========================================"
+echo "  Verification Steps"
+echo "========================================"
+
+echo ""
+echo "[1/3] Verifying FFmpeg installation..."
+if command_exists ffmpeg; then
+    FFMPEG_VERSION=$(ffmpeg -version 2>&1 | head -n 1)
+    echo "  ✓ Found: $FFMPEG_VERSION"
+else
+    echo "  ✗ Warning: FFmpeg not found in PATH"
+    echo "  Please install FFmpeg:"
+    echo "    Linux:  sudo apt install ffmpeg"
+    echo "    macOS:  brew install ffmpeg"
+    echo "    Or visit: https://ffmpeg.org/download.html"
+fi
+
+echo ""
+echo "[2/3] Verifying CUDA availability..."
+if [ "$ENV_TYPE" = "conda" ]; then
+    conda run -n talksmith python -c "import torch; print(f'CUDA Available: {torch.cuda.is_available()}')"
+else
     python -c "import torch; print(f'CUDA Available: {torch.cuda.is_available()}')"
+fi
+
+echo ""
+echo "[3/3] Testing basic imports..."
+TEST_SCRIPT='
+try:
+    import numpy as np
+    print("  numpy: OK")
+    import torch
+    print("  torch: OK")
+    import librosa
+    print("  librosa: OK")
+    import resemblyzer
+    print("  resemblyzer: OK")
+    import sklearn
+    print("  sklearn: OK")
+    print("\nAll imports successful!")
+except ImportError as e:
+    print(f"  Import error: {e}")
+    exit(1)
+'
+
+if [ "$ENV_TYPE" = "conda" ]; then
+    conda run -n talksmith python -c "$TEST_SCRIPT"
+else
+    python -c "$TEST_SCRIPT"
 fi
 
 echo ""
