@@ -31,14 +31,14 @@ TalkSmith follows these testing principles:
 Fast, isolated tests for individual functions and classes.
 
 **Coverage Areas:**
-- Transcription logic (`test_transcribe_fw.py`)
-- Diarization algorithms (`test_diarize_whisperx.py`)
-- Audio preprocessing (`test_preprocess.py`)
-- Export formats (`test_export.py`)
-- Speaker postprocessing (`test_postprocess_speakers.py`)
-- GPU detection (`test_check_gpu.py`)
-- Error handling (`test_error_handling.py`)
-- Performance metrics (`test_performance.py`)
+- ✅ Configuration system (`test_config.py`) - Fully implemented
+- ✅ Logging utility (`test_logger.py`) - Fully implemented
+- ✅ Error handling (`test_error_handling.py`) - Framework ready
+- ✅ Performance metrics (`test_performance.py`) - Framework ready
+- 📋 Transcription logic (`test_transcribe.py`) - Placeholder for future implementation
+- 📋 Diarization algorithms (`test_diarization.py`) - Placeholder for future implementation
+- 📋 Export formats (`test_exports.py`) - Placeholder for future implementation
+- 📋 GPU detection (`test_check_gpu.py`) - Placeholder for future implementation
 
 **Run Command:**
 ```bash
@@ -49,10 +49,10 @@ pytest tests/unit -m unit
 Tests for workflows spanning multiple modules.
 
 **Coverage Areas:**
-- End-to-end pipeline (`test_pipeline_e2e.py`)
-- CLI interface (`test_cli.py`)
-- Batch processing
-- Multi-GPU coordination
+- 📋 End-to-end pipeline (`test_full_pipeline.py`) - Placeholder for future implementation
+- 📋 CLI interface - Placeholder for future implementation
+- 📋 Batch processing - Placeholder for future implementation
+- 📋 Multi-GPU coordination - Placeholder for future implementation
 
 **Run Command:**
 ```bash

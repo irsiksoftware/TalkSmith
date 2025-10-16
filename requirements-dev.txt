@@ -1,17 +1,20 @@
 # TalkSmith Development Dependencies
 # Install with: pip install -r requirements-dev.txt
 
-# Core requirements
+# Include base requirements
 -r requirements.txt
 
 # Testing
 pytest>=7.4.0
 pytest-cov>=4.1.0
+pytest-timeout>=2.1.0
+pytest-xdist>=3.3.0  # For parallel test execution
 
-# Linting and formatting
+# Code Quality
 black>=23.0.0
 flake8>=6.0.0
-mypy>=1.0.0
+isort>=5.12.0
+mypy>=1.4.0
 
-# Type stubs
-types-toml>=0.10.8
+# Development Tools
+ipython>=8.14.0

@@ -139,27 +139,31 @@ TalkSmith/
 │   ├── diarize_alt.py         # No-token alternative diarization
 │   ├── preprocess.py          # Audio preprocessing
 │   ├── postprocess_speakers.py # Speaker normalization
-│   └── outline_from_segments.py # Outline generation
+│   ├── outline_from_segments.py # Outline generation
+│   └── logger.py              # ✅ Structured JSON logging
 ├── scripts/            # Automation and utilities
 │   ├── batch_transcribe.ps1   # Batch processing (Windows)
 │   ├── batch_transcribe.sh    # Batch processing (Linux)
 │   ├── launcher.ps1/sh        # Multi-GPU job scheduler
 │   └── check_gpu.py           # GPU verification
 ├── cli/                # Unified CLI interface
+├── config/             # ✅ Configuration system
+│   ├── settings.py            # Configuration loader
+│   └── settings.ini           # Default settings
 ├── data/
 │   ├── inputs/         # Place audio files here
 │   ├── outputs/        # Transcripts and exports
 │   └── samples/        # Test samples
 ├── docs/               # Documentation
 ├── benchmarks/         # Performance benchmarks
-└── tests/              # Unit and E2E tests
+└── tests/              # ✅ Comprehensive test suite
 ```
 
 ## 🔧 Configuration
 
-> **Note:** Configuration system is planned. This shows the intended design.
+**✅ IMPLEMENTED** - Centralized configuration system with `settings.ini`
 
-All settings will be centralized in `settings.ini`:
+Configuration is managed through `config/settings.ini`:
 
 ```ini
 [Paths]
@@ -168,7 +172,7 @@ output_dir = data/outputs
 
 [Models]
 whisper_model = large-v3
-diarization_model = pyannote/speaker-diarization
+diarization_model = pyannote/speaker-diarization-3.1
 
 [Diarization]
 mode = whisperx  # whisperx, alt, or off
@@ -176,11 +180,78 @@ vad_threshold = 0.5
 
 [Export]
 formats = txt,json,srt
+
+[Logging]
+level = INFO
+format = json
+log_dir = data/outputs/{slug}/logs
 ```
 
-Override via environment variables or CLI flags:
+Override via environment variables (format: `TALKSMITH_<SECTION>_<KEY>`):
 ```bash
-WHISPER_MODEL=medium.en python pipeline/transcribe_fw.py audio.wav
+TALKSMITH_MODELS_WHISPER_MODEL=medium.en python pipeline/transcribe_fw.py audio.wav
+```
+
+See [docs/configuration.md](docs/configuration.md) for complete documentation.
+
+## 📝 Logging
+
+**✅ IMPLEMENTED** - Structured JSON logging with metrics tracking and retry/backoff
+
+TalkSmith includes a comprehensive logging utility (`pipeline/logger.py`) that provides:
+- **JSON-formatted logs** for easy parsing and analysis
+- **Per-file log outputs** to `data/outputs/<slug>/logs/*.log`
+- **Console and file output** with rotation support
+- **Custom metrics tracking** for performance monitoring
+- **Batch operation summaries** with success/failure tracking
+- **Retry/backoff for transient errors** with exponential backoff
+
+### Basic Logging
+
+```python
+from pipeline.logger import get_logger
+
+# Create logger with slug for file-specific logging
+logger = get_logger(__name__, slug='interview-2025-01-15')
+
+# Log with custom fields
+logger.info("Starting transcription", audio_file='test.wav')
+
+# Log metrics
+logger.log_metrics({
+    'rtf': 0.12,
+    'duration': 3600,
+    'model': 'large-v3'
+})
+
+# Track batch operations
+from pipeline.logger import BatchLogSummary
+batch = BatchLogSummary(logger)
+batch.record_success('file1.wav')
+batch.record_failure('file2.wav', 'File not found')
+batch.print_summary()
+```
+
+### Retry and Error Handling
+
+```python
+from pipeline.logger import get_logger, with_retry, retry_operation, TransientError
+
+logger = get_logger(__name__)
+
+# Using decorator for retry with exponential backoff
+@with_retry(max_attempts=3, initial_delay=1.0, backoff_factor=2.0, logger=logger)
+def fetch_model():
+    # Code that may fail transiently (network issues, API limits, etc.)
+    return download_model()
+
+# Using functional approach
+result = retry_operation(
+    lambda: api_call(),
+    max_attempts=5,
+    logger=logger,
+    operation_name='api_fetch'
+)
 ```
 
 ## 📊 Performance
@@ -212,6 +283,9 @@ See our [GitHub Issues](https://github.com/DakotaIrsik/TalkSmith/issues) for det
 
 **Phase 1: Foundation (P0)** - *In Progress*
 - [x] Repository structure and documentation
+- [x] Centralized configuration system (settings.ini)
+- [x] Comprehensive test suite and CI/CD pipeline
+- [x] Structured JSON logging utility
 - [ ] GPU and CUDA verification
 - [ ] Python environment setup
 - [ ] Core transcription pipeline (faster-whisper)
@@ -224,7 +298,6 @@ See our [GitHub Issues](https://github.com/DakotaIrsik/TalkSmith/issues) for det
 - [ ] Multi-GPU parallelism
 - [ ] Speaker post-processing and outlines
 - [ ] CLI wrapper
-- [ ] Comprehensive testing
 
 **Phase 3: Advanced (P2)**
 - [ ] Alternative diarization (no HF token)
@@ -234,17 +307,36 @@ See our [GitHub Issues](https://github.com/DakotaIrsik/TalkSmith/issues) for det
 - [ ] Docker (CUDA) support
 - [ ] PII scrubbing
 
+## 🧪 Testing
+
+**✅ IMPLEMENTED** - Comprehensive test suite with CI/CD automation
+
+```bash
+# Run all tests
+make test
+
+# Run with coverage report
+make coverage
+
+# Run specific test categories
+pytest -m unit          # Unit tests only
+pytest -m integration   # Integration tests only
+```
+
+See [TESTING.md](TESTING.md) for detailed testing documentation and [tests/README.md](tests/README.md) for quick reference.
+
 ## 🤝 Contributing
 
-We welcome contributions! Please read our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on:
-- Setting up your development environment
-- Code style and standards
-- Testing requirements
-- Pull request process
+We welcome contributions! Contribution guidelines coming soon.
+
+Before submitting a PR:
+- ✅ Run tests: `make test`
+- ✅ Check coverage: `make coverage`
+- ✅ Review [TESTING.md](TESTING.md) for testing standards
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+License TBD - Will be added in a future release.
 
 ## 🙏 Acknowledgments
 

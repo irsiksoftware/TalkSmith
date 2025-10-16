@@ -1,4 +1,5 @@
 """Unit tests for transcription module."""
+
 import pytest
 
 
@@ -25,6 +26,6 @@ class TestTranscription:
 
     def test_invalid_audio_file(self, temp_dir):
         """Test error handling for invalid audio."""
-        # invalid_path = temp_dir / "nonexistent.wav"
+        invalid_path = temp_dir / "nonexistent.wav"
         # Should raise appropriate error when implemented
         pass
