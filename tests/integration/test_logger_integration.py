@@ -343,6 +343,7 @@ class TestRealWorldScenarios:
         """Test workflow with both retryable and permanent errors."""
         logger = get_logger(__name__)
         results = []
+        item_3_attempts = {"count": 0}
 
         @with_retry(max_attempts=3, initial_delay=0.01, logger=logger)
         def process_item(item_id):
@@ -351,7 +352,8 @@ class TestRealWorldScenarios:
                 raise ValueError("Invalid format")
             elif item_id == 3:
                 # Transient error on first attempt
-                if item_id not in [r["id"] for r in results]:
+                item_3_attempts["count"] += 1
+                if item_3_attempts["count"] < 2:
                     raise TransientError("Temporary failure")
             return {"id": item_id, "status": "done"}
 

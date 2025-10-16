@@ -1,0 +1,5 @@
+{
+  "sample_1min.wav": "This is a placeholder ground truth transcript for the 1-minute sample audio file. Replace this with the actual reference transcript for WER calculation.",
+  "sample_5min.wav": "This is a placeholder ground truth transcript for the 5-minute sample audio file. Replace this with the actual reference transcript for WER calculation.",
+  "sample_30min.wav": "This is a placeholder ground truth transcript for the 30-minute sample audio file. Replace this with the actual reference transcript for WER calculation."
+}
