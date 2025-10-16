@@ -52,7 +52,7 @@ TalkSmith replaces expensive cloud transcription services with a one-time setup 
 
 ### Core Capabilities (Planned)
 - 🚀 **GPU-accelerated** transcription with faster-whisper (CTranslate2)
-- 👥 **Speaker diarization** via WhisperX + pyannote.audio
+- 👥 **Speaker diarization** via WhisperX + pyannote.audio OR token-free alternative
 - 🎙️ **Multi-speaker support** for meetings, interviews, podcasts
 - 📊 **Batch processing** with resume capability
 - 🔧 **Audio preprocessing** (denoise, loudnorm, silence trimming)
@@ -71,7 +71,7 @@ TalkSmith replaces expensive cloud transcription services with a one-time setup 
 
 ### Advanced Features (Planned)
 - 💾 **Multi-GPU parallelism** (utilize multiple RTX 3060s concurrently)
-- 🔄 **No-token diarization** alternative (no HuggingFace account required)
+- ✅ **No-token diarization** alternative (no HuggingFace account required) - ✅ Implemented
 - ☁️ **Optional cloud sync** (rclone to Google Drive) - ✅ Implemented
 - 📄 **PRD/plan generation** from meeting transcripts
 
@@ -141,8 +141,11 @@ python scripts/check_gpu.py
 # Transcribe a single file (not yet implemented)
 python pipeline/transcribe_fw.py path/to/audio.wav --model-size medium.en
 
-# Transcribe with diarization (not yet implemented)
+# Transcribe with diarization - WhisperX (not yet implemented)
 python pipeline/diarize_whisperx.py path/to/audio.wav
+
+# Transcribe with token-free diarization - ✅ IMPLEMENTED
+python pipeline/diarize_alt.py path/to/audio.wav -o segments.json
 
 # Batch process a directory (not yet implemented)
 .\scripts\batch_transcribe.ps1 --model-size large-v3 --diarization whisperx
@@ -185,7 +188,7 @@ TalkSmith/
 ├── pipeline/           # Core processing modules
 │   ├── transcribe_fw.py       # faster-whisper transcription (planned)
 │   ├── diarize_whisperx.py    # WhisperX + pyannote diarization (planned)
-│   ├── diarize_alt.py         # No-token alternative diarization (planned)
+│   ├── diarize_alt.py         # ✅ No-token alternative diarization
 │   ├── preprocess.py          # Audio preprocessing (planned)
 │   ├── postprocess_speakers.py # ✅ Speaker normalization and utterance merging
 │   ├── outline_from_segments.py # ✅ Outline generation with topic detection
@@ -211,6 +214,7 @@ TalkSmith/
 │   └── samples/        # ✅ Test samples
 ├── docs/               # ✅ Documentation
 │   ├── configuration.md       # Configuration guide
+│   ├── diarization.md         # ✅ Diarization comparison guide
 │   └── consent_template.md    # Recording consent template
 ├── benchmarks/         # Performance benchmarks (planned)
 └── tests/              # ✅ Comprehensive test suite
@@ -602,7 +606,7 @@ See our [GitHub Issues](https://github.com/DakotaIrsik/TalkSmith/issues) for det
 - [x] PII redaction with whitelist support
 - [x] Docker (CUDA) support
 - [x] Google Drive sync (rclone)
-- [ ] Alternative diarization (no HF token)
+- [x] Alternative diarization (no HF token)
 - [ ] Benchmark suite
 - [ ] Plan/PRD generation
 
