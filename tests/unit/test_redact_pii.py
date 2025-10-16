@@ -20,9 +20,7 @@ class TestPIIRedactor:
     def redactor_with_whitelist(self, tmp_path):
         """Create PIIRedactor with a whitelist."""
         whitelist_path = tmp_path / "whitelist.txt"
-        whitelist_path.write_text(
-            "support@example.com\n555-0100\n192.168.1.1\n"
-        )
+        whitelist_path.write_text("support@example.com\n555-0100\n192.168.1.1\n")
         return PIIRedactor(str(whitelist_path))
 
     def test_redact_email_basic(self, redactor):
@@ -60,7 +58,7 @@ class TestPIIRedactor:
             "Call 5551234567",
             "Phone: (555) 123-4567",
             "Dial +1-555-123-4567",
-            "Contact: 555.123.4567"
+            "Contact: 555.123.4567",
         ]
         for text in texts:
             result = redactor.redact_phones(text)
@@ -160,16 +158,8 @@ class TestPIIRedactor:
     def test_redact_segments_text(self, redactor):
         """Test redacting PII from segment text."""
         segments = [
-            {
-                "start": 0.0,
-                "end": 2.0,
-                "text": "My email is john@example.com"
-            },
-            {
-                "start": 2.0,
-                "end": 4.0,
-                "text": "Call me at 555-123-4567"
-            }
+            {"start": 0.0, "end": 2.0, "text": "My email is john@example.com"},
+            {"start": 2.0, "end": 4.0, "text": "Call me at 555-123-4567"},
         ]
         result = redactor.redact_segments(segments)
         assert "[EMAIL_REDACTED]" in result[0]["text"]
@@ -184,8 +174,8 @@ class TestPIIRedactor:
                 "text": "Email john@example.com",
                 "words": [
                     {"start": 0.0, "end": 0.5, "word": "Email"},
-                    {"start": 0.5, "end": 1.5, "word": "john@example.com"}
-                ]
+                    {"start": 0.5, "end": 1.5, "word": "john@example.com"},
+                ],
             }
         ]
         result = redactor.redact_segments(segments, redact_words=True)
@@ -194,12 +184,7 @@ class TestPIIRedactor:
     def test_redact_segments_preserves_structure(self, redactor):
         """Test that redaction preserves segment structure."""
         segments = [
-            {
-                "start": 0.0,
-                "end": 2.0,
-                "text": "Hello there",
-                "speaker": "SPEAKER_01"
-            }
+            {"start": 0.0, "end": 2.0, "text": "Hello there", "speaker": "SPEAKER_01"}
         ]
         result = redactor.redact_segments(segments)
         assert result[0]["start"] == 0.0
@@ -208,13 +193,7 @@ class TestPIIRedactor:
 
     def test_redact_segments_skip_text(self, redactor):
         """Test skipping text redaction."""
-        segments = [
-            {
-                "start": 0.0,
-                "end": 2.0,
-                "text": "My email is john@example.com"
-            }
-        ]
+        segments = [{"start": 0.0, "end": 2.0, "text": "My email is john@example.com"}]
         result = redactor.redact_segments(segments, redact_text=False)
         assert "john@example.com" in result[0]["text"]
 
@@ -225,9 +204,7 @@ class TestPIIRedactor:
                 "start": 0.0,
                 "end": 2.0,
                 "text": "Email john@example.com",
-                "words": [
-                    {"start": 0.5, "end": 1.5, "word": "john@example.com"}
-                ]
+                "words": [{"start": 0.5, "end": 1.5, "word": "john@example.com"}],
             }
         ]
         result = redactor.redact_segments(segments, redact_words=False)
@@ -236,9 +213,7 @@ class TestPIIRedactor:
     def test_redact_transcript_file(self, redactor, tmp_path):
         """Test redacting a transcript file."""
         input_path = tmp_path / "transcript.txt"
-        input_path.write_text(
-            "Contact john@example.com or call 555-123-4567"
-        )
+        input_path.write_text("Contact john@example.com or call 555-123-4567")
 
         output_path = redactor.redact_transcript_file(str(input_path))
         output_file = Path(output_path)
@@ -255,10 +230,7 @@ class TestPIIRedactor:
         output_path = tmp_path / "output" / "redacted.txt"
         input_path.write_text("Email: test@example.com")
 
-        result_path = redactor.redact_transcript_file(
-            str(input_path),
-            str(output_path)
-        )
+        result_path = redactor.redact_transcript_file(str(input_path), str(output_path))
 
         assert Path(result_path).exists()
         assert Path(result_path) == output_path
