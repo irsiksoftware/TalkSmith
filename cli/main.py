@@ -49,8 +49,7 @@ def export_command(args: argparse.Namespace) -> int:
         # Load segments from JSON
         if not input_path.exists():
             exit_code = logger.log_error_exit(
-                f"Input file not found: {input_path}",
-                file=str(input_path)
+                f"Input file not found: {input_path}", file=str(input_path)
             )
             return exit_code
 
@@ -61,7 +60,9 @@ def export_command(args: argparse.Namespace) -> int:
         logger.info(f"Loaded {len(segments)} segments", segment_count=len(segments))
 
         # Export to formats
-        formats = args.formats.split(",") if args.formats else ["txt", "srt", "vtt", "json"]
+        formats = (
+            args.formats.split(",") if args.formats else ["txt", "srt", "vtt", "json"]
+        )
         base_name = args.name or input_path.stem
 
         logger.info("Exporting to formats", formats=formats, base_name=base_name)
@@ -70,12 +71,12 @@ def export_command(args: argparse.Namespace) -> int:
             segments=segments,
             output_dir=output_dir,
             base_name=base_name,
-            formats=formats
+            formats=formats,
         )
 
         logger.log_complete(
             "export",
-            output_files={fmt: str(path) for fmt, path in output_files.items()}
+            output_files={fmt: str(path) for fmt, path in output_files.items()},
         )
 
         # Print output paths for user
@@ -144,13 +145,13 @@ def batch_command(args: argparse.Namespace) -> int:
                 segments=segments,
                 output_dir=output_dir / json_file.stem,
                 base_name=json_file.stem,
-                formats=formats
+                formats=formats,
             )
 
             file_logger.log_complete(
                 "export",
                 segment_count=len(segments),
-                output_files={fmt: str(path) for fmt, path in output_files.items()}
+                output_files={fmt: str(path) for fmt, path in output_files.items()},
             )
 
             batch_summary.record_success(str(json_file))
@@ -197,12 +198,14 @@ def demo_command(args: argparse.Namespace) -> int:
 
     # 2. Metrics logging
     print("2. Metrics logging:")
-    logger.log_metrics({
-        "rtf": 0.12,
-        "duration_seconds": 3600,
-        "model": "large-v3",
-        "gpu_memory_mb": 8192
-    })
+    logger.log_metrics(
+        {
+            "rtf": 0.12,
+            "duration_seconds": 3600,
+            "model": "large-v3",
+            "gpu_memory_mb": 8192,
+        }
+    )
 
     # 3. Retry with transient errors
     print("3. Retry mechanism with exponential backoff:")
@@ -216,13 +219,17 @@ def demo_command(args: argparse.Namespace) -> int:
         print(f"   Attempt {attempt_count['count']}...")
 
         if attempt_count["count"] < 3:
-            raise TransientError(f"Simulated transient failure (attempt {attempt_count['count']})")
+            raise TransientError(
+                f"Simulated transient failure (attempt {attempt_count['count']})"
+            )
 
         return {"status": "success", "data": "result"}
 
     try:
         result = simulated_api_call()
-        logger.info("API call succeeded", result=result, total_attempts=attempt_count["count"])
+        logger.info(
+            "API call succeeded", result=result, total_attempts=attempt_count["count"]
+        )
         print(f"   [OK] Success after {attempt_count['count']} attempts")
     except TransientError as e:
         logger.error("API call failed after all retries", error=str(e))
@@ -238,7 +245,9 @@ def demo_command(args: argparse.Namespace) -> int:
     batch.record_failure("file5.wav", "Corrupted audio")
     batch.print_summary()
 
-    print(f"   Total: {batch.total}, Success: {batch.successful}, Failed: {batch.failed}")
+    print(
+        f"   Total: {batch.total}, Success: {batch.successful}, Failed: {batch.failed}"
+    )
     print(f"   Exit code would be: {batch.get_exit_code()}")
 
     # 5. Complete operation
@@ -261,59 +270,55 @@ def main():
 
     # Export command
     export_parser = subparsers.add_parser(
-        "export",
-        help="Export segments to various formats"
+        "export", help="Export segments to various formats"
     )
+    export_parser.add_argument("input", help="Input JSON file with segments")
     export_parser.add_argument(
-        "input",
-        help="Input JSON file with segments"
-    )
-    export_parser.add_argument(
-        "-o", "--output-dir",
+        "-o",
+        "--output-dir",
         default="data/outputs",
-        help="Output directory (default: data/outputs)"
+        help="Output directory (default: data/outputs)",
     )
     export_parser.add_argument(
-        "-f", "--formats",
-        help="Comma-separated list of formats: txt,srt,vtt,json (default: all)"
+        "-f",
+        "--formats",
+        help="Comma-separated list of formats: txt,srt,vtt,json (default: all)",
     )
     export_parser.add_argument(
-        "-n", "--name",
-        help="Base name for output files (default: input filename)"
+        "-n", "--name", help="Base name for output files (default: input filename)"
     )
 
     # Batch command
     batch_parser = subparsers.add_parser(
-        "batch",
-        help="Batch export multiple segment files"
+        "batch", help="Batch export multiple segment files"
     )
     batch_parser.add_argument(
-        "input_dir",
-        help="Input directory containing JSON segment files"
+        "input_dir", help="Input directory containing JSON segment files"
     )
     batch_parser.add_argument(
-        "-o", "--output-dir",
+        "-o",
+        "--output-dir",
         default="data/outputs",
-        help="Output directory (default: data/outputs)"
+        help="Output directory (default: data/outputs)",
     )
     batch_parser.add_argument(
-        "-p", "--pattern",
+        "-p",
+        "--pattern",
         default="*.json",
-        help="File pattern to match (default: *.json)"
+        help="File pattern to match (default: *.json)",
     )
     batch_parser.add_argument(
-        "-f", "--formats",
-        help="Comma-separated list of formats (default: txt,srt,vtt,json)"
+        "-f",
+        "--formats",
+        help="Comma-separated list of formats (default: txt,srt,vtt,json)",
     )
 
     # Demo command
     demo_parser = subparsers.add_parser(
-        "demo",
-        help="Demonstrate logging and error handling features"
+        "demo", help="Demonstrate logging and error handling features"
     )
     demo_parser.add_argument(
-        "-t", "--demo-type",
-        help="Type of demo to run (optional metadata)"
+        "-t", "--demo-type", help="Type of demo to run (optional metadata)"
     )
 
     args = parser.parse_args()

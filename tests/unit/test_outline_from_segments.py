@@ -14,11 +14,36 @@ from pipeline.outline_from_segments import (
 def sample_segments():
     """Sample segments for outline generation."""
     return [
-        {"start": 0.0, "end": 10.0, "speaker": "Speaker 1", "text": "Hello everyone, welcome to today's meeting about project planning."},
-        {"start": 10.5, "end": 20.0, "speaker": "Speaker 2", "text": "Thanks for having me. I'm excited to discuss the roadmap."},
-        {"start": 65.0, "end": 75.0, "speaker": "Speaker 1", "text": "Let's move on to the budget discussion now."},
-        {"start": 76.0, "end": 85.0, "speaker": "Speaker 2", "text": "The budget looks reasonable for Q1."},
-        {"start": 140.0, "end": 150.0, "speaker": "Speaker 1", "text": "Now for the final topic, timeline and milestones."},
+        {
+            "start": 0.0,
+            "end": 10.0,
+            "speaker": "Speaker 1",
+            "text": "Hello everyone, welcome to today's meeting about project planning.",
+        },
+        {
+            "start": 10.5,
+            "end": 20.0,
+            "speaker": "Speaker 2",
+            "text": "Thanks for having me. I'm excited to discuss the roadmap.",
+        },
+        {
+            "start": 65.0,
+            "end": 75.0,
+            "speaker": "Speaker 1",
+            "text": "Let's move on to the budget discussion now.",
+        },
+        {
+            "start": 76.0,
+            "end": 85.0,
+            "speaker": "Speaker 2",
+            "text": "The budget looks reasonable for Q1.",
+        },
+        {
+            "start": 140.0,
+            "end": 150.0,
+            "speaker": "Speaker 1",
+            "text": "Now for the final topic, timeline and milestones.",
+        },
     ]
 
 
@@ -27,9 +52,24 @@ def segments_with_topic_changes():
     """Segments with clear topic changes (long gaps)."""
     return [
         {"start": 0.0, "end": 5.0, "speaker": "Speaker 1", "text": "First topic here."},
-        {"start": 5.5, "end": 10.0, "speaker": "Speaker 1", "text": "Continuing first topic."},
-        {"start": 15.0, "end": 20.0, "speaker": "Speaker 2", "text": "New topic after gap."},  # 5s gap
-        {"start": 20.5, "end": 25.0, "speaker": "Speaker 2", "text": "More on second topic."},
+        {
+            "start": 5.5,
+            "end": 10.0,
+            "speaker": "Speaker 1",
+            "text": "Continuing first topic.",
+        },
+        {
+            "start": 15.0,
+            "end": 20.0,
+            "speaker": "Speaker 2",
+            "text": "New topic after gap.",
+        },  # 5s gap
+        {
+            "start": 20.5,
+            "end": 25.0,
+            "speaker": "Speaker 2",
+            "text": "More on second topic.",
+        },
     ]
 
 
@@ -108,32 +148,57 @@ class TestDetectTopicChange:
     def test_speaker_change_with_gap(self):
         """Test speaker change with significant gap."""
         prev = {"start": 0.0, "end": 5.0, "speaker": "Speaker 1", "text": "First."}
-        curr = {"start": 10.0, "end": 15.0, "speaker": "Speaker 2", "text": "Second."}  # 5s gap
+        curr = {
+            "start": 10.0,
+            "end": 15.0,
+            "speaker": "Speaker 2",
+            "text": "Second.",
+        }  # 5s gap
         assert detect_topic_change(prev, curr, gap_threshold=3.0) is True
 
     def test_speaker_change_no_gap(self):
         """Test speaker change without significant gap."""
         prev = {"start": 0.0, "end": 5.0, "speaker": "Speaker 1", "text": "First."}
-        curr = {"start": 5.5, "end": 10.0, "speaker": "Speaker 2", "text": "Second."}  # 0.5s gap
+        curr = {
+            "start": 5.5,
+            "end": 10.0,
+            "speaker": "Speaker 2",
+            "text": "Second.",
+        }  # 0.5s gap
         assert detect_topic_change(prev, curr, gap_threshold=3.0) is False
 
     def test_same_speaker_large_gap(self):
         """Test same speaker with very large gap."""
         prev = {"start": 0.0, "end": 5.0, "speaker": "Speaker 1", "text": "First."}
-        curr = {"start": 20.0, "end": 25.0, "speaker": "Speaker 1", "text": "Second."}  # 15s gap
+        curr = {
+            "start": 20.0,
+            "end": 25.0,
+            "speaker": "Speaker 1",
+            "text": "Second.",
+        }  # 15s gap
         # Threshold is 3.0, so 2x threshold is 6.0 - 15s gap should trigger
         assert detect_topic_change(prev, curr, gap_threshold=3.0) is True
 
     def test_same_speaker_small_gap(self):
         """Test same speaker with small gap."""
         prev = {"start": 0.0, "end": 5.0, "speaker": "Speaker 1", "text": "First."}
-        curr = {"start": 6.0, "end": 10.0, "speaker": "Speaker 1", "text": "Second."}  # 1s gap
+        curr = {
+            "start": 6.0,
+            "end": 10.0,
+            "speaker": "Speaker 1",
+            "text": "Second.",
+        }  # 1s gap
         assert detect_topic_change(prev, curr, gap_threshold=3.0) is False
 
     def test_custom_threshold(self):
         """Test with custom gap threshold."""
         prev = {"start": 0.0, "end": 5.0, "speaker": "Speaker 1", "text": "First."}
-        curr = {"start": 10.0, "end": 15.0, "speaker": "Speaker 2", "text": "Second."}  # 5s gap
+        curr = {
+            "start": 10.0,
+            "end": 15.0,
+            "speaker": "Speaker 2",
+            "text": "Second.",
+        }  # 5s gap
         assert detect_topic_change(prev, curr, gap_threshold=10.0) is False
         assert detect_topic_change(prev, curr, gap_threshold=2.0) is True
 
@@ -200,7 +265,9 @@ class TestGenerateOutline:
 
     def test_outline_summary_truncation(self, sample_segments):
         """Test that summaries are truncated appropriately."""
-        outline = generate_outline(sample_segments, interval_seconds=60.0, max_summary_words=5)
+        outline = generate_outline(
+            sample_segments, interval_seconds=60.0, max_summary_words=5
+        )
 
         # Check that long summaries are truncated
         for entry in outline:
@@ -282,7 +349,11 @@ class TestFormatOutlineMarkdown:
     def test_format_markdown_structure(self):
         """Test proper Markdown heading structure."""
         entries = [
-            {"timestamp_formatted": "[00:00:00]", "speaker": "Speaker 1", "summary": "Test"},
+            {
+                "timestamp_formatted": "[00:00:00]",
+                "speaker": "Speaker 1",
+                "summary": "Test",
+            },
         ]
         markdown = format_outline_markdown(entries, title="Outline")
 
