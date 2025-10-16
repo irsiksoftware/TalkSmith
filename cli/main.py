@@ -98,7 +98,43 @@ def batch_command(args: argparse.Namespace) -> int:
     - BatchLogSummary for tracking successes/failures
     - Proper exit code handling
     - Per-file logging
+    - Multi-GPU parallel processing support
     """
+    # Check if multi-GPU mode is requested
+    if args.multi_gpu:
+        # Delegate to launcher_multigpu.py
+        import subprocess
+
+        launcher_path = Path(__file__).parent.parent / "launcher_multigpu.py"
+        if not launcher_path.exists():
+            print(f"ERROR: launcher_multigpu.py not found at {launcher_path}")
+            return 1
+
+        cmd = [
+            sys.executable,
+            str(launcher_path),
+            "--input-dir", args.input_dir,
+            "--output-dir", args.output_dir,
+        ]
+
+        if args.gpus:
+            cmd.extend(["--gpus", args.gpus])
+        else:
+            cmd.extend(["--gpus", "auto"])
+
+        if args.model_size:
+            cmd.extend(["--model-size", args.model_size])
+
+        if args.language:
+            cmd.extend(["--language", args.language])
+
+        if args.pattern:
+            cmd.extend(["--pattern", args.pattern])
+
+        print(f"Launching multi-GPU transcription: {' '.join(cmd)}\n")
+        result = subprocess.run(cmd)
+        return result.returncode
+
     input_dir = Path(args.input_dir)
     output_dir = Path(args.output_dir)
 
@@ -304,6 +340,24 @@ def main():
     batch_parser.add_argument(
         "-f", "--formats",
         help="Comma-separated list of formats (default: txt,srt,vtt,json)"
+    )
+    batch_parser.add_argument(
+        "--multi-gpu",
+        action="store_true",
+        help="Enable multi-GPU processing (requires launcher_multigpu.py)"
+    )
+    batch_parser.add_argument(
+        "--gpus",
+        help="Comma-separated GPU IDs for multi-GPU mode (e.g., '0,1,2') or 'auto'"
+    )
+    batch_parser.add_argument(
+        "--model-size",
+        default="base",
+        help="Model size for transcription in multi-GPU mode (default: base)"
+    )
+    batch_parser.add_argument(
+        "--language",
+        help="Language code for transcription in multi-GPU mode (e.g., 'en')"
     )
 
     # Demo command
