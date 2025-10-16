@@ -1,7 +1,6 @@
 """Unit tests for export formats."""
 
 import pytest
-from pathlib import Path
 
 
 @pytest.mark.unit
@@ -11,7 +10,7 @@ class TestExports:
     def test_export_txt(self, sample_segments, temp_dir):
         """Test plain text export."""
         # TODO: Implement when export module exists
-        output_file = temp_dir / "output.txt"
+        # output_file = temp_dir / "output.txt"
         # export_txt(sample_segments, output_file)
         # assert output_file.exists()
         pass

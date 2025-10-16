@@ -2,7 +2,6 @@
 
 import subprocess
 from unittest.mock import patch, MagicMock
-import pytest
 
 from scripts.check_ffmpeg import (
     check_ffmpeg_installed,

@@ -105,26 +105,28 @@ python scripts/check_gpu.py
 ### Planned Basic Usage
 
 ```bash
-# Transcribe a single file
+# Transcribe a single file (not yet implemented)
 python pipeline/transcribe_fw.py path/to/audio.wav --model-size medium.en
 
-# Transcribe with diarization
+# Transcribe with diarization (not yet implemented)
 python pipeline/diarize_whisperx.py path/to/audio.wav
 
-# Batch process a directory
+# Batch process a directory (not yet implemented)
 .\scripts\batch_transcribe.ps1 --model-size large-v3 --diarization whisperx
 
-# Generate outline from transcript
+# Generate outline from transcript (not yet implemented)
 python pipeline/outline_from_segments.py path/to/segments.json
 ```
 
-### Planned CLI Interface
+### CLI Interface (Skeleton Implemented)
 
 ```bash
-# Unified CLI interface (in development)
-python cli/main.py transcribe --input audio.wav --diarize --export srt,json
+# Unified CLI interface - skeleton ready, pipeline modules pending
+python cli/main.py transcribe --input audio.wav --model large-v3
+python cli/main.py diarize --input audio.wav --speakers 2-5
 python cli/main.py batch --input-dir ./recordings --model large-v3
-python cli/main.py plan --segments segments.json --output plan.md
+python cli/main.py export --input segments.json --format srt,vtt,txt
+python cli/main.py plan --input segments.json --output plan.md
 ```
 
 ## 🏗️ Architecture
@@ -146,7 +148,8 @@ TalkSmith/
 │   ├── batch_transcribe.sh    # Batch processing (Linux)
 │   ├── launcher.ps1/sh        # Multi-GPU job scheduler
 │   └── check_gpu.py           # GPU verification
-├── cli/                # Unified CLI interface
+├── cli/                # ✅ Unified CLI interface (skeleton)
+│   └── main.py                # Command-line entry point
 ├── config/             # ✅ Configuration system
 │   ├── settings.py            # Configuration loader
 │   └── settings.ini           # Default settings
@@ -285,7 +288,8 @@ See our [GitHub Issues](https://github.com/DakotaIrsik/TalkSmith/issues) for det
 - [x] Repository structure and documentation
 - [x] Centralized configuration system (settings.ini)
 - [x] Comprehensive test suite and CI/CD pipeline
-- [x] Structured JSON logging utility
+- [x] Structured JSON logging utility with retry/backoff
+- [x] CLI interface skeleton
 - [ ] GPU and CUDA verification
 - [ ] Python environment setup
 - [ ] Core transcription pipeline (faster-whisper)

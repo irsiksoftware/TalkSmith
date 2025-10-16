@@ -1,11 +1,9 @@
 """Stress tests for configuration system."""
 
 import os
-import tempfile
-from pathlib import Path
 import pytest
 
-from config.settings import TalkSmithConfig, get_config
+from config.settings import TalkSmithConfig
 
 
 class TestConfigStress:
@@ -210,7 +208,7 @@ class TestConfigMemoryEfficiency:
 
     def test_singleton_memory_efficiency(self):
         """Test singleton pattern doesn't create extra instances."""
-        from config import get_config
+        from config.settings import get_config
 
         # Get config 100 times
         configs = [get_config() for _ in range(100)]
@@ -244,7 +242,7 @@ class TestConfigErrorRecovery:
 
         # Should raise error on corrupted file
         with pytest.raises(configparser.MissingSectionHeaderError):
-            config = TalkSmithConfig(str(config_path))
+            TalkSmithConfig(str(config_path))
 
     def test_empty_config_file(self, temp_dir):
         """Test handling of empty config file."""
@@ -316,7 +314,6 @@ class TestConfigCaseSensitivity:
 
         # ConfigParser is case-sensitive for sections by default
         val1 = config.get("Test", "key", fallback="default")
-        val2 = config.get("test", "key", fallback="default")
 
         # Both should be retrievable
         assert val1 in ["value1", "value2"]
