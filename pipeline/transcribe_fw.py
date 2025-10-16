@@ -13,6 +13,7 @@ from typing import Dict, Optional
 from faster_whisper import WhisperModel
 
 from pipeline.logger import get_logger
+from pipeline.gpu_utils import select_device, get_memory_info, suggest_model_for_vram
 
 
 class FasterWhisperTranscriber:
@@ -30,22 +31,52 @@ class FasterWhisperTranscriber:
 
         Args:
             model_size: Model size (base, small, medium.en, large-v3)
-            device: Device to use (cuda or cpu)
+            device: Device to use (cuda, cpu, or auto)
             compute_type: Compute precision (float16, int8, etc.)
             logger: Optional logger instance
         """
-        self.model_size = model_size
-        self.device = device
-        self.compute_type = compute_type
         self.logger = logger or get_logger(__name__)
+
+        # Auto-select device if needed
+        selected_device = select_device(device, self.logger)
+
+        # Check VRAM and suggest model if using GPU
+        if selected_device == "cuda":
+            mem_info = get_memory_info(0)
+            if "error" not in mem_info:
+                self.logger.info(
+                    f"GPU memory: {mem_info['free_gb']} GB free / "
+                    f"{mem_info['total_gb']} GB total"
+                )
+
+                suggested_model = suggest_model_for_vram(mem_info["free_gb"])
+                if model_size == "large-v3" and mem_info["free_gb"] < 10:
+                    self.logger.warning(
+                        f"Model '{model_size}' may require more VRAM than available. "
+                        f"Consider using '{suggested_model}' model for {mem_info['free_gb']} GB VRAM"
+                    )
+
+        # Adjust compute type for CPU
+        if selected_device == "cpu":
+            if compute_type == "float16":
+                compute_type = "int8"
+                self.logger.info(
+                    "Adjusted compute_type to 'int8' for CPU (float16 not supported)"
+                )
+
+        self.model_size = model_size
+        self.device = selected_device
+        self.compute_type = compute_type
 
         self.logger.info(
             "Initializing transcriber",
             model_size=model_size,
-            device=device,
+            device=selected_device,
             compute_type=compute_type,
         )
-        self.model = WhisperModel(model_size, device=device, compute_type=compute_type)
+        self.model = WhisperModel(
+            model_size, device=selected_device, compute_type=compute_type
+        )
 
     def transcribe(
         self,
@@ -201,8 +232,8 @@ def main():
     parser.add_argument(
         "--device",
         default="cuda",
-        choices=["cuda", "cpu"],
-        help="Device to use (default: cuda)",
+        choices=["cuda", "cpu", "auto"],
+        help="Device to use: 'cuda', 'cpu', or 'auto' (default: cuda)",
     )
     parser.add_argument(
         "--language", help="Language code (e.g., 'en'). Auto-detect if not specified."
