@@ -236,11 +236,15 @@ See our [GitHub Issues](https://github.com/DakotaIrsik/TalkSmith/issues) for det
 
 ## 🤝 Contributing
 
-We welcome contributions! Contribution guidelines coming soon.
+We welcome contributions! Please read our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on:
+- Setting up your development environment
+- Code style and standards
+- Testing requirements
+- Pull request process
 
 ## 📄 License
 
-License TBD - Will be added in a future release.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
