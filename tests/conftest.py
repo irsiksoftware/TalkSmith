@@ -1,5 +1,4 @@
 """Pytest configuration and shared fixtures."""
-import os
 import tempfile
 from pathlib import Path
 from typing import Generator
@@ -118,6 +117,7 @@ device_ids = 0,1
 @pytest.fixture
 def mock_gpu_available(monkeypatch):
     """Mock GPU availability."""
+
     def mock_cuda_is_available():
         return True
 
@@ -131,6 +131,7 @@ def mock_gpu_available(monkeypatch):
 @pytest.fixture
 def mock_no_gpu(monkeypatch):
     """Mock no GPU availability."""
+
     def mock_cuda_is_available():
         return False
 

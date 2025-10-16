@@ -53,14 +53,14 @@ class TalkSmithConfig:
         if config_path:
             return config_path
 
-        if 'TALKSMITH_CONFIG' in os.environ:
-            return os.environ['TALKSMITH_CONFIG']
+        if "TALKSMITH_CONFIG" in os.environ:
+            return os.environ["TALKSMITH_CONFIG"]
 
         # Check standard locations
         candidates = [
-            Path.cwd() / 'settings.ini',
-            Path.cwd() / 'config' / 'settings.ini',
-            Path.home() / '.talksmith' / 'settings.ini',
+            Path.cwd() / "settings.ini",
+            Path.cwd() / "config" / "settings.ini",
+            Path.home() / ".talksmith" / "settings.ini",
         ]
 
         for candidate in candidates:
@@ -68,53 +68,53 @@ class TalkSmithConfig:
                 return str(candidate)
 
         # Default to config/settings.ini even if doesn't exist
-        return str(Path.cwd() / 'config' / 'settings.ini')
+        return str(Path.cwd() / "config" / "settings.ini")
 
     def _load_defaults(self):
         """Load default configuration values."""
-        self.parser['Paths'] = {
-            'input_dir': 'data/inputs',
-            'output_dir': 'data/outputs',
-            'samples_dir': 'data/samples',
-            'cache_dir': '.cache',
+        self.parser["Paths"] = {
+            "input_dir": "data/inputs",
+            "output_dir": "data/outputs",
+            "samples_dir": "data/samples",
+            "cache_dir": ".cache",
         }
 
-        self.parser['Models'] = {
-            'whisper_model': 'large-v3',
-            'whisper_device': 'auto',
-            'compute_type': 'float16',
-            'diarization_model': 'pyannote/speaker-diarization-3.1',
-            'batch_size': '16',
-            'num_workers': '4',
+        self.parser["Models"] = {
+            "whisper_model": "large-v3",
+            "whisper_device": "auto",
+            "compute_type": "float16",
+            "diarization_model": "pyannote/speaker-diarization-3.1",
+            "batch_size": "16",
+            "num_workers": "4",
         }
 
-        self.parser['Diarization'] = {
-            'mode': 'whisperx',
-            'vad_threshold': '0.5',
-            'min_speakers': '1',
-            'max_speakers': '10',
-            'min_segment_length': '0.5',
+        self.parser["Diarization"] = {
+            "mode": "whisperx",
+            "vad_threshold": "0.5",
+            "min_speakers": "1",
+            "max_speakers": "10",
+            "min_segment_length": "0.5",
         }
 
-        self.parser['Export'] = {
-            'formats': 'txt,json,srt',
-            'include_timestamps': 'true',
-            'include_confidence': 'true',
-            'word_level': 'false',
+        self.parser["Export"] = {
+            "formats": "txt,json,srt",
+            "include_timestamps": "true",
+            "include_confidence": "true",
+            "word_level": "false",
         }
 
-        self.parser['Processing'] = {
-            'denoise': 'false',
-            'normalize_audio': 'true',
-            'trim_silence': 'false',
-            'sample_rate': '16000',
+        self.parser["Processing"] = {
+            "denoise": "false",
+            "normalize_audio": "true",
+            "trim_silence": "false",
+            "sample_rate": "16000",
         }
 
-        self.parser['Logging'] = {
-            'level': 'INFO',
-            'format': 'json',
-            'log_dir': 'data/outputs/{slug}/logs',
-            'console_output': 'true',
+        self.parser["Logging"] = {
+            "level": "INFO",
+            "format": "json",
+            "log_dir": "data/outputs/{slug}/logs",
+            "console_output": "true",
         }
 
     def get(self, section: str, key: str, fallback: Any = None) -> str:
@@ -133,7 +133,7 @@ class TalkSmithConfig:
             Configuration value as string
         """
         # Check environment variable first
-        env_key = f'TALKSMITH_{section.upper()}_{key.upper()}'
+        env_key = f"TALKSMITH_{section.upper()}_{key.upper()}"
         if env_key in os.environ:
             return os.environ[env_key]
 
@@ -165,16 +165,20 @@ class TalkSmithConfig:
         value = self.get(section, key)
         if value is None:
             return fallback
-        return value.lower() in ('true', 'yes', '1', 'on')
+        return value.lower() in ("true", "yes", "1", "on")
 
-    def get_list(self, section: str, key: str, separator: str = ',', fallback: list = None) -> list:
+    def get_list(
+        self, section: str, key: str, separator: str = ",", fallback: list = None
+    ) -> list:
         """Get configuration value as list."""
         value = self.get(section, key)
         if value is None:
             return fallback or []
         return [item.strip() for item in value.split(separator) if item.strip()]
 
-    def get_path(self, section: str, key: str, create: bool = False, fallback: str = None) -> Path:
+    def get_path(
+        self, section: str, key: str, create: bool = False, fallback: str = None
+    ) -> Path:
         """
         Get configuration value as Path object.
 
@@ -228,19 +232,23 @@ class TalkSmithConfig:
         # Create directory if needed
         Path(save_path).parent.mkdir(parents=True, exist_ok=True)
 
-        with open(save_path, 'w') as f:
+        with open(save_path, "w") as f:
             self.parser.write(f)
 
     def to_dict(self) -> dict:
         """Convert configuration to dictionary."""
-        return {section: dict(self.parser[section]) for section in self.parser.sections()}
+        return {
+            section: dict(self.parser[section]) for section in self.parser.sections()
+        }
 
 
 # Global config instance
 _config: Optional[TalkSmithConfig] = None
 
 
-def get_config(config_path: Optional[str] = None, reload: bool = False) -> TalkSmithConfig:
+def get_config(
+    config_path: Optional[str] = None, reload: bool = False
+) -> TalkSmithConfig:
     """
     Get global configuration instance (singleton pattern).
 
@@ -259,7 +267,7 @@ def get_config(config_path: Optional[str] = None, reload: bool = False) -> TalkS
     return _config
 
 
-def create_default_config(path: str = 'config/settings.ini'):
+def create_default_config(path: str = "config/settings.ini"):
     """
     Create a default settings.ini file.
 
@@ -271,7 +279,7 @@ def create_default_config(path: str = 'config/settings.ini'):
     print(f"Created default configuration at: {path}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # CLI for creating default config
     import sys
 

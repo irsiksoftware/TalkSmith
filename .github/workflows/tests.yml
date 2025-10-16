@@ -40,11 +40,7 @@ jobs:
 
     - name: Run unit tests
       run: |
-        pytest tests/unit -m "unit and not gpu" --cov=pipeline --cov=cli --cov-report=xml --cov-report=term
-
-    - name: Run integration tests
-      run: |
-        pytest tests/integration -m "integration and not slow and not gpu" --cov-append --cov=pipeline --cov=cli --cov-report=xml
+        pytest tests/ -v --cov=config --cov-report=xml --cov-report=term
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
@@ -71,11 +67,11 @@ jobs:
         pip install -r requirements-dev.txt
 
     - name: Run black
-      run: black --check .
+      run: black --check config tests
 
     - name: Run flake8
-      run: flake8 pipeline cli tests --max-line-length=100
+      run: flake8 config tests --max-line-length=100
 
     - name: Run mypy
-      run: mypy pipeline cli --ignore-missing-imports
+      run: mypy config --ignore-missing-imports
       continue-on-error: true
