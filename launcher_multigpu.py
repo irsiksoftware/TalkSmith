@@ -134,34 +134,40 @@ def worker_process(
                 processed += 1
 
                 # Send result back
-                result_queue.put({
-                    "type": "success",
-                    "gpu_id": gpu_id,
-                    "file": str(file_path),
-                    "duration": result["duration"],
-                    "processing_time": elapsed,
-                    "rtf": result["rtf"],
-                    "output_dir": str(output_subdir),
-                })
+                result_queue.put(
+                    {
+                        "type": "success",
+                        "gpu_id": gpu_id,
+                        "file": str(file_path),
+                        "duration": result["duration"],
+                        "processing_time": elapsed,
+                        "rtf": result["rtf"],
+                        "output_dir": str(output_subdir),
+                    }
+                )
 
             except Exception as e:
                 logger.exception(f"Failed to process {file_path.name}", error=str(e))
-                result_queue.put({
-                    "type": "failure",
-                    "gpu_id": gpu_id,
-                    "file": str(file_path),
-                    "error": str(e),
-                })
+                result_queue.put(
+                    {
+                        "type": "failure",
+                        "gpu_id": gpu_id,
+                        "file": str(file_path),
+                        "error": str(e),
+                    }
+                )
 
         except Empty:
             continue
         except Exception as e:
             logger.exception("Worker error", error=str(e))
-            result_queue.put({
-                "type": "error",
-                "gpu_id": gpu_id,
-                "error": str(e),
-            })
+            result_queue.put(
+                {
+                    "type": "error",
+                    "gpu_id": gpu_id,
+                    "error": str(e),
+                }
+            )
             break
 
     logger.info(f"Worker finished on GPU {gpu_id}", gpu_id=gpu_id, processed=processed)
@@ -278,18 +284,24 @@ def run_multi_gpu(
                 gpu_stats[result["gpu_id"]]["processed"] += 1
                 gpu_stats[result["gpu_id"]]["time"] += result["processing_time"]
 
-                print(f"[{completed}/{len(files)}] GPU {result['gpu_id']}: "
-                      f"{Path(result['file']).name} "
-                      f"(RTF: {result['rtf']:.3f})")
+                print(
+                    f"[{completed}/{len(files)}] GPU {result['gpu_id']}: "
+                    f"{Path(result['file']).name} "
+                    f"(RTF: {result['rtf']:.3f})"
+                )
 
             elif result["type"] == "failure":
                 completed += 1
                 batch_summary.record_failure(result["file"], result["error"])
-                print(f"[{completed}/{len(files)}] GPU {result['gpu_id']}: "
-                      f"FAILED {Path(result['file']).name} - {result['error']}")
+                print(
+                    f"[{completed}/{len(files)}] GPU {result['gpu_id']}: "
+                    f"FAILED {Path(result['file']).name} - {result['error']}"
+                )
 
             elif result["type"] == "error":
-                logger.error(f"Worker error on GPU {result['gpu_id']}", error=result["error"])
+                logger.error(
+                    f"Worker error on GPU {result['gpu_id']}", error=result["error"]
+                )
                 print(f"ERROR on GPU {result['gpu_id']}: {result['error']}")
 
         except Empty:
@@ -309,7 +321,9 @@ def run_multi_gpu(
     print(f"Successful: {batch_summary.successful}")
     print(f"Failed: {batch_summary.failed}")
     print(f"Total audio duration: {total_duration:.2f}s ({total_duration/60:.2f}m)")
-    print(f"Total processing time: {total_processing_time:.2f}s ({total_processing_time/60:.2f}m)")
+    print(
+        f"Total processing time: {total_processing_time:.2f}s ({total_processing_time/60:.2f}m)"
+    )
     print(f"Overall RTF: {overall_rtf:.3f}")
     print(f"Speedup: {speedup:.2f}x")
 
@@ -421,7 +435,9 @@ Examples:
 
     for gpu_id in gpus:
         if gpu_id not in available_gpus:
-            print(f"ERROR: GPU {gpu_id} not available. Available GPUs: {available_gpus}")
+            print(
+                f"ERROR: GPU {gpu_id} not available. Available GPUs: {available_gpus}"
+            )
             return 1
 
     # Resolve paths
@@ -449,6 +465,7 @@ Examples:
     except Exception as e:
         print(f"ERROR: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 
