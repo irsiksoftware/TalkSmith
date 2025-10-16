@@ -117,7 +117,9 @@ class AlternativeDiarizer:
             num_speakers = self._estimate_num_speakers(embeddings)
             self.logger.info("Estimated number of speakers", num_speakers=num_speakers)
         else:
-            self.logger.info("Using specified number of speakers", num_speakers=num_speakers)
+            self.logger.info(
+                "Using specified number of speakers", num_speakers=num_speakers
+            )
 
         speaker_labels = self._cluster_embeddings(embeddings, num_speakers)
 
@@ -338,7 +340,6 @@ class AlternativeDiarizer:
         for trans_seg in transcript_segments:
             trans_start = trans_seg["start"]
             trans_end = trans_seg["end"]
-            trans_mid = (trans_start + trans_end) / 2
 
             # Find speaker segment with most overlap
             best_speaker = "SPEAKER_00"
@@ -425,7 +426,7 @@ def diarize_file(
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(output_data, f, indent=2, ensure_ascii=False)
 
-    print(f"\nDiarization Results:")
+    print("\nDiarization Results:")
     print(f"  Speakers detected: {output_data['num_speakers']}")
     print(f"  Segments created: {output_data['num_segments']}")
     print(f"  Saved to: {output_path}")
