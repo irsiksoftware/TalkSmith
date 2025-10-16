@@ -117,7 +117,9 @@ class AlternativeDiarizer:
             num_speakers = self._estimate_num_speakers(embeddings)
             self.logger.info("Estimated number of speakers", num_speakers=num_speakers)
         else:
-            self.logger.info("Using specified number of speakers", num_speakers=num_speakers)
+            self.logger.info(
+                "Using specified number of speakers", num_speakers=num_speakers
+            )
 
         speaker_labels = self._cluster_embeddings(embeddings, num_speakers)
 
