@@ -15,7 +15,12 @@ def sample_segments():
         {"start": 0.0, "end": 2.0, "speaker": "SPEAKER_00", "text": "Hello there."},
         {"start": 2.5, "end": 4.0, "speaker": "SPEAKER_01", "text": "Hi!"},
         {"start": 4.5, "end": 7.0, "speaker": "SPEAKER_00", "text": "How are you?"},
-        {"start": 7.5, "end": 10.0, "speaker": "SPEAKER_01", "text": "I'm doing well, thanks."},
+        {
+            "start": 7.5,
+            "end": 10.0,
+            "speaker": "SPEAKER_01",
+            "text": "I'm doing well, thanks.",
+        },
     ]
 
 
@@ -24,9 +29,24 @@ def segments_with_short_utterances():
     """Segments with short utterances that should be merged."""
     return [
         {"start": 0.0, "end": 2.0, "speaker": "SPEAKER_00", "text": "Hello."},
-        {"start": 2.1, "end": 2.5, "speaker": "SPEAKER_00", "text": "Yes."},  # Short, same speaker
-        {"start": 2.6, "end": 5.0, "speaker": "SPEAKER_00", "text": "I agree completely."},
-        {"start": 6.0, "end": 8.0, "speaker": "SPEAKER_01", "text": "Interesting point."},
+        {
+            "start": 2.1,
+            "end": 2.5,
+            "speaker": "SPEAKER_00",
+            "text": "Yes.",
+        },  # Short, same speaker
+        {
+            "start": 2.6,
+            "end": 5.0,
+            "speaker": "SPEAKER_00",
+            "text": "I agree completely.",
+        },
+        {
+            "start": 6.0,
+            "end": 8.0,
+            "speaker": "SPEAKER_01",
+            "text": "Interesting point.",
+        },
     ]
 
 
@@ -70,7 +90,12 @@ class TestNormalizeSpeakerNames:
         """Test normalization with segments missing speaker field."""
         segments = [
             {"start": 0.0, "end": 2.0, "text": "No speaker here."},
-            {"start": 2.0, "end": 4.0, "speaker": "SPEAKER_00", "text": "I have a speaker."},
+            {
+                "start": 2.0,
+                "end": 4.0,
+                "speaker": "SPEAKER_00",
+                "text": "I have a speaker.",
+            },
         ]
         result = normalize_speaker_names(segments)
 
@@ -98,7 +123,9 @@ class TestMergeShortUtterances:
 
     def test_merge_short_same_speaker(self, segments_with_short_utterances):
         """Test merging short utterances from same speaker."""
-        result = merge_short_utterances(segments_with_short_utterances, min_duration_ms=1000)
+        result = merge_short_utterances(
+            segments_with_short_utterances, min_duration_ms=1000
+        )
 
         # Should merge first 3 segments (all from SPEAKER_00)
         assert len(result) < len(segments_with_short_utterances)
@@ -110,7 +137,9 @@ class TestMergeShortUtterances:
 
     def test_merge_preserves_timestamps(self, segments_with_short_utterances):
         """Test that merging preserves start of first and end of last segment."""
-        result = merge_short_utterances(segments_with_short_utterances, min_duration_ms=1000)
+        result = merge_short_utterances(
+            segments_with_short_utterances, min_duration_ms=1000
+        )
 
         # First segment should start at original time
         assert result[0]["start"] == 0.0
@@ -132,7 +161,9 @@ class TestMergeShortUtterances:
 
     def test_merge_zero_threshold(self, segments_with_short_utterances):
         """Test with zero threshold (no merging)."""
-        result = merge_short_utterances(segments_with_short_utterances, min_duration_ms=0)
+        result = merge_short_utterances(
+            segments_with_short_utterances, min_duration_ms=0
+        )
 
         # Should return original segments unchanged
         assert len(result) == len(segments_with_short_utterances)
@@ -176,7 +207,12 @@ class TestMergeShortUtterances:
         """Test that segments with large gaps are not merged."""
         segments = [
             {"start": 0.0, "end": 0.5, "speaker": "SPEAKER_00", "text": "First."},
-            {"start": 5.0, "end": 5.5, "speaker": "SPEAKER_00", "text": "Second."},  # 4.5s gap
+            {
+                "start": 5.0,
+                "end": 5.5,
+                "speaker": "SPEAKER_00",
+                "text": "Second.",
+            },  # 4.5s gap
         ]
         result = merge_short_utterances(segments, min_duration_ms=1000)
 

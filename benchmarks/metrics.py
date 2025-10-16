@@ -18,6 +18,7 @@ from datetime import datetime
 @dataclass
 class BenchmarkResult:
     """Container for benchmark results."""
+
     model: str
     device: str
     compute_type: str
@@ -72,10 +73,10 @@ def normalize_text(text: str) -> str:
     text = text.lower()
 
     # Remove punctuation
-    text = re.sub(r'[^\w\s]', '', text)
+    text = re.sub(r"[^\w\s]", "", text)
 
     # Normalize whitespace
-    text = re.sub(r'\s+', ' ', text)
+    text = re.sub(r"\s+", " ", text)
 
     # Strip
     text = text.strip()
@@ -134,9 +135,9 @@ def calculate_wer(reference: str, hypothesis: str) -> float:
                 dp[i][j] = dp[i - 1][j - 1]
             else:
                 dp[i][j] = min(
-                    dp[i - 1][j] + 1,      # Deletion
-                    dp[i][j - 1] + 1,      # Insertion
-                    dp[i - 1][j - 1] + 1   # Substitution
+                    dp[i - 1][j] + 1,  # Deletion
+                    dp[i][j - 1] + 1,  # Insertion
+                    dp[i - 1][j - 1] + 1,  # Substitution
                 )
 
     # WER is edit distance divided by reference length
@@ -154,7 +155,7 @@ def load_ground_truth(ground_truth_path: Path) -> Dict[str, str]:
     Returns:
         Dictionary mapping audio filenames to reference transcripts
     """
-    with open(ground_truth_path, 'r', encoding='utf-8') as f:
+    with open(ground_truth_path, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -188,13 +189,13 @@ def generate_report(results: List[BenchmarkResult], output_dir: Path) -> None:
 
     # Save JSON
     json_path = output_dir / "report.json"
-    with open(json_path, 'w', encoding='utf-8') as f:
+    with open(json_path, "w", encoding="utf-8") as f:
         json.dump([asdict(r) for r in results], f, indent=2)
     print(f"Saved JSON report to {json_path}")
 
     # Generate markdown report
     md_path = output_dir / "report.md"
-    with open(md_path, 'w', encoding='utf-8') as f:
+    with open(md_path, "w", encoding="utf-8") as f:
         f.write("# TalkSmith Benchmark Report\n\n")
         f.write(f"**Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
 
@@ -208,23 +209,31 @@ def generate_report(results: List[BenchmarkResult], output_dir: Path) -> None:
         f.write("## Detailed Results\n\n")
 
         # Group by audio file for cleaner presentation
-        for audio_file in df['audio_file'].unique():
+        for audio_file in df["audio_file"].unique():
             f.write(f"### {audio_file}\n\n")
 
-            subset = df[df['audio_file'] == audio_file].copy()
+            subset = df[df["audio_file"] == audio_file].copy()
 
             # Format the table
-            f.write("| Model | Device | Compute | Diarization | RTF | WER | Memory (MB) | Process Time (s) |\n")
-            f.write("|-------|--------|---------|-------------|-----|-----|-------------|------------------|\n")
+            f.write(
+                "| Model | Device | Compute | Diarization | RTF | WER | Memory (MB) | Process Time (s) |\n"
+            )
+            f.write(
+                "|-------|--------|---------|-------------|-----|-----|-------------|------------------|\n"
+            )
 
             for _, row in subset.iterrows():
-                wer_str = f"{row['wer']:.2%}" if pd.notna(row['wer']) else "N/A"
-                mem_str = f"{row['memory_mb']:.1f}" if pd.notna(row['memory_mb']) else "N/A"
-                diar_str = "Yes" if row['diarization'] else "No"
+                wer_str = f"{row['wer']:.2%}" if pd.notna(row["wer"]) else "N/A"
+                mem_str = (
+                    f"{row['memory_mb']:.1f}" if pd.notna(row["memory_mb"]) else "N/A"
+                )
+                diar_str = "Yes" if row["diarization"] else "No"
 
-                f.write(f"| {row['model']} | {row['device']} | {row['compute_type']} | "
-                       f"{diar_str} | {row['rtf']:.3f} | {wer_str} | {mem_str} | "
-                       f"{row['process_time']:.1f} |\n")
+                f.write(
+                    f"| {row['model']} | {row['device']} | {row['compute_type']} | "
+                    f"{diar_str} | {row['rtf']:.3f} | {wer_str} | {mem_str} | "
+                    f"{row['process_time']:.1f} |\n"
+                )
 
             f.write("\n")
 
@@ -232,27 +241,33 @@ def generate_report(results: List[BenchmarkResult], output_dir: Path) -> None:
         f.write("## Best Configurations\n\n")
 
         f.write("### Fastest (Lowest RTF)\n")
-        fastest = df.nsmallest(3, 'rtf')[['model', 'device', 'compute_type', 'rtf']]
+        fastest = df.nsmallest(3, "rtf")[["model", "device", "compute_type", "rtf"]]
         f.write(fastest.to_markdown(index=False))
         f.write("\n\n")
 
-        if df['wer'].notna().any():
+        if df["wer"].notna().any():
             f.write("### Most Accurate (Lowest WER)\n")
-            most_accurate = df[df['wer'].notna()].nsmallest(3, 'wer')[['model', 'device', 'wer']]
+            most_accurate = df[df["wer"].notna()].nsmallest(3, "wer")[
+                ["model", "device", "wer"]
+            ]
             f.write(most_accurate.to_markdown(index=False))
             f.write("\n\n")
 
         # Trade-off analysis
-        if df['wer'].notna().any():
+        if df["wer"].notna().any():
             f.write("## Speed vs Accuracy Trade-off\n\n")
             f.write("Models ranked by balanced performance (lower is better):\n\n")
 
             # Calculate composite score (normalized RTF + WER)
-            valid_rows = df[df['wer'].notna()].copy()
+            valid_rows = df[df["wer"].notna()].copy()
             if len(valid_rows) > 0:
-                valid_rows['score'] = (valid_rows['rtf'] / valid_rows['rtf'].max() +
-                                      valid_rows['wer'] / valid_rows['wer'].max())
-                top_balanced = valid_rows.nsmallest(5, 'score')[['model', 'device', 'rtf', 'wer', 'score']]
+                valid_rows["score"] = (
+                    valid_rows["rtf"] / valid_rows["rtf"].max()
+                    + valid_rows["wer"] / valid_rows["wer"].max()
+                )
+                top_balanced = valid_rows.nsmallest(5, "score")[
+                    ["model", "device", "rtf", "wer", "score"]
+                ]
                 f.write(top_balanced.to_markdown(index=False))
                 f.write("\n")
 
@@ -276,12 +291,12 @@ def parse_transcription_output(output: str) -> tuple[float, float]:
     rtf = None
     process_time = None
 
-    for line in output.split('\n'):
-        rtf_match = re.search(r'RTF:\s*([\d.]+)', line, re.IGNORECASE)
+    for line in output.split("\n"):
+        rtf_match = re.search(r"RTF:\s*([\d.]+)", line, re.IGNORECASE)
         if rtf_match:
             rtf = float(rtf_match.group(1))
 
-        time_match = re.search(r'Processing time:\s*([\d.]+)\s*s', line, re.IGNORECASE)
+        time_match = re.search(r"Processing time:\s*([\d.]+)\s*s", line, re.IGNORECASE)
         if time_match:
             process_time = float(time_match.group(1))
 
