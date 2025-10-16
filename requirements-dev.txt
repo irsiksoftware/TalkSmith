@@ -1,0 +1,17 @@
+# TalkSmith Development Dependencies
+# Install with: pip install -r requirements-dev.txt
+
+# Core requirements
+-r requirements.txt
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# Linting and formatting
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.0.0
+
+# Type stubs
+types-toml>=0.10.8

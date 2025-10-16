@@ -1,0 +1,9 @@
+# TalkSmith Dependencies
+# Core requirements for transcription and diarization
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# Configuration (built-in to Python, but listed for clarity)
+# configparser - included in Python standard library
