@@ -164,7 +164,7 @@ class AlternativeDiarizer:
         timestamps = []
 
         for i in range(0, len(wav) - window_samples, hop_samples):
-            window = wav[i : i + window_samples]
+            window = wav[i: i + window_samples]
 
             # Skip silent/very quiet windows
             if np.abs(window).max() < 0.01:
@@ -340,7 +340,6 @@ class AlternativeDiarizer:
         for trans_seg in transcript_segments:
             trans_start = trans_seg["start"]
             trans_end = trans_seg["end"]
-            trans_mid = (trans_start + trans_end) / 2
 
             # Find speaker segment with most overlap
             best_speaker = "SPEAKER_00"
@@ -427,7 +426,7 @@ def diarize_file(
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(output_data, f, indent=2, ensure_ascii=False)
 
-    print(f"\nDiarization Results:")
+    print("\nDiarization Results:")
     print(f"  Speakers detected: {output_data['num_speakers']}")
     print(f"  Segments created: {output_data['num_segments']}")
     print(f"  Saved to: {output_path}")
