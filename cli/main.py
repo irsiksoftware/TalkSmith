@@ -333,8 +333,7 @@ def transcribe_command(args: argparse.Namespace) -> int:
         print(f"Processing time: {result['processing_time']:.2f}s")
         print(f"RTF: {result['rtf']:.3f}")
         print(
-            f"Language: {result['language']} "
-            f"({result['language_probability']:.2%})"
+            f"Language: {result['language']} " f"({result['language_probability']:.2%})"
         )
 
         return 0
