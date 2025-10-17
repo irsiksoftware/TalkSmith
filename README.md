@@ -16,7 +16,7 @@ TalkSmith transforms your audio recordings into:
 - **Speaker diarization** (who said what and when)
 - **Multiple export formats** (TXT, SRT, VTT, JSON)
 - **Intelligent outlines** and summaries
-- **Optional PRD/plan generation** from meeting transcripts
+- **PRD/plan generation** from meeting transcripts with Google Docs integration
 
 All powered by your local GPU(s), with support for multi-GPU parallelism to maximize throughput.
 
@@ -68,13 +68,13 @@ TalkSmith replaces expensive cloud transcription services with a one-time setup 
 - ✅ **Comprehensive testing** - Unit, integration, and CI/CD automation
 - ✅ **Speaker post-processing** - Normalize speaker labels and merge utterances
 - ✅ **Outline generation** - Timestamped outlines with auto topic detection
+- ✅ **Plan/PRD generation** - LLM-powered structured plans from transcripts with Google Docs publishing
 - ✅ **WhisperX diarization** - GPU-accelerated diarization with pyannote.audio
 
 ### Advanced Features (Planned)
 - 💾 **Multi-GPU parallelism** (utilize multiple RTX 3060s concurrently)
 - ✅ **No-token diarization** alternative (no HuggingFace account required) - ✅ Implemented
 - ☁️ **Optional cloud sync** (rclone to Google Drive) - ✅ Implemented
-- 📄 **PRD/plan generation** from meeting transcripts
 
 ### Privacy & Control
 - ✅ **100% local processing** - your audio never leaves your machine
@@ -300,6 +300,12 @@ python pipeline/postprocess_speakers.py segments.json --min-utterance-ms 1000
 
 # Generate outline from transcript - ✅ IMPLEMENTED
 python pipeline/outline_from_segments.py segments.json --interval 60
+
+# Generate PRD/plan from transcript - ✅ IMPLEMENTED
+python pipeline/plan_from_transcript.py --input segments.json --output plan.md
+
+# Generate and publish to Google Docs - ✅ IMPLEMENTED
+python pipeline/plan_from_transcript.py --input segments.json --google-docs --google-docs-title "Project Plan"
 ```
 
 ### CLI Interface
@@ -337,6 +343,8 @@ TalkSmith/
 │   ├── preprocess.py          # Audio preprocessing (planned)
 │   ├── postprocess_speakers.py # ✅ Speaker normalization and utterance merging
 │   ├── outline_from_segments.py # ✅ Outline generation with topic detection
+│   ├── plan_from_transcript.py # ✅ LLM-powered PRD/plan generation
+│   ├── google_docs_integration.py # ✅ Google Docs API integration
 │   ├── exporters.py           # ✅ Export formats (TXT, SRT, VTT, JSON)
 │   ├── redact_pii.py          # ✅ PII redaction
 │   └── logger.py              # ✅ Structured JSON logging
@@ -360,7 +368,8 @@ TalkSmith/
 ├── docs/               # ✅ Documentation
 │   ├── configuration.md       # Configuration guide
 │   ├── diarization.md         # ✅ Diarization comparison guide
-│   └── consent_template.md    # Recording consent template
+│   ├── consent_template.md    # Recording consent template
+│   └── google_docs_setup.md   # ✅ Google Docs integration setup guide
 ├── benchmarks/         # Performance benchmarks (planned)
 └── tests/              # ✅ Comprehensive test suite
 ```
@@ -510,6 +519,116 @@ Updates on the project timeline. We've made significant progress on...
 
 ## [00:03:45] Speaker 1
 Questions about the budget. How are we tracking against our...
+```
+
+## 📝 Plan/PRD Generation
+
+**✅ IMPLEMENTED** - LLM-powered structured plan generation with Google Docs integration
+
+The `plan_from_transcript.py` module extracts structured information from meeting transcripts and generates professional PRD/plan documents using AI.
+
+### Features
+
+- **LLM-powered extraction** - Uses Claude or GPT to intelligently extract plan sections
+- **Structured sections** - Problem Statement, Target Users, Goals, Acceptance Criteria, Risks
+- **Google Docs publishing** - Optionally upload plans directly to Google Docs
+- **Markdown output** - Clean, shareable format
+- **Flexible configuration** - Support for multiple LLM providers
+
+### Usage
+
+```python
+from pipeline.plan_from_transcript import PlanGenerator
+
+# Initialize with preferred LLM (Claude or GPT)
+generator = PlanGenerator(model_type='claude')
+
+# Generate plan from transcript segments
+plan_md = generator.generate_plan(
+    segments_path='segments.json',
+    output_path='plan.md',
+    title='Project Plan'
+)
+```
+
+### CLI Usage
+
+```bash
+# Generate local markdown plan (using Claude by default)
+python pipeline/plan_from_transcript.py --input segments.json --output plan.md
+
+# Use GPT instead of Claude
+python pipeline/plan_from_transcript.py --input segments.json --model gpt
+
+# Generate and upload to Google Docs
+python pipeline/plan_from_transcript.py \
+    --input segments.json \
+    --google-docs \
+    --google-docs-title "Q4 Product Roadmap"
+
+# Custom title and both local + Google Docs
+python pipeline/plan_from_transcript.py \
+    --input segments.json \
+    --output plan.md \
+    --title "Sprint Planning" \
+    --google-docs \
+    --google-docs-title "Sprint 23 Plan"
+```
+
+### Environment Setup
+
+Set your LLM API key:
+
+```bash
+# For Claude (recommended)
+export ANTHROPIC_API_KEY="sk-ant-..."
+
+# For GPT
+export OPENAI_API_KEY="sk-..."
+```
+
+### Google Docs Integration
+
+For Google Docs publishing, complete the setup steps in [docs/google_docs_setup.md](docs/google_docs_setup.md):
+
+1. Create Google Cloud project
+2. Enable Google Docs and Drive APIs
+3. Download OAuth credentials
+4. Configure `config/google_docs.ini`
+5. Authenticate on first run
+
+See [README_GOOGLE_DOCS.md](README_GOOGLE_DOCS.md) for detailed documentation.
+
+### Example Output
+
+The generated plan includes:
+
+```markdown
+# Project Plan
+
+**Date:** 2025-10-17
+**Source:** segments.json
+
+## Problem Statement
+[LLM-extracted problem description from transcript]
+
+## Target Users
+[Identified user personas and stakeholders]
+
+## Goals & Objectives
+[Project goals and success metrics]
+
+## Acceptance Criteria
+[Requirements and must-haves]
+
+## Risks & Assumptions
+[Potential challenges and assumptions]
+
+## Additional Notes
+[Action items and next steps]
+```
+
+See [examples/sample_plan.md](examples/sample_plan.md) for a complete example.
 ```
 
 ## 📝 Logging
@@ -752,26 +871,8 @@ See our [GitHub Issues](https://github.com/DakotaIrsik/TalkSmith/issues) for det
 - [x] Docker (CUDA) support
 - [x] Google Drive sync (rclone)
 - [x] Alternative diarization (no HF token)
+- [x] Plan/PRD generation with LLM and Google Docs integration
 - [ ] Benchmark suite
-- [ ] Plan/PRD generation
-
-## 🧪 Testing
-
-**✅ IMPLEMENTED** - Comprehensive test suite with CI/CD automation
-
-```bash
-# Run all tests
-make test
-
-# Run with coverage report
-make coverage
-
-# Run specific test categories
-pytest -m unit          # Unit tests only
-pytest -m integration   # Integration tests only
-```
-
-See [TESTING.md](TESTING.md) for detailed testing documentation and [tests/README.md](tests/README.md) for quick reference.
 
 ## 🧪 Testing
 

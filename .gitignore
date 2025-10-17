@@ -54,3 +54,11 @@ data/outputs/*
 
 # Local files
 Local_Transcription_Issues__preview_.csv
+
+# Google Docs integration
+credentials.json
+google_token.pickle
+token.pickle
+config/google_docs.ini
+config/credentials.json
+config/token.json

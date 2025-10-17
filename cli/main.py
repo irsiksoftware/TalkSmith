@@ -7,6 +7,7 @@ Provides subcommands for:
 - diarize: Speaker diarization
 - export: Export segments to various formats
 - batch: Batch process multiple files
+- plan: Generate PRD/plan from transcript (optional Google Docs upload)
 - demo: Demonstrate logging and error handling
 """
 
@@ -494,6 +495,92 @@ def diarize_command(args: argparse.Namespace) -> int:
         return 1
 
 
+def plan_command(args: argparse.Namespace) -> int:
+    """
+    Generate structured PRD/plan document from transcript.
+
+    Demonstrates:
+    - LLM-based extraction of plan structure
+    - Markdown plan generation
+    - Optional Google Docs upload
+    """
+    from pipeline.plan_from_transcript import PlanGenerator
+
+    input_path = Path(args.input)
+
+    # Create slug for logging
+    slug = create_slug_from_filename(input_path.name)
+    logger = get_logger(__name__, slug=slug)
+
+    logger.log_start(
+        "plan_generation",
+        input_file=str(input_path),
+        model=args.model,
+        google_docs=args.google_docs,
+    )
+
+    try:
+        # Check input file exists
+        if not input_path.exists():
+            exit_code = logger.log_error_exit(
+                f"Input file not found: {input_path}", file=str(input_path)
+            )
+            return exit_code
+
+        # Set output path
+        if args.output:
+            output_path = Path(args.output)
+        else:
+            output_path = input_path.parent / f"{input_path.stem}_plan.md"
+
+        # Generate plan
+        logger.info(
+            f"Generating plan using {args.model}",
+            model=args.model,
+        )
+
+        generator = PlanGenerator(model_type=args.model)
+        plan_md = generator.generate_plan(
+            segments_path=input_path, output_path=output_path, title=args.title
+        )
+
+        logger.info("Plan generated successfully", output_file=str(output_path))
+
+        # Upload to Google Docs if requested
+        if args.google_docs:
+            try:
+                from pipeline.google_docs_integration import GoogleDocsUploader
+
+                logger.info("Uploading to Google Docs")
+                uploader = GoogleDocsUploader()
+                doc_title = args.google_docs_title or args.title or input_path.stem
+                doc_url = uploader.create_document_from_markdown(plan_md, doc_title)
+
+                logger.info(f"Plan uploaded to Google Docs: {doc_url}")
+                print(f"\nGoogle Docs URL: {doc_url}")
+
+            except ImportError as e:
+                logger.error(f"Google Docs integration not available: {e}")
+                print(f"WARNING: Could not upload to Google Docs: {e}")
+                print("Plan was still saved locally.")
+            except Exception as e:
+                logger.error(f"Failed to upload to Google Docs: {e}")
+                print(f"WARNING: Failed to upload to Google Docs: {e}")
+                print("Plan was still saved locally.")
+
+        logger.log_complete("plan_generation", output_file=str(output_path))
+
+        print(f"\nPlan generated successfully!")
+        print(f"Saved to: {output_path}")
+
+        return 0
+
+    except Exception as e:
+        logger.exception("Plan generation failed", error=str(e))
+        print(f"ERROR: {e}")
+        return 1
+
+
 def demo_command(args: argparse.Namespace) -> int:
     """
     Demonstrate logging features including retry/backoff.
@@ -756,6 +843,37 @@ def main():
         help="Language code for transcription in multi-GPU mode (e.g., 'en')",
     )
 
+    # Plan command
+    plan_parser = subparsers.add_parser(
+        "plan", help="Generate structured PRD/plan from transcript"
+    )
+    plan_parser.add_argument("input", help="Input segments JSON file")
+    plan_parser.add_argument(
+        "-o",
+        "--output",
+        help="Output markdown file (default: <input>_plan.md)",
+    )
+    plan_parser.add_argument(
+        "-t",
+        "--title",
+        help="Plan title (default: derived from filename)",
+    )
+    plan_parser.add_argument(
+        "--model",
+        choices=["claude", "gpt"],
+        default="claude",
+        help="LLM model to use (default: claude)",
+    )
+    plan_parser.add_argument(
+        "--google-docs",
+        action="store_true",
+        help="Upload plan to Google Docs",
+    )
+    plan_parser.add_argument(
+        "--google-docs-title",
+        help="Google Docs document title (default: same as plan title)",
+    )
+
     # Demo command
     demo_parser = subparsers.add_parser(
         "demo", help="Demonstrate logging and error handling features"
@@ -781,6 +899,8 @@ def main():
         return export_command(args)
     elif args.command == "batch":
         return batch_command(args)
+    elif args.command == "plan":
+        return plan_command(args)
     elif args.command == "demo":
         return demo_command(args)
     else:
