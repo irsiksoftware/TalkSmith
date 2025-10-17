@@ -1,0 +1,16 @@
+[google_docs]
+# Path to Google Cloud service account credentials JSON file
+# Download from: https://console.cloud.google.com/iam-admin/serviceaccounts
+credentials_file = config/service-account-credentials.json
+
+# Optional: Google Drive folder ID to store created documents
+# Leave empty to create in root directory
+# To get folder ID: Open folder in browser, copy ID from URL
+folder_id =
+
+# Optional: Comma-separated list of emails to share documents with
+# Leave empty to skip automatic sharing
+share_with_emails =
+
+# Permission level for shared users: reader, commenter, or writer
+share_permission = writer

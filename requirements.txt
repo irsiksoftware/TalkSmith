@@ -10,3 +10,9 @@ pytest-cov>=4.1.0
 
 # Configuration (built-in to Python, but listed for clarity)
 # configparser - included in Python standard library
+
+# Google Docs API integration (optional)
+google-auth>=2.23.0
+google-auth-oauthlib>=1.1.0
+google-auth-httplib2>=0.1.1
+google-api-python-client>=2.100.0
