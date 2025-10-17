@@ -23,20 +23,21 @@ from datetime import datetime
 
 try:
     import anthropic
+
     ANTHROPIC_AVAILABLE = True
 except ImportError:
     ANTHROPIC_AVAILABLE = False
 
 try:
     import openai
+
     OPENAI_AVAILABLE = True
 except ImportError:
     OPENAI_AVAILABLE = False
 
 
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -109,30 +110,38 @@ class PlanGenerator:
 
         if self.model_type == "claude":
             if not ANTHROPIC_AVAILABLE:
-                raise ImportError("anthropic package not installed. Run: pip install anthropic")
+                raise ImportError(
+                    "anthropic package not installed. Run: pip install anthropic"
+                )
             self.client = anthropic.Anthropic(api_key=api_key)
             self.model = "claude-3-5-sonnet-20241022"
         elif self.model_type == "gpt":
             if not OPENAI_AVAILABLE:
-                raise ImportError("openai package not installed. Run: pip install openai")
+                raise ImportError(
+                    "openai package not installed. Run: pip install openai"
+                )
             self.client = openai.OpenAI(api_key=api_key)
             self.model = "gpt-4o"
         else:
-            raise ValueError(f"Unsupported model_type: {model_type}. Use 'claude' or 'gpt'.")
+            raise ValueError(
+                f"Unsupported model_type: {model_type}. Use 'claude' or 'gpt'."
+            )
 
     def load_segments(self, segments_path: Path) -> List[Dict]:
         """Load transcript segments from JSON file."""
         logger.info(f"Loading segments from {segments_path}")
-        with open(segments_path, 'r', encoding='utf-8') as f:
+        with open(segments_path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
         # Handle different segment formats
         if isinstance(data, list):
             segments = data
-        elif isinstance(data, dict) and 'segments' in data:
-            segments = data['segments']
+        elif isinstance(data, dict) and "segments" in data:
+            segments = data["segments"]
         else:
-            raise ValueError("Invalid segments format. Expected list or dict with 'segments' key.")
+            raise ValueError(
+                "Invalid segments format. Expected list or dict with 'segments' key."
+            )
 
         logger.info(f"Loaded {len(segments)} segments")
         return segments
@@ -141,16 +150,16 @@ class PlanGenerator:
         """Convert segments to plain text transcript."""
         lines = []
         for seg in segments:
-            timestamp = seg.get('start', 0)
-            text = seg.get('text', '').strip()
-            speaker = seg.get('speaker', 'Unknown')
+            timestamp = seg.get("start", 0)
+            text = seg.get("text", "").strip()
+            speaker = seg.get("speaker", "Unknown")
 
             # Format: [00:00] Speaker: Text
             minutes = int(timestamp // 60)
             seconds = int(timestamp % 60)
             lines.append(f"[{minutes:02d}:{seconds:02d}] {speaker}: {text}")
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
     def extract_plan_data(self, transcript: str) -> Dict[str, str]:
         """
@@ -170,14 +179,14 @@ class PlanGenerator:
             response = self.client.messages.create(
                 model=self.model,
                 max_tokens=4096,
-                messages=[{"role": "user", "content": prompt}]
+                messages=[{"role": "user", "content": prompt}],
             )
             content = response.content[0].text
         else:  # gpt
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
-                response_format={"type": "json_object"}
+                response_format={"type": "json_object"},
             )
             content = response.choices[0].message.content
 
@@ -187,14 +196,22 @@ class PlanGenerator:
         except json.JSONDecodeError:
             # Try to extract JSON from markdown code blocks
             import re
-            json_match = re.search(r'```json\s*(.*?)\s*```', content, re.DOTALL)
+
+            json_match = re.search(r"```json\s*(.*?)\s*```", content, re.DOTALL)
             if json_match:
                 plan_data = json.loads(json_match.group(1))
             else:
                 raise ValueError(f"Failed to parse LLM response as JSON: {content}")
 
         # Validate required keys
-        required_keys = ["problem", "users", "goals", "acceptance_criteria", "risks", "notes"]
+        required_keys = [
+            "problem",
+            "users",
+            "goals",
+            "acceptance_criteria",
+            "risks",
+            "notes",
+        ]
         for key in required_keys:
             if key not in plan_data:
                 plan_data[key] = "Not specified in transcript."
@@ -206,7 +223,7 @@ class PlanGenerator:
         self,
         segments_path: Path,
         output_path: Optional[Path] = None,
-        title: Optional[str] = None
+        title: Optional[str] = None,
     ) -> str:
         """
         Generate a structured plan document from transcript segments.
@@ -228,25 +245,25 @@ class PlanGenerator:
 
         # Generate plan document
         if title is None:
-            title = segments_path.stem.replace('_', ' ').title()
+            title = segments_path.stem.replace("_", " ").title()
 
         plan_md = PLAN_TEMPLATE.format(
             title=title,
-            date=datetime.now().strftime('%Y-%m-%d'),
+            date=datetime.now().strftime("%Y-%m-%d"),
             source=segments_path.name,
-            problem=plan_data['problem'],
-            users=plan_data['users'],
-            goals=plan_data['goals'],
-            acceptance_criteria=plan_data['acceptance_criteria'],
-            risks=plan_data['risks'],
-            notes=plan_data['notes']
+            problem=plan_data["problem"],
+            users=plan_data["users"],
+            goals=plan_data["goals"],
+            acceptance_criteria=plan_data["acceptance_criteria"],
+            risks=plan_data["risks"],
+            notes=plan_data["notes"],
         )
 
         # Save to file if requested
         if output_path:
             logger.info(f"Saving plan to {output_path}")
             output_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(output_path, 'w', encoding='utf-8') as f:
+            with open(output_path, "w", encoding="utf-8") as f:
                 f.write(plan_md)
 
         return plan_md
@@ -255,40 +272,34 @@ class PlanGenerator:
 def main():
     """CLI entry point."""
     parser = argparse.ArgumentParser(
-        description='Generate structured PRD/plan from transcript segments'
+        description="Generate structured PRD/plan from transcript segments"
     )
     parser.add_argument(
-        '--input', '-i',
+        "--input", "-i", type=Path, required=True, help="Input segments JSON file"
+    )
+    parser.add_argument(
+        "--output",
+        "-o",
         type=Path,
-        required=True,
-        help='Input segments JSON file'
+        help="Output plan markdown file (default: input_name_plan.md)",
     )
     parser.add_argument(
-        '--output', '-o',
-        type=Path,
-        help='Output plan markdown file (default: input_name_plan.md)'
+        "--title", "-t", type=str, help="Plan title (default: derived from filename)"
     )
     parser.add_argument(
-        '--title', '-t',
+        "--model",
         type=str,
-        help='Plan title (default: derived from filename)'
+        choices=["claude", "gpt"],
+        default="claude",
+        help="LLM model to use (default: claude)",
     )
     parser.add_argument(
-        '--model',
+        "--google-docs", action="store_true", help="Upload plan to Google Docs"
+    )
+    parser.add_argument(
+        "--google-docs-title",
         type=str,
-        choices=['claude', 'gpt'],
-        default='claude',
-        help='LLM model to use (default: claude)'
-    )
-    parser.add_argument(
-        '--google-docs',
-        action='store_true',
-        help='Upload plan to Google Docs'
-    )
-    parser.add_argument(
-        '--google-docs-title',
-        type=str,
-        help='Google Docs document title (default: same as plan title)'
+        help="Google Docs document title (default: same as plan title)",
     )
 
     args = parser.parse_args()
@@ -306,9 +317,7 @@ def main():
     try:
         generator = PlanGenerator(model_type=args.model)
         plan_md = generator.generate_plan(
-            segments_path=args.input,
-            output_path=args.output,
-            title=args.title
+            segments_path=args.input, output_path=args.output, title=args.title
         )
 
         logger.info(f"Plan generated successfully: {args.output}")
@@ -326,7 +335,9 @@ def main():
                 print(f"\nGoogle Docs URL: {doc_url}")
 
             except ImportError:
-                logger.error("Google Docs integration not available. Check google_docs_integration.py")
+                logger.error(
+                    "Google Docs integration not available. Check google_docs_integration.py"
+                )
                 return 1
             except Exception as e:
                 logger.error(f"Failed to upload to Google Docs: {e}")
@@ -340,5 +351,5 @@ def main():
         return 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     exit(main())

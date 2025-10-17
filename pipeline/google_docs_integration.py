@@ -24,6 +24,7 @@ try:
     from google_auth_oauthlib.flow import InstalledAppFlow
     from googleapiclient.discovery import build
     from googleapiclient.errors import HttpError
+
     GOOGLE_AVAILABLE = True
 except ImportError:
     GOOGLE_AVAILABLE = False
@@ -34,8 +35,8 @@ logger = logging.getLogger(__name__)
 
 # OAuth 2.0 scopes required for Google Docs
 SCOPES = [
-    'https://www.googleapis.com/auth/documents',
-    'https://www.googleapis.com/auth/drive.file'
+    "https://www.googleapis.com/auth/documents",
+    "https://www.googleapis.com/auth/drive.file",
 ]
 
 
@@ -73,12 +74,12 @@ class GoogleDocsUploader:
         config.read(config_path)
 
         # Validate required sections and keys
-        if 'google_docs' not in config:
+        if "google_docs" not in config:
             raise ValueError("Missing [google_docs] section in config")
 
-        required_keys = ['credentials_file']
+        required_keys = ["credentials_file"]
         for key in required_keys:
-            if key not in config['google_docs']:
+            if key not in config["google_docs"]:
                 raise ValueError(f"Missing required config key: {key}")
 
         return config
@@ -86,8 +87,8 @@ class GoogleDocsUploader:
     def _authenticate(self):
         """Authenticate with Google APIs using OAuth 2.0."""
         creds = None
-        token_file = self.config['google_docs'].get('token_file', 'config/token.json')
-        credentials_file = self.config['google_docs']['credentials_file']
+        token_file = self.config["google_docs"].get("token_file", "config/token.json")
+        credentials_file = self.config["google_docs"]["credentials_file"]
 
         # Load existing token if available
         if os.path.exists(token_file):
@@ -104,17 +105,19 @@ class GoogleDocsUploader:
                         "Download from Google Cloud Console and save to this location."
                     )
 
-                flow = InstalledAppFlow.from_client_secrets_file(credentials_file, SCOPES)
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    credentials_file, SCOPES
+                )
                 creds = flow.run_local_server(port=0)
 
             # Save token for future use
             Path(token_file).parent.mkdir(parents=True, exist_ok=True)
-            with open(token_file, 'w') as token:
+            with open(token_file, "w") as token:
                 token.write(creds.to_json())
 
         self.credentials = creds
-        self.docs_service = build('docs', 'v1', credentials=creds)
-        self.drive_service = build('drive', 'v3', credentials=creds)
+        self.docs_service = build("docs", "v1", credentials=creds)
+        self.drive_service = build("drive", "v3", credentials=creds)
 
     def create_document_from_markdown(self, markdown_content: str, title: str) -> str:
         """
@@ -131,8 +134,8 @@ class GoogleDocsUploader:
             logger.info(f"Creating Google Doc: {title}")
 
             # Create blank document
-            doc = self.docs_service.documents().create(body={'title': title}).execute()
-            doc_id = doc['documentId']
+            doc = self.docs_service.documents().create(body={"title": title}).execute()
+            doc_id = doc["documentId"]
             logger.info(f"Document created with ID: {doc_id}")
 
             # Convert markdown to plain text (basic conversion)
@@ -141,30 +144,24 @@ class GoogleDocsUploader:
 
             # Insert content
             requests = [
-                {
-                    'insertText': {
-                        'location': {'index': 1},
-                        'text': plain_content
-                    }
-                }
+                {"insertText": {"location": {"index": 1}, "text": plain_content}}
             ]
 
             self.docs_service.documents().batchUpdate(
-                documentId=doc_id,
-                body={'requests': requests}
+                documentId=doc_id, body={"requests": requests}
             ).execute()
             logger.info("Content inserted successfully")
 
             # Set sharing permissions if configured
-            sharing = self.config['google_docs'].get('sharing', 'private')
-            if sharing == 'anyone':
+            sharing = self.config["google_docs"].get("sharing", "private")
+            if sharing == "anyone":
                 logger.info("Sharing document with anyone")
-                self._share_document(doc_id, 'anyone', 'reader')
-            elif sharing == 'domain':
-                domain = self.config['google_docs'].get('domain', '')
+                self._share_document(doc_id, "anyone", "reader")
+            elif sharing == "domain":
+                domain = self.config["google_docs"].get("domain", "")
                 if domain:
                     logger.info(f"Sharing document with domain: {domain}")
-                    self._share_document(doc_id, f'domain:{domain}', 'reader')
+                    self._share_document(doc_id, f"domain:{domain}", "reader")
 
             doc_url = f"https://docs.google.com/document/d/{doc_id}/edit"
             logger.info(f"Document created: {doc_url}")
@@ -188,8 +185,8 @@ class GoogleDocsUploader:
         try:
             # Get document to find end index
             doc = self.docs_service.documents().get(documentId=doc_id).execute()
-            content = doc.get('body').get('content')
-            end_index = content[-1].get('endIndex', 1)
+            content = doc.get("body").get("content")
+            end_index = content[-1].get("endIndex", 1)
 
             # Convert markdown to plain text
             plain_content = self._markdown_to_plain(markdown_content)
@@ -197,24 +194,15 @@ class GoogleDocsUploader:
             # Replace all content
             requests = [
                 {
-                    'deleteContentRange': {
-                        'range': {
-                            'startIndex': 1,
-                            'endIndex': end_index - 1
-                        }
+                    "deleteContentRange": {
+                        "range": {"startIndex": 1, "endIndex": end_index - 1}
                     }
                 },
-                {
-                    'insertText': {
-                        'location': {'index': 1},
-                        'text': plain_content
-                    }
-                }
+                {"insertText": {"location": {"index": 1}, "text": plain_content}},
             ]
 
             self.docs_service.documents().batchUpdate(
-                documentId=doc_id,
-                body={'requests': requests}
+                documentId=doc_id, body={"requests": requests}
             ).execute()
 
             return f"https://docs.google.com/document/d/{doc_id}/edit"
@@ -222,7 +210,7 @@ class GoogleDocsUploader:
         except HttpError as error:
             raise RuntimeError(f"Failed to update Google Doc: {error}")
 
-    def _share_document(self, doc_id: str, email_or_domain: str, role: str = 'reader'):
+    def _share_document(self, doc_id: str, email_or_domain: str, role: str = "reader"):
         """
         Share document with specific user or domain.
 
@@ -233,21 +221,20 @@ class GoogleDocsUploader:
         """
         try:
             permission = {
-                'type': 'user' if '@' in email_or_domain else 'anyone',
-                'role': role
+                "type": "user" if "@" in email_or_domain else "anyone",
+                "role": role,
             }
 
-            if email_or_domain.startswith('domain:'):
-                permission['type'] = 'domain'
-                permission['domain'] = email_or_domain.split(':', 1)[1]
-            elif email_or_domain == 'anyone':
-                permission['type'] = 'anyone'
+            if email_or_domain.startswith("domain:"):
+                permission["type"] = "domain"
+                permission["domain"] = email_or_domain.split(":", 1)[1]
+            elif email_or_domain == "anyone":
+                permission["type"] = "anyone"
             else:
-                permission['emailAddress'] = email_or_domain
+                permission["emailAddress"] = email_or_domain
 
             self.drive_service.permissions().create(
-                fileId=doc_id,
-                body=permission
+                fileId=doc_id, body=permission
             ).execute()
 
         except HttpError as error:
@@ -271,12 +258,12 @@ class GoogleDocsUploader:
         text = markdown
 
         # Remove markdown bold/italic
-        text = text.replace('**', '').replace('__', '')
-        text = text.replace('*', '').replace('_', '')
+        text = text.replace("**", "").replace("__", "")
+        text = text.replace("*", "").replace("_", "")
 
         # Keep checkbox format
-        text = text.replace('- [ ]', '☐')
-        text = text.replace('- [x]', '☑')
+        text = text.replace("- [ ]", "☐")
+        text = text.replace("- [x]", "☑")
 
         return text
 
@@ -291,13 +278,17 @@ class GoogleDocsUploader:
             List of document metadata dictionaries
         """
         try:
-            results = self.drive_service.files().list(
-                q="mimeType='application/vnd.google-apps.document'",
-                pageSize=max_results,
-                fields="files(id, name, createdTime, modifiedTime, webViewLink)"
-            ).execute()
+            results = (
+                self.drive_service.files()
+                .list(
+                    q="mimeType='application/vnd.google-apps.document'",
+                    pageSize=max_results,
+                    fields="files(id, name, createdTime, modifiedTime, webViewLink)",
+                )
+                .execute()
+            )
 
-            return results.get('files', [])
+            return results.get("files", [])
 
         except HttpError as error:
             raise RuntimeError(f"Failed to list documents: {error}")

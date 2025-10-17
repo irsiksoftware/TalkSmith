@@ -42,44 +42,42 @@ def main():
         description="Example: Generate and publish plan to Google Docs"
     )
     parser.add_argument(
-        '--segments',
+        "--segments",
         type=Path,
-        default=Path('examples/sample_segments.json'),
-        help="Path to segments file (default: examples/sample_segments.json)"
+        default=Path("examples/sample_segments.json"),
+        help="Path to segments file (default: examples/sample_segments.json)",
     )
     parser.add_argument(
-        '--output',
+        "--output",
         type=Path,
-        default=Path('output/example_plan.md'),
-        help="Local output file (default: output/example_plan.md)"
+        default=Path("output/example_plan.md"),
+        help="Local output file (default: output/example_plan.md)",
     )
     parser.add_argument(
-        '--title',
-        default="TalkSmith Example Plan",
-        help="Document title"
+        "--title", default="TalkSmith Example Plan", help="Document title"
     )
     parser.add_argument(
-        '--publish',
-        action='store_true',
-        help="Publish to Google Docs (requires authentication)"
+        "--publish",
+        action="store_true",
+        help="Publish to Google Docs (requires authentication)",
     )
     parser.add_argument(
-        '--config',
+        "--config",
         type=Path,
-        default=Path('config/google_docs.ini'),
-        help="Google Docs config file"
+        default=Path("config/google_docs.ini"),
+        help="Google Docs config file",
     )
     parser.add_argument(
-        '--share',
-        metavar='EMAIL',
-        action='append',
-        help="Share with email address (can be used multiple times)"
+        "--share",
+        metavar="EMAIL",
+        action="append",
+        help="Share with email address (can be used multiple times)",
     )
     parser.add_argument(
-        '--role',
-        default='writer',
-        choices=['reader', 'writer', 'commenter'],
-        help="Sharing role (default: writer)"
+        "--role",
+        default="writer",
+        choices=["reader", "writer", "commenter"],
+        help="Sharing role (default: writer)",
     )
 
     args = parser.parse_args()
@@ -107,7 +105,9 @@ def main():
 
     # Count total items across sections
     total_items = sum(len(items) for items in plan_sections.values())
-    print(f"      > Found {total_items} items across {len([k for k, v in plan_sections.items() if v])} sections")
+    print(
+        f"      > Found {total_items} items across {len([k for k, v in plan_sections.items() if v])} sections"
+    )
 
     # Step 3: Format as markdown
     print(f"[3/4] Formatting markdown...")
@@ -141,7 +141,7 @@ def main():
             print(f"      > Published: {doc_url}")
 
             # Extract document ID from URL
-            doc_id = doc_url.split('/d/')[1].split('/')[0]
+            doc_id = doc_url.split("/d/")[1].split("/")[0]
 
             # Share if requested
             if args.share:
@@ -191,5 +191,5 @@ def main():
     print("-" * 60)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

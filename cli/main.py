@@ -516,15 +516,14 @@ def plan_command(args: argparse.Namespace) -> int:
         "plan_generation",
         input_file=str(input_path),
         model=args.model,
-        google_docs=args.google_docs
+        google_docs=args.google_docs,
     )
 
     try:
         # Check input file exists
         if not input_path.exists():
             exit_code = logger.log_error_exit(
-                f"Input file not found: {input_path}",
-                file=str(input_path)
+                f"Input file not found: {input_path}", file=str(input_path)
             )
             return exit_code
 
@@ -542,9 +541,7 @@ def plan_command(args: argparse.Namespace) -> int:
 
         generator = PlanGenerator(model_type=args.model)
         plan_md = generator.generate_plan(
-            segments_path=input_path,
-            output_path=output_path,
-            title=args.title
+            segments_path=input_path, output_path=output_path, title=args.title
         )
 
         logger.info("Plan generated successfully", output_file=str(output_path))
