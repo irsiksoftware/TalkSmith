@@ -50,8 +50,14 @@ def check_cuda_availability() -> Dict[str, any]:
             "torch_version": torch.__version__,
             "cuda_available": cuda_available,
             "cuda_version": cuda_version,
-            "cudnn_available": torch.backends.cudnn.is_available() if cuda_available else False,
-            "cudnn_version": torch.backends.cudnn.version() if cuda_available and torch.backends.cudnn.is_available() else None,
+            "cudnn_available": (
+                torch.backends.cudnn.is_available() if cuda_available else False
+            ),
+            "cudnn_version": (
+                torch.backends.cudnn.version()
+                if cuda_available and torch.backends.cudnn.is_available()
+                else None
+            ),
             "device_count": device_count,
             "devices": devices,
         }
@@ -161,7 +167,7 @@ def main():
         print_status(
             "CuDNN Available",
             cuda_info["cudnn_available"],
-            cuda_info["cudnn_available"]
+            cuda_info["cudnn_available"],
         )
         if cuda_info["cudnn_available"]:
             print_status("CuDNN Version", cuda_info["cudnn_version"])
