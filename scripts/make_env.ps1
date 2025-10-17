@@ -89,9 +89,54 @@ if ($EnvType -eq "conda") {
 
     Write-Host "`n[6/6] Installing TalkSmith dependencies..." -ForegroundColor Yellow
     & pip install -r requirements.txt
+}
 
-    Write-Host "`nVerifying CUDA availability..." -ForegroundColor Yellow
+Write-Host "`n========================================" -ForegroundColor Yellow
+Write-Host "  Verification Steps" -ForegroundColor Yellow
+Write-Host "========================================" -ForegroundColor Yellow
+
+Write-Host "`n[1/3] Verifying FFmpeg installation..." -ForegroundColor Yellow
+$ffmpegExists = Get-Command ffmpeg -ErrorAction SilentlyContinue
+if ($ffmpegExists) {
+    $ffmpegVersion = & ffmpeg -version 2>&1 | Select-Object -First 1
+    Write-Host "  Found: $ffmpegVersion" -ForegroundColor Green
+} else {
+    Write-Host "  Warning: FFmpeg not found in PATH" -ForegroundColor Red
+    Write-Host "  Please install FFmpeg:" -ForegroundColor Red
+    Write-Host "    Windows: choco install ffmpeg" -ForegroundColor Red
+    Write-Host "    Or download from: https://ffmpeg.org/download.html" -ForegroundColor Red
+}
+
+Write-Host "`n[2/3] Verifying CUDA availability..." -ForegroundColor Yellow
+if ($EnvType -eq "conda") {
+    & conda run -n talksmith python -c "import torch; print(f'CUDA Available: {torch.cuda.is_available()}')"
+} else {
     & python -c "import torch; print(f'CUDA Available: {torch.cuda.is_available()}')"
+}
+
+Write-Host "`n[3/3] Testing basic imports..." -ForegroundColor Yellow
+$testScript = @"
+try:
+    import numpy as np
+    print('  numpy: OK')
+    import torch
+    print('  torch: OK')
+    import librosa
+    print('  librosa: OK')
+    import resemblyzer
+    print('  resemblyzer: OK')
+    import sklearn
+    print('  sklearn: OK')
+    print('\nAll imports successful!')
+except ImportError as e:
+    print(f'  Import error: {e}')
+    exit(1)
+"@
+
+if ($EnvType -eq "conda") {
+    & conda run -n talksmith python -c $testScript
+} else {
+    & python -c $testScript
 }
 
 Write-Host "`n========================================" -ForegroundColor Green
