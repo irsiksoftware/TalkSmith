@@ -3,7 +3,7 @@ GPU utilities for device selection and memory monitoring.
 """
 
 import logging
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional
 
 
 def get_gpu_info() -> Dict:
