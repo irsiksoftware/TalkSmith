@@ -68,22 +68,13 @@ TalkSmith replaces expensive cloud transcription services with a one-time setup 
 - ✅ **Comprehensive testing** - Unit, integration, and CI/CD automation
 - ✅ **Speaker post-processing** - Normalize speaker labels and merge utterances
 - ✅ **Outline generation** - Timestamped outlines with auto topic detection
-<<<<<<< HEAD
+- ✅ **Plan/PRD generation** - LLM-powered structured plans from transcripts with Google Docs publishing
 - ✅ **WhisperX diarization** - GPU-accelerated diarization with pyannote.audio
 
 ### Advanced Features (Planned)
 - 💾 **Multi-GPU parallelism** (utilize multiple RTX 3060s concurrently)
 - ✅ **No-token diarization** alternative (no HuggingFace account required) - ✅ Implemented
 - ☁️ **Optional cloud sync** (rclone to Google Drive) - ✅ Implemented
-- 📄 **PRD/plan generation** from meeting transcripts
-=======
-- ✅ **Plan/PRD generation** - LLM-powered structured plans from transcripts with Google Docs publishing
-
-### Advanced Features (Planned)
-- 💾 **Multi-GPU parallelism** (utilize multiple RTX 3060s concurrently)
-- 🔄 **No-token diarization** alternative (no HuggingFace account required)
-- ☁️ **Optional cloud sync** (rclone to Google Drive)
->>>>>>> f2f109d (Add Google Docs plan generation from transcripts (#16))
 
 ### Privacy & Control
 - ✅ **100% local processing** - your audio never leaves your machine
@@ -376,13 +367,9 @@ TalkSmith/
 │   └── samples/        # ✅ Test samples
 ├── docs/               # ✅ Documentation
 │   ├── configuration.md       # Configuration guide
-<<<<<<< HEAD
 │   ├── diarization.md         # ✅ Diarization comparison guide
-│   └── consent_template.md    # Recording consent template
-=======
 │   ├── consent_template.md    # Recording consent template
 │   └── google_docs_setup.md   # ✅ Google Docs integration setup guide
->>>>>>> f2f109d (Add Google Docs plan generation from transcripts (#16))
 ├── benchmarks/         # Performance benchmarks (planned)
 └── tests/              # ✅ Comprehensive test suite
 ```
@@ -882,35 +869,10 @@ See our [GitHub Issues](https://github.com/DakotaIrsik/TalkSmith/issues) for det
 - [x] Model cache management and version pinning
 - [x] PII redaction with whitelist support
 - [x] Docker (CUDA) support
-<<<<<<< HEAD
 - [x] Google Drive sync (rclone)
 - [x] Alternative diarization (no HF token)
-- [ ] Benchmark suite
-- [ ] Plan/PRD generation
-=======
 - [x] Plan/PRD generation with LLM and Google Docs integration
-- [ ] Alternative diarization (no HF token)
 - [ ] Benchmark suite
-- [ ] Google Drive sync
->>>>>>> f2f109d (Add Google Docs plan generation from transcripts (#16))
-
-## 🧪 Testing
-
-**✅ IMPLEMENTED** - Comprehensive test suite with CI/CD automation
-
-```bash
-# Run all tests
-make test
-
-# Run with coverage report
-make coverage
-
-# Run specific test categories
-pytest -m unit          # Unit tests only
-pytest -m integration   # Integration tests only
-```
-
-See [TESTING.md](TESTING.md) for detailed testing documentation and [tests/README.md](tests/README.md) for quick reference.
 
 ## 🧪 Testing
 
