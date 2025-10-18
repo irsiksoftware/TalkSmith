@@ -16,7 +16,6 @@ Usage:
 import argparse
 import json
 import logging
-import sys
 from pathlib import Path
 from typing import Dict, List, Optional
 from datetime import datetime
@@ -67,16 +66,23 @@ PLAN_TEMPLATE = """# {title}
 """
 
 
-EXTRACTION_PROMPT = """You are analyzing a meeting or interview transcript to extract structured information for a Product Requirements Document (PRD) or project plan.
+EXTRACTION_PROMPT = (
+    """You are analyzing a meeting or interview transcript to extract """
+    """structured information for a Product Requirements Document (PRD) """
+    """or project plan.
 
 Review the following transcript and extract:
 
-1. **Problem Statement**: What problem is being solved? What pain points are mentioned?
+1. **Problem Statement**: What problem is being solved? What pain points """
+    """are mentioned?
 2. **Target Users**: Who will use this? What are their characteristics?
-3. **Goals & Objectives**: What are the desired outcomes? What success metrics are mentioned?
+3. **Goals & Objectives**: What are the desired outcomes? What success """
+    """metrics are mentioned?
 4. **Acceptance Criteria**: What conditions must be met? What defines "done"?
-5. **Risks & Assumptions**: What challenges, dependencies, or assumptions are mentioned?
-6. **Additional Notes**: Any other important context, decisions, or action items.
+5. **Risks & Assumptions**: What challenges, dependencies, or assumptions """
+    """are mentioned?
+6. **Additional Notes**: Any other important context, decisions, or action """
+    """items.
 
 Transcript:
 {transcript}
@@ -91,8 +97,11 @@ Respond in JSON format with these exact keys:
   "notes": "string"
 }}
 
-Be concise but comprehensive. Use bullet points where appropriate. If a section has no clear information, write "Not specified in transcript."
-"""
+Be concise but comprehensive. Use bullet points where appropriate. """
+    """If a section has no clear information, write """
+    '''"Not specified in transcript."
+'''
+)
 
 
 class PlanGenerator:
