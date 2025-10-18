@@ -49,6 +49,11 @@ class TestLoggerWorkflow:
             # Complete operation
             logger.log_complete("transcription", duration=36.5)
 
+            # Close all handlers to release file locks on Windows
+            for handler in logger.logger.handlers[:]:
+                handler.close()
+                logger.logger.removeHandler(handler)
+
             # Verify log file created
             log_file = temp_dir / "test-workflow" / "logs" / "test-workflow.log"
             assert log_file.exists()
