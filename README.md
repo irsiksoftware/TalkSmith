@@ -16,7 +16,7 @@ TalkSmith transforms your audio recordings into:
 - **Speaker diarization** (who said what and when)
 - **Multiple export formats** (TXT, SRT, VTT, JSON)
 - **Intelligent outlines** and summaries
-- **Optional PRD/plan generation** from meeting transcripts
+- **PRD/plan generation** from meeting transcripts with Google Docs integration
 
 All powered by your local GPU(s), with support for multi-GPU parallelism to maximize throughput.
 
@@ -68,13 +68,13 @@ TalkSmith replaces expensive cloud transcription services with a one-time setup 
 - ✅ **Comprehensive testing** - Unit, integration, and CI/CD automation
 - ✅ **Speaker post-processing** - Normalize speaker labels and merge utterances
 - ✅ **Outline generation** - Timestamped outlines with auto topic detection
+- ✅ **Plan/PRD generation** - LLM-powered structured plans from transcripts with Google Docs publishing
 - ✅ **WhisperX diarization** - GPU-accelerated diarization with pyannote.audio
 
 ### Advanced Features (Planned)
 - 💾 **Multi-GPU parallelism** (utilize multiple RTX 3060s concurrently)
 - ✅ **No-token diarization** alternative (no HuggingFace account required) - ✅ Implemented
 - ☁️ **Optional cloud sync** (rclone to Google Drive) - ✅ Implemented
-- 📄 **PRD/plan generation** from meeting transcripts
 
 ### Privacy & Control
 - ✅ **100% local processing** - your audio never leaves your machine
@@ -92,7 +92,22 @@ TalkSmith replaces expensive cloud transcription services with a one-time setup 
 - **Python:** 3.10 or 3.11
 - **FFmpeg:** Required for audio processing
 
-### Planned Installation
+## 🚀 Installation
+
+### Prerequisites
+
+Before installing TalkSmith, ensure you have:
+
+- **Python:** Version 3.10 or 3.11
+- **GPU (Recommended):** NVIDIA GPU with CUDA support (e.g., RTX 3060, 12GB+ VRAM)
+  - For CPU-only installation, use the `cpu` option in setup scripts
+- **FFmpeg:** Required for audio processing
+  - **Windows:** `choco install ffmpeg` or download from [ffmpeg.org](https://ffmpeg.org/download.html)
+  - **Linux:** `sudo apt install ffmpeg` (Ubuntu/Debian) or equivalent
+  - **macOS:** `brew install ffmpeg`
+- **Git:** For cloning the repository
+
+### Installation Methods
 
 **Option 1: Docker (Recommended for Linux/GPU)** - ✅ IMPLEMENTED
 
@@ -116,25 +131,154 @@ docker compose down
 
 See [Docker Setup](#-docker-setup-cuda) for detailed instructions.
 
-**Option 2: Native Installation**
+**Option 2: Native Installation** - ✅ IMPLEMENTED
+
+#### Windows (PowerShell)
+
+```powershell
+# 1. Clone the repository
+git clone https://github.com/DakotaIrsik/TalkSmith.git
+cd TalkSmith
+
+# 2. Run environment setup script
+.\scripts\make_env.ps1
+
+# For CPU-only installation:
+.\scripts\make_env.ps1 -CudaVersion cpu
+
+# For conda environment (requires Anaconda/Miniconda):
+.\scripts\make_env.ps1 -EnvType conda
+
+# 3. Activate the environment
+.\venv\Scripts\Activate.ps1
+# OR for conda: conda activate talksmith
+
+# 4. Verify installation
+python scripts\check_gpu.py
+python scripts\check_ffmpeg.py
+
+# 5. (Optional) Prefetch models for offline use
+.\scripts\prefetch_models.ps1 -Sizes "medium.en,large-v3"
+```
+
+#### Linux/macOS (Bash)
 
 ```bash
 # 1. Clone the repository
 git clone https://github.com/DakotaIrsik/TalkSmith.git
 cd TalkSmith
 
-# 2. Create environment (Windows PowerShell) - Coming soon
-.\scripts\make_env.ps1
+# 2. Make scripts executable and run setup
+chmod +x scripts/make_env.sh
+./scripts/make_env.sh
 
-# 2. Create environment (Linux/macOS) - Coming soon
-./scripts\make_env.sh
+# For CPU-only installation:
+./scripts/make_env.sh venv 3.11 cpu
 
-# 3. Verify GPU setup - Coming soon
+# For conda environment (requires Anaconda/Miniconda):
+./scripts/make_env.sh conda
+
+# 3. Activate the environment
+source venv/bin/activate
+# OR for conda: conda activate talksmith
+
+# 4. Verify installation
 python scripts/check_gpu.py
+python scripts/check_ffmpeg.py
 
-# 4. (Optional) Prefetch models - ✅ IMPLEMENTED
-.\scripts\prefetch_models.ps1 -Sizes "medium.en,large-v3"
+# 5. (Optional) Prefetch models for offline use
+./scripts/prefetch_models.sh --sizes "medium.en,large-v3"
 ```
+
+### What the Setup Script Does
+
+The `make_env.ps1` (Windows) and `make_env.sh` (Linux/macOS) scripts automate the following:
+
+1. **Environment Creation:** Creates a Python virtual environment or Conda environment
+2. **Dependency Installation:** Installs PyTorch with CUDA support and all TalkSmith dependencies
+3. **FFmpeg Verification:** Checks that FFmpeg is installed and accessible
+4. **CUDA Verification:** Tests GPU availability through PyTorch
+5. **Import Testing:** Validates that all required Python packages are importable
+
+### Troubleshooting Installation Issues
+
+#### FFmpeg Not Found
+
+If the setup script reports FFmpeg is not installed:
+
+- **Windows:** Install via Chocolatey (`choco install ffmpeg`) or download binaries from [ffmpeg.org](https://ffmpeg.org/download.html)
+- **Linux:** `sudo apt install ffmpeg` (Ubuntu/Debian), `sudo yum install ffmpeg` (RHEL/CentOS)
+- **macOS:** `brew install ffmpeg`
+
+After installation, restart your terminal and verify: `ffmpeg -version`
+
+#### CUDA Not Available
+
+If PyTorch reports CUDA is not available but you have an NVIDIA GPU:
+
+1. **Verify NVIDIA drivers:** Run `nvidia-smi` to check driver installation
+2. **Check CUDA version compatibility:** Ensure your driver supports the CUDA version in PyTorch
+3. **Reinstall PyTorch with correct CUDA version:**
+   ```powershell
+   # Example: Install PyTorch with CUDA 11.8
+   pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu118
+   ```
+
+#### Import Errors
+
+If the setup script reports import errors:
+
+1. **Activate the environment first:**
+   - Windows: `.\venv\Scripts\Activate.ps1`
+   - Linux/macOS: `source venv/bin/activate`
+2. **Reinstall dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. **Check Python version:** TalkSmith requires Python 3.10 or 3.11
+   ```bash
+   python --version
+   ```
+
+#### Virtual Environment Creation Failed
+
+If virtual environment creation fails:
+
+1. **Ensure Python is installed:** `python --version`
+2. **Install venv module (Linux):** `sudo apt install python3-venv`
+3. **Try alternative Python command:**
+   - Use `python3` instead of `python`
+   - Use specific version: `python3.11 -m venv venv`
+
+### Next Steps After Installation
+
+Once installation is complete:
+
+1. **Verify setup:**
+   ```bash
+   python scripts/check_gpu.py
+   python scripts/check_ffmpeg.py
+   ```
+
+2. **Prefetch models (optional but recommended):**
+   ```bash
+   # Windows
+   .\scripts\prefetch_models.ps1 -Sizes "medium.en,large-v3"
+
+   # Linux/macOS
+   ./scripts/prefetch_models.sh --sizes "medium.en,large-v3"
+   ```
+
+3. **Try the CLI:**
+   ```bash
+   python cli/main.py demo
+   python cli/main.py export --help
+   ```
+
+4. **Read the documentation:**
+   - [Configuration Guide](docs/configuration.md)
+   - [Diarization Guide](docs/diarization.md)
+   - [Testing Guide](TESTING.md)
 
 ### Planned Basic Usage
 
@@ -156,6 +300,12 @@ python pipeline/postprocess_speakers.py segments.json --min-utterance-ms 1000
 
 # Generate outline from transcript - ✅ IMPLEMENTED
 python pipeline/outline_from_segments.py segments.json --interval 60
+
+# Generate PRD/plan from transcript - ✅ IMPLEMENTED
+python pipeline/plan_from_transcript.py --input segments.json --output plan.md
+
+# Generate and publish to Google Docs - ✅ IMPLEMENTED
+python pipeline/plan_from_transcript.py --input segments.json --google-docs --google-docs-title "Project Plan"
 ```
 
 ### CLI Interface
@@ -193,6 +343,8 @@ TalkSmith/
 │   ├── preprocess.py          # Audio preprocessing (planned)
 │   ├── postprocess_speakers.py # ✅ Speaker normalization and utterance merging
 │   ├── outline_from_segments.py # ✅ Outline generation with topic detection
+│   ├── plan_from_transcript.py # ✅ LLM-powered PRD/plan generation
+│   ├── google_docs_integration.py # ✅ Google Docs API integration
 │   ├── exporters.py           # ✅ Export formats (TXT, SRT, VTT, JSON)
 │   ├── redact_pii.py          # ✅ PII redaction
 │   └── logger.py              # ✅ Structured JSON logging
@@ -216,7 +368,8 @@ TalkSmith/
 ├── docs/               # ✅ Documentation
 │   ├── configuration.md       # Configuration guide
 │   ├── diarization.md         # ✅ Diarization comparison guide
-│   └── consent_template.md    # Recording consent template
+│   ├── consent_template.md    # Recording consent template
+│   └── google_docs_setup.md   # ✅ Google Docs integration setup guide
 ├── benchmarks/         # Performance benchmarks (planned)
 └── tests/              # ✅ Comprehensive test suite
 ```
@@ -366,6 +519,116 @@ Updates on the project timeline. We've made significant progress on...
 
 ## [00:03:45] Speaker 1
 Questions about the budget. How are we tracking against our...
+```
+
+## 📝 Plan/PRD Generation
+
+**✅ IMPLEMENTED** - LLM-powered structured plan generation with Google Docs integration
+
+The `plan_from_transcript.py` module extracts structured information from meeting transcripts and generates professional PRD/plan documents using AI.
+
+### Features
+
+- **LLM-powered extraction** - Uses Claude or GPT to intelligently extract plan sections
+- **Structured sections** - Problem Statement, Target Users, Goals, Acceptance Criteria, Risks
+- **Google Docs publishing** - Optionally upload plans directly to Google Docs
+- **Markdown output** - Clean, shareable format
+- **Flexible configuration** - Support for multiple LLM providers
+
+### Usage
+
+```python
+from pipeline.plan_from_transcript import PlanGenerator
+
+# Initialize with preferred LLM (Claude or GPT)
+generator = PlanGenerator(model_type='claude')
+
+# Generate plan from transcript segments
+plan_md = generator.generate_plan(
+    segments_path='segments.json',
+    output_path='plan.md',
+    title='Project Plan'
+)
+```
+
+### CLI Usage
+
+```bash
+# Generate local markdown plan (using Claude by default)
+python pipeline/plan_from_transcript.py --input segments.json --output plan.md
+
+# Use GPT instead of Claude
+python pipeline/plan_from_transcript.py --input segments.json --model gpt
+
+# Generate and upload to Google Docs
+python pipeline/plan_from_transcript.py \
+    --input segments.json \
+    --google-docs \
+    --google-docs-title "Q4 Product Roadmap"
+
+# Custom title and both local + Google Docs
+python pipeline/plan_from_transcript.py \
+    --input segments.json \
+    --output plan.md \
+    --title "Sprint Planning" \
+    --google-docs \
+    --google-docs-title "Sprint 23 Plan"
+```
+
+### Environment Setup
+
+Set your LLM API key:
+
+```bash
+# For Claude (recommended)
+export ANTHROPIC_API_KEY="sk-ant-..."
+
+# For GPT
+export OPENAI_API_KEY="sk-..."
+```
+
+### Google Docs Integration
+
+For Google Docs publishing, complete the setup steps in [docs/google_docs_setup.md](docs/google_docs_setup.md):
+
+1. Create Google Cloud project
+2. Enable Google Docs and Drive APIs
+3. Download OAuth credentials
+4. Configure `config/google_docs.ini`
+5. Authenticate on first run
+
+See [README_GOOGLE_DOCS.md](README_GOOGLE_DOCS.md) for detailed documentation.
+
+### Example Output
+
+The generated plan includes:
+
+```markdown
+# Project Plan
+
+**Date:** 2025-10-17
+**Source:** segments.json
+
+## Problem Statement
+[LLM-extracted problem description from transcript]
+
+## Target Users
+[Identified user personas and stakeholders]
+
+## Goals & Objectives
+[Project goals and success metrics]
+
+## Acceptance Criteria
+[Requirements and must-haves]
+
+## Risks & Assumptions
+[Potential challenges and assumptions]
+
+## Additional Notes
+[Action items and next steps]
+```
+
+See [examples/sample_plan.md](examples/sample_plan.md) for a complete example.
 ```
 
 ## 📝 Logging
@@ -590,8 +853,8 @@ See our [GitHub Issues](https://github.com/DakotaIrsik/TalkSmith/issues) for det
 - [x] Export formats (TXT, SRT, VTT, JSON)
 - [x] CLI wrapper (export, batch commands)
 - [x] Diarization (WhisperX + pyannote)
-- [ ] GPU and CUDA verification
-- [ ] Python environment setup
+- [x] GPU and CUDA verification
+- [x] Python environment setup (make_env.ps1/sh with verification)
 - [ ] Core transcription pipeline (faster-whisper)
 - [ ] Batch processing with resume
 
@@ -608,26 +871,8 @@ See our [GitHub Issues](https://github.com/DakotaIrsik/TalkSmith/issues) for det
 - [x] Docker (CUDA) support
 - [x] Google Drive sync (rclone)
 - [x] Alternative diarization (no HF token)
+- [x] Plan/PRD generation with LLM and Google Docs integration
 - [ ] Benchmark suite
-- [ ] Plan/PRD generation
-
-## 🧪 Testing
-
-**✅ IMPLEMENTED** - Comprehensive test suite with CI/CD automation
-
-```bash
-# Run all tests
-make test
-
-# Run with coverage report
-make coverage
-
-# Run specific test categories
-pytest -m unit          # Unit tests only
-pytest -m integration   # Integration tests only
-```
-
-See [TESTING.md](TESTING.md) for detailed testing documentation and [tests/README.md](tests/README.md) for quick reference.
 
 ## 🧪 Testing
 
