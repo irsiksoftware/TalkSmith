@@ -1,317 +1,245 @@
 """
-Tests for plan_from_transcript.py module.
+Unit tests for plan_from_transcript.py
+
+Tests the PlanGenerator class and LLM-based plan extraction.
 """
 
 import json
 import pytest
 from pathlib import Path
-from pipeline.plan_from_transcript import (
-    PlanExtractor,
-    Plan,
-    PlanSection
-)
+import sys
+from unittest.mock import Mock, patch, MagicMock
+
+# Add pipeline directory to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from pipeline.plan_from_transcript import PlanGenerator, PLAN_TEMPLATE
 
 
-@pytest.fixture
-def sample_segments_file(tmp_path):
-    """Create sample segments JSON file for testing."""
-    segments = [
-        {
-            "start": 0.0,
-            "end": 5.0,
-            "text": "We have a problem with users not understanding the onboarding flow."
-        },
-        {
-            "start": 5.5,
-            "end": 12.0,
-            "text": "Our target users are small business owners who need simple invoicing."
-        },
-        {
-            "start": 12.5,
-            "end": 20.0,
-            "text": "The goal is to achieve 80% completion rate for new user onboarding."
-        },
-        {
-            "start": 20.5,
-            "end": 28.0,
-            "text": "Acceptance criteria: Users must complete profile setup within 5 minutes."
-        },
-        {
-            "start": 28.5,
-            "end": 35.0,
-            "text": "Main risk is that users might abandon if we ask for too much information."
-        }
-    ]
+class TestPlanGenerator:
+    """Test PlanGenerator class."""
 
-    segments_file = tmp_path / "test_segments.json"
-    with open(segments_file, 'w') as f:
-        json.dump(segments, f)
-
-    return segments_file
-
-
-@pytest.fixture
-def sample_segments_with_dict_format(tmp_path):
-    """Create segments file with dictionary wrapper format."""
-    data = {
-        "segments": [
+    @pytest.fixture
+    def sample_segments(self):
+        """Sample transcript segments for testing."""
+        return [
             {
-                "start": 0.0,
-                "end": 5.0,
-                "text": "The main issue is slow page load times affecting user experience."
-            }
+                "text": "We have a problem with user authentication",
+                "start": 15,
+                "speaker": "Alice",
+            },
+            {
+                "text": "Our main users are developers and product managers",
+                "start": 90,
+                "speaker": "Bob",
+            },
+            {
+                "text": "The goal is to reduce login time by 50%",
+                "start": 165,
+                "speaker": "Alice",
+            },
         ]
-    }
 
-    segments_file = tmp_path / "test_segments_dict.json"
-    with open(segments_file, 'w') as f:
-        json.dump(data, f)
+    @pytest.fixture
+    def sample_segments_file(self, tmp_path, sample_segments):
+        """Create a temporary segments JSON file."""
+        file_path = tmp_path / "segments.json"
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(sample_segments, f)
+        return file_path
 
-    return segments_file
-
-
-class TestPlanExtractor:
-    """Test PlanExtractor class."""
-
-    def test_load_segments_list_format(self, sample_segments_file):
-        """Test loading segments from list format."""
-        extractor = PlanExtractor(sample_segments_file)
-        assert len(extractor.segments) == 5
-        assert extractor.segments[0]['text'].startswith("We have a problem")
-
-    def test_load_segments_dict_format(self, sample_segments_with_dict_format):
-        """Test loading segments from dictionary format."""
-        extractor = PlanExtractor(sample_segments_with_dict_format)
-        assert len(extractor.segments) == 1
-        assert "issue" in extractor.segments[0]['text']
-
-    def test_extract_timestamp(self, sample_segments_file):
-        """Test timestamp extraction from segments."""
-        extractor = PlanExtractor(sample_segments_file)
-        timestamp = extractor._extract_timestamp({"start": 125.5})
-        assert timestamp == "02:05"
-
-        timestamp = extractor._extract_timestamp({"start": 45.0})
-        assert timestamp == "00:45"
-
-    def test_get_segment_text(self, sample_segments_file):
-        """Test text extraction from segments."""
-        extractor = PlanExtractor(sample_segments_file)
-
-        # Test 'text' field
-        text = extractor._get_segment_text({"text": "  Some text  "})
-        assert text == "Some text"
-
-        # Test 'content' field
-        text = extractor._get_segment_text({"content": "  Other text  "})
-        assert text == "Other text"
-
-        # Test empty segment
-        text = extractor._get_segment_text({})
-        assert text == ""
-
-    def test_classify_segment(self, sample_segments_file):
-        """Test segment classification based on keywords."""
-        extractor = PlanExtractor(sample_segments_file)
-
-        # Test problem classification
-        sections = extractor._classify_segment("We have a problem with the UI")
-        assert "problem_statement" in sections
-
-        # Test user classification
-        sections = extractor._classify_segment("Our users need better tools")
-        assert "target_users" in sections
-
-        # Test goal classification
-        sections = extractor._classify_segment("The objective is to improve performance")
-        assert "goals_objectives" in sections
-
-        # Test acceptance criteria
-        sections = extractor._classify_segment("Requirements include login functionality")
-        assert "acceptance_criteria" in sections
-
-        # Test risk classification
-        sections = extractor._classify_segment("There is a risk of data loss")
-        assert "risks_considerations" in sections
-
-        # Test multiple classifications
-        sections = extractor._classify_segment("The goal is to solve the user problem")
-        assert "goals_objectives" in sections
-        assert "problem_statement" in sections
-        assert "target_users" in sections
-
-    def test_extract_plan(self, sample_segments_file):
-        """Test full plan extraction."""
-        extractor = PlanExtractor(sample_segments_file)
-        plan = extractor.extract_plan(title="Test Plan")
-
-        assert plan.title == "Test Plan"
-        assert plan.source_file == str(sample_segments_file)
-        assert len(plan.sections) > 0
-
-        # Check specific sections were created
-        assert "problem_statement" in plan.sections
-        assert "target_users" in plan.sections
-        assert "goals_objectives" in plan.sections
-        assert "acceptance_criteria" in plan.sections
-        assert "risks_considerations" in plan.sections
-
-        # Verify section content
-        assert len(plan.sections["problem_statement"].content) > 0
-        assert len(plan.sections["problem_statement"].timestamps) > 0
-
-    def test_extract_plan_default_title(self, sample_segments_file):
-        """Test plan extraction with default title."""
-        extractor = PlanExtractor(sample_segments_file)
-        plan = extractor.extract_plan()
-
-        assert "test_segments" in plan.title
-
-    def test_save_plan_markdown(self, sample_segments_file, tmp_path):
-        """Test saving plan as markdown."""
-        extractor = PlanExtractor(sample_segments_file)
-        plan = extractor.extract_plan(title="Markdown Test Plan")
-
-        output_file = tmp_path / "test_plan.md"
-        extractor.save_plan(plan, output_file, format="markdown")
-
-        assert output_file.exists()
-        content = output_file.read_text()
-
-        # Verify markdown structure
-        assert "# Markdown Test Plan" in content
-        assert "## Problem Statement" in content
-        assert "## Target Users" in content
-        assert "Generated:" in content
-        assert "Source:" in content
-
-    def test_save_plan_json(self, sample_segments_file, tmp_path):
-        """Test saving plan as JSON."""
-        extractor = PlanExtractor(sample_segments_file)
-        plan = extractor.extract_plan(title="JSON Test Plan")
-
-        output_file = tmp_path / "test_plan.json"
-        extractor.save_plan(plan, output_file, format="json")
-
-        assert output_file.exists()
-
-        # Verify JSON structure
-        with open(output_file, 'r') as f:
-            data = json.load(f)
-
-        assert data['title'] == "JSON Test Plan"
-        assert 'sections' in data
-        assert 'generated_date' in data
-
-
-class TestPlan:
-    """Test Plan dataclass."""
-
-    def test_plan_to_markdown(self):
-        """Test Plan markdown conversion."""
-        sections = {
-            "problem_statement": PlanSection(
-                title="Problem Statement",
-                content=["Issue 1", "Issue 2"],
-                timestamps=["00:00", "00:10"]
-            ),
-            "target_users": PlanSection(
-                title="Target Users",
-                content=["User type 1"],
-                timestamps=["00:20"]
-            )
+    @pytest.fixture
+    def mock_llm_response(self):
+        """Mock LLM response with structured plan data."""
+        return {
+            "problem": "User authentication is slow and causes friction in the login process.",
+            "users": "Developers and product managers who need quick access to the system.",
+            "goals": "- Reduce login time by 50%\n- Improve user satisfaction",
+            "acceptance_criteria": "- Login completes in under 2 seconds\n- No breaking changes to existing integrations",
+            "risks": "- Risk of breaking existing integrations\n- Performance issues under load",
+            "notes": "Implementation requires careful testing of authentication flow.",
         }
 
-        plan = Plan(
+    @patch("pipeline.plan_from_transcript.anthropic")
+    def test_init_claude(self, mock_anthropic):
+        """Test PlanGenerator initialization with Claude."""
+        mock_client = Mock()
+        mock_anthropic.Anthropic.return_value = mock_client
+
+        generator = PlanGenerator(model_type="claude")
+
+        assert generator.model_type == "claude"
+        assert generator.client == mock_client
+        assert generator.model == "claude-3-5-sonnet-20241022"
+        mock_anthropic.Anthropic.assert_called_once()
+
+    @patch("pipeline.plan_from_transcript.openai")
+    def test_init_gpt(self, mock_openai):
+        """Test PlanGenerator initialization with GPT."""
+        mock_client = Mock()
+        mock_openai.OpenAI.return_value = mock_client
+
+        generator = PlanGenerator(model_type="gpt")
+
+        assert generator.model_type == "gpt"
+        assert generator.client == mock_client
+        assert generator.model == "gpt-4o"
+        mock_openai.OpenAI.assert_called_once()
+
+    def test_init_invalid_model(self):
+        """Test PlanGenerator initialization with invalid model type."""
+        with pytest.raises(ValueError, match="Unsupported model_type"):
+            PlanGenerator(model_type="invalid")
+
+    @patch("pipeline.plan_from_transcript.ANTHROPIC_AVAILABLE", False)
+    def test_init_claude_not_available(self):
+        """Test error when Claude package not installed."""
+        with pytest.raises(ImportError, match="anthropic package not installed"):
+            PlanGenerator(model_type="claude")
+
+    def test_load_segments_list(self, sample_segments_file, sample_segments):
+        """Test loading segments from JSON array."""
+        with patch("pipeline.plan_from_transcript.anthropic"):
+            generator = PlanGenerator(model_type="claude")
+            loaded = generator.load_segments(sample_segments_file)
+            assert loaded == sample_segments
+
+    def test_load_segments_object(self, tmp_path, sample_segments):
+        """Test loading segments from JSON object with 'segments' key."""
+        data = {"segments": sample_segments, "metadata": {"duration": 120}}
+        file_path = tmp_path / "segments.json"
+        with open(file_path, "w") as f:
+            json.dump(data, f)
+
+        with patch("pipeline.plan_from_transcript.anthropic"):
+            generator = PlanGenerator(model_type="claude")
+            loaded = generator.load_segments(file_path)
+            assert loaded == sample_segments
+
+    def test_load_segments_invalid_format(self, tmp_path):
+        """Test error handling for invalid segment format."""
+        file_path = tmp_path / "invalid.json"
+        with open(file_path, "w") as f:
+            json.dump({"data": "wrong format"}, f)
+
+        with patch("pipeline.plan_from_transcript.anthropic"):
+            generator = PlanGenerator(model_type="claude")
+            with pytest.raises(ValueError, match="Invalid segments format"):
+                generator.load_segments(file_path)
+
+    def test_segments_to_text(self, sample_segments):
+        """Test converting segments to plain text transcript."""
+        with patch("pipeline.plan_from_transcript.anthropic"):
+            generator = PlanGenerator(model_type="claude")
+            text = generator.segments_to_text(sample_segments)
+
+            assert "[00:15] Alice: We have a problem with user authentication" in text
+            assert (
+                "[01:30] Bob: Our main users are developers and product managers"
+                in text
+            )
+            assert "[02:45] Alice: The goal is to reduce login time by 50%" in text
+
+    @patch("pipeline.plan_from_transcript.anthropic")
+    def test_extract_plan_data_claude(self, mock_anthropic, mock_llm_response):
+        """Test extracting plan data using Claude."""
+        # Mock Claude API response
+        mock_client = Mock()
+        mock_response = Mock()
+        mock_response.content = [Mock(text=json.dumps(mock_llm_response))]
+        mock_client.messages.create.return_value = mock_response
+        mock_anthropic.Anthropic.return_value = mock_client
+
+        generator = PlanGenerator(model_type="claude")
+        result = generator.extract_plan_data("Sample transcript")
+
+        assert result["problem"] == mock_llm_response["problem"]
+        assert result["users"] == mock_llm_response["users"]
+        assert result["goals"] == mock_llm_response["goals"]
+        mock_client.messages.create.assert_called_once()
+
+    @patch("pipeline.plan_from_transcript.openai")
+    def test_extract_plan_data_gpt(self, mock_openai, mock_llm_response):
+        """Test extracting plan data using GPT."""
+        # Mock OpenAI API response
+        mock_client = Mock()
+        mock_response = Mock()
+        mock_response.choices = [
+            Mock(message=Mock(content=json.dumps(mock_llm_response)))
+        ]
+        mock_client.chat.completions.create.return_value = mock_response
+        mock_openai.OpenAI.return_value = mock_client
+
+        generator = PlanGenerator(model_type="gpt")
+        result = generator.extract_plan_data("Sample transcript")
+
+        assert result["problem"] == mock_llm_response["problem"]
+        assert result["users"] == mock_llm_response["users"]
+        mock_client.chat.completions.create.assert_called_once()
+
+    @patch("pipeline.plan_from_transcript.anthropic")
+    def test_generate_plan(
+        self, mock_anthropic, sample_segments_file, mock_llm_response, tmp_path
+    ):
+        """Test complete plan generation workflow."""
+        # Mock Claude API
+        mock_client = Mock()
+        mock_response = Mock()
+        mock_response.content = [Mock(text=json.dumps(mock_llm_response))]
+        mock_client.messages.create.return_value = mock_response
+        mock_anthropic.Anthropic.return_value = mock_client
+
+        output_path = tmp_path / "plan.md"
+        generator = PlanGenerator(model_type="claude")
+        plan_md = generator.generate_plan(
+            segments_path=sample_segments_file,
+            output_path=output_path,
+            title="Test Project Plan",
+        )
+
+        # Check plan structure
+        assert "# Test Project Plan" in plan_md
+        assert "## Problem Statement" in plan_md
+        assert "## Target Users" in plan_md
+        assert mock_llm_response["problem"] in plan_md
+        assert mock_llm_response["users"] in plan_md
+
+        # Check file was saved
+        assert output_path.exists()
+        assert output_path.read_text() == plan_md
+
+
+class TestPlanTemplate:
+    """Test plan template and formatting."""
+
+    def test_plan_template_has_required_sections(self):
+        """Test that PLAN_TEMPLATE includes all required sections."""
+        assert "# {title}" in PLAN_TEMPLATE
+        assert "## Problem Statement" in PLAN_TEMPLATE
+        assert "## Target Users" in PLAN_TEMPLATE
+        assert "## Goals & Objectives" in PLAN_TEMPLATE
+        assert "## Acceptance Criteria" in PLAN_TEMPLATE
+        assert "## Risks & Assumptions" in PLAN_TEMPLATE
+        assert "## Additional Notes" in PLAN_TEMPLATE
+
+    def test_plan_template_formatting(self):
+        """Test that plan template can be formatted correctly."""
+        formatted = PLAN_TEMPLATE.format(
             title="Test Plan",
-            generated_date="2025-01-01 12:00:00",
-            source_file="test.json",
-            sections=sections
+            date="2025-10-17",
+            source="segments.json",
+            problem="Test problem",
+            users="Test users",
+            goals="Test goals",
+            acceptance_criteria="Test criteria",
+            risks="Test risks",
+            notes="Test notes",
         )
 
-        markdown = plan.to_markdown()
-
-        # Verify structure
-        assert "# Test Plan" in markdown
-        assert "## Problem Statement" in markdown
-        assert "- Issue 1" in markdown
-        assert "- Issue 2" in markdown
-        assert "00:00, 00:10" in markdown
-        assert "## Target Users" in markdown
-        assert "- User type 1" in markdown
-
-    def test_plan_empty_sections(self):
-        """Test Plan with no sections."""
-        plan = Plan(
-            title="Empty Plan",
-            generated_date="2025-01-01",
-            source_file="empty.json",
-            sections={}
-        )
-
-        markdown = plan.to_markdown()
-        assert "# Empty Plan" in markdown
-        assert "Generated:" in markdown
+        assert "# Test Plan" in formatted
+        assert "Test problem" in formatted
+        assert "Test users" in formatted
 
 
-class TestPlanSection:
-    """Test PlanSection dataclass."""
-
-    def test_plan_section_creation(self):
-        """Test creating PlanSection."""
-        section = PlanSection(
-            title="Test Section",
-            content=["Item 1", "Item 2"],
-            timestamps=["00:00", "01:00"]
-        )
-
-        assert section.title == "Test Section"
-        assert len(section.content) == 2
-        assert len(section.timestamps) == 2
-
-
-def test_integration_full_pipeline(tmp_path):
-    """Integration test for complete pipeline."""
-    # Create comprehensive test segments
-    segments = [
-        {"start": 0, "text": "The problem is users cannot find the settings page easily"},
-        {"start": 10, "text": "Our target audience includes enterprise customers and SMBs"},
-        {"start": 20, "text": "The main goal is to improve navigation clarity by 50%"},
-        {"start": 30, "text": "Acceptance criteria: Settings must be accessible within 2 clicks"},
-        {"start": 40, "text": "Risk: Changes might confuse existing power users"},
-        {"start": 50, "text": "Another issue is the search functionality being slow"},
-        {"start": 60, "text": "We aim to achieve sub-second search results"},
-    ]
-
-    segments_file = tmp_path / "integration_test.json"
-    with open(segments_file, 'w') as f:
-        json.dump(segments, f)
-
-    # Extract plan
-    extractor = PlanExtractor(segments_file)
-    plan = extractor.extract_plan(title="Integration Test Plan")
-
-    # Verify extraction
-    assert plan.title == "Integration Test Plan"
-    assert len(plan.sections) >= 3
-
-    # Save both formats
-    md_file = tmp_path / "plan.md"
-    json_file = tmp_path / "plan.json"
-
-    extractor.save_plan(plan, md_file, format="markdown")
-    extractor.save_plan(plan, json_file, format="json")
-
-    assert md_file.exists()
-    assert json_file.exists()
-
-    # Verify markdown output
-    md_content = md_file.read_text()
-    assert "Integration Test Plan" in md_content
-    assert "Problem Statement" in md_content
-    assert "Goals & Objectives" in md_content
-
-    # Verify JSON output
-    with open(json_file, 'r') as f:
-        json_data = json.load(f)
-    assert json_data['title'] == "Integration Test Plan"
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

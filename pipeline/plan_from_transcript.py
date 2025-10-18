@@ -1,282 +1,354 @@
-#!/usr/bin/env python3
 """
-Extract structured PRD/plan from transcription segments.
+Generate structured PRD/plan documents from transcript segments using LLM.
 
-Transforms conversation segments into actionable documents with sections:
+This module extracts key sections from meeting transcripts:
 - Problem Statement
 - Target Users
 - Goals & Objectives
 - Acceptance Criteria
-- Risks & Considerations
+- Risks & Assumptions
+
+Usage:
+    python -m pipeline.plan_from_transcript --input segments.json --output plan.md
+    python -m pipeline.plan_from_transcript --input segments.json --google-docs
 """
 
-import json
 import argparse
+import json
 import logging
+import sys
 from pathlib import Path
 from typing import Dict, List, Optional
-from dataclasses import dataclass, asdict
 from datetime import datetime
 
+try:
+    import anthropic
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    ANTHROPIC_AVAILABLE = True
+except ImportError:
+    ANTHROPIC_AVAILABLE = False
+
+try:
+    import openai
+
+    OPENAI_AVAILABLE = True
+except ImportError:
+    OPENAI_AVAILABLE = False
+
+
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class PlanSection:
-    """Represents a section in the plan document."""
-    title: str
-    content: List[str]
-    timestamps: List[str]
+PLAN_TEMPLATE = """# {title}
+
+**Date:** {date}
+**Source:** {source}
+
+## Problem Statement
+{problem}
+
+## Target Users
+{users}
+
+## Goals & Objectives
+{goals}
+
+## Acceptance Criteria
+{acceptance_criteria}
+
+## Risks & Assumptions
+{risks}
+
+## Additional Notes
+{notes}
+"""
 
 
-@dataclass
-class Plan:
-    """Structured plan document."""
-    title: str
-    generated_date: str
-    source_file: str
-    sections: Dict[str, PlanSection]
+EXTRACTION_PROMPT = """You are analyzing a meeting or interview transcript to extract structured information for a Product Requirements Document (PRD) or project plan.
 
-    def to_markdown(self) -> str:
-        """Convert plan to markdown format."""
-        lines = [
-            f"# {self.title}",
-            "",
-            f"**Generated:** {self.generated_date}  ",
-            f"**Source:** {self.source_file}",
-            "",
-            "---",
-            ""
-        ]
+Review the following transcript and extract:
 
-        section_order = [
-            "problem_statement",
-            "target_users",
-            "goals_objectives",
-            "acceptance_criteria",
-            "risks_considerations"
-        ]
+1. **Problem Statement**: What problem is being solved? What pain points are mentioned?
+2. **Target Users**: Who will use this? What are their characteristics?
+3. **Goals & Objectives**: What are the desired outcomes? What success metrics are mentioned?
+4. **Acceptance Criteria**: What conditions must be met? What defines "done"?
+5. **Risks & Assumptions**: What challenges, dependencies, or assumptions are mentioned?
+6. **Additional Notes**: Any other important context, decisions, or action items.
 
-        for section_key in section_order:
-            if section_key in self.sections:
-                section = self.sections[section_key]
-                lines.append(f"## {section.title}")
-                lines.append("")
+Transcript:
+{transcript}
 
-                for item in section.content:
-                    lines.append(f"- {item}")
+Respond in JSON format with these exact keys:
+{{
+  "problem": "string",
+  "users": "string",
+  "goals": "string",
+  "acceptance_criteria": "string",
+  "risks": "string",
+  "notes": "string"
+}}
 
-                if section.timestamps:
-                    lines.append("")
-                    lines.append(f"*Referenced timestamps: {', '.join(section.timestamps)}*")
+Be concise but comprehensive. Use bullet points where appropriate. If a section has no clear information, write "Not specified in transcript."
+"""
 
-                lines.append("")
+
+class PlanGenerator:
+    """Generate structured plans from transcripts using LLM."""
+
+    def __init__(self, model_type: str = "claude", api_key: Optional[str] = None):
+        """
+        Initialize the plan generator.
+
+        Args:
+            model_type: Either "claude" or "gpt" (default: "claude")
+            api_key: API key for the chosen model. If None, reads from environment.
+        """
+        self.model_type = model_type.lower()
+
+        if self.model_type == "claude":
+            if not ANTHROPIC_AVAILABLE:
+                raise ImportError(
+                    "anthropic package not installed. Run: pip install anthropic"
+                )
+            self.client = anthropic.Anthropic(api_key=api_key)
+            self.model = "claude-3-5-sonnet-20241022"
+        elif self.model_type == "gpt":
+            if not OPENAI_AVAILABLE:
+                raise ImportError(
+                    "openai package not installed. Run: pip install openai"
+                )
+            self.client = openai.OpenAI(api_key=api_key)
+            self.model = "gpt-4o"
+        else:
+            raise ValueError(
+                f"Unsupported model_type: {model_type}. Use 'claude' or 'gpt'."
+            )
+
+    def load_segments(self, segments_path: Path) -> List[Dict]:
+        """Load transcript segments from JSON file."""
+        logger.info(f"Loading segments from {segments_path}")
+        with open(segments_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        # Handle different segment formats
+        if isinstance(data, list):
+            segments = data
+        elif isinstance(data, dict) and "segments" in data:
+            segments = data["segments"]
+        else:
+            raise ValueError(
+                "Invalid segments format. Expected list or dict with 'segments' key."
+            )
+
+        logger.info(f"Loaded {len(segments)} segments")
+        return segments
+
+    def segments_to_text(self, segments: List[Dict]) -> str:
+        """Convert segments to plain text transcript."""
+        lines = []
+        for seg in segments:
+            timestamp = seg.get("start", 0)
+            text = seg.get("text", "").strip()
+            speaker = seg.get("speaker", "Unknown")
+
+            # Format: [00:00] Speaker: Text
+            minutes = int(timestamp // 60)
+            seconds = int(timestamp % 60)
+            lines.append(f"[{minutes:02d}:{seconds:02d}] {speaker}: {text}")
 
         return "\n".join(lines)
 
+    def extract_plan_data(self, transcript: str) -> Dict[str, str]:
+        """
+        Extract structured plan data from transcript using LLM.
 
-class PlanExtractor:
-    """Extract structured plan from transcript segments."""
+        Args:
+            transcript: Plain text transcript
 
-    SECTION_KEYWORDS = {
-        "problem_statement": ["problem", "issue", "challenge", "pain point", "difficulty"],
-        "target_users": ["user", "customer", "client", "audience", "stakeholder"],
-        "goals_objectives": ["goal", "objective", "aim", "target", "outcome", "achieve"],
-        "acceptance_criteria": ["criteria", "requirement", "must have", "should", "acceptance"],
-        "risks_considerations": ["risk", "concern", "challenge", "limitation", "consideration"]
-    }
+        Returns:
+            Dict with keys: problem, users, goals, acceptance_criteria, risks, notes
+        """
+        logger.info(f"Extracting plan data using {self.model_type}")
 
-    SECTION_TITLES = {
-        "problem_statement": "Problem Statement",
-        "target_users": "Target Users",
-        "goals_objectives": "Goals & Objectives",
-        "acceptance_criteria": "Acceptance Criteria",
-        "risks_considerations": "Risks & Considerations"
-    }
+        prompt = EXTRACTION_PROMPT.format(transcript=transcript)
 
-    def __init__(self, segments_file: Path):
-        """Initialize extractor with segments file."""
-        self.segments_file = segments_file
-        self.segments = self._load_segments()
-
-    def _load_segments(self) -> List[Dict]:
-        """Load transcript segments from JSON file."""
-        try:
-            with open(self.segments_file, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-
-            # Handle different segment formats
-            if isinstance(data, list):
-                return data
-            elif isinstance(data, dict) and 'segments' in data:
-                return data['segments']
-            else:
-                logger.warning(f"Unexpected segment format in {self.segments_file}")
-                return []
-        except Exception as e:
-            logger.error(f"Failed to load segments: {e}")
-            raise
-
-    def _extract_timestamp(self, segment: Dict) -> str:
-        """Extract timestamp from segment."""
-        if 'start' in segment:
-            minutes = int(segment['start'] // 60)
-            seconds = int(segment['start'] % 60)
-            return f"{minutes:02d}:{seconds:02d}"
-        return "00:00"
-
-    def _get_segment_text(self, segment: Dict) -> str:
-        """Extract text from segment."""
-        if 'text' in segment:
-            return segment['text'].strip()
-        elif 'content' in segment:
-            return segment['content'].strip()
-        return ""
-
-    def _classify_segment(self, text: str) -> List[str]:
-        """Classify segment into one or more sections based on keywords."""
-        text_lower = text.lower()
-        matched_sections = []
-
-        for section_key, keywords in self.SECTION_KEYWORDS.items():
-            if any(keyword in text_lower for keyword in keywords):
-                matched_sections.append(section_key)
-
-        return matched_sections
-
-    def extract_plan(self, title: Optional[str] = None) -> Plan:
-        """Extract plan from loaded segments."""
-        if title is None:
-            title = f"Plan from {self.segments_file.stem}"
-
-        # Initialize sections
-        sections = {
-            key: PlanSection(
-                title=self.SECTION_TITLES[key],
-                content=[],
-                timestamps=[]
+        if self.model_type == "claude":
+            response = self.client.messages.create(
+                model=self.model,
+                max_tokens=4096,
+                messages=[{"role": "user", "content": prompt}],
             )
-            for key in self.SECTION_KEYWORDS.keys()
-        }
+            content = response.content[0].text
+        else:  # gpt
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"},
+            )
+            content = response.choices[0].message.content
 
-        # Process segments
-        for segment in self.segments:
-            text = self._get_segment_text(segment)
-            if not text:
-                continue
+        # Parse JSON response
+        try:
+            plan_data = json.loads(content)
+        except json.JSONDecodeError:
+            # Try to extract JSON from markdown code blocks
+            import re
 
-            timestamp = self._extract_timestamp(segment)
-            matched_sections = self._classify_segment(text)
+            json_match = re.search(r"```json\s*(.*?)\s*```", content, re.DOTALL)
+            if json_match:
+                plan_data = json.loads(json_match.group(1))
+            else:
+                raise ValueError(f"Failed to parse LLM response as JSON: {content}")
 
-            # Add to matched sections
-            for section_key in matched_sections:
-                sections[section_key].content.append(text)
-                sections[section_key].timestamps.append(timestamp)
+        # Validate required keys
+        required_keys = [
+            "problem",
+            "users",
+            "goals",
+            "acceptance_criteria",
+            "risks",
+            "notes",
+        ]
+        for key in required_keys:
+            if key not in plan_data:
+                plan_data[key] = "Not specified in transcript."
 
-        # Remove empty sections
-        sections = {k: v for k, v in sections.items() if v.content}
+        logger.info("Successfully extracted plan data")
+        return plan_data
 
-        plan = Plan(
+    def generate_plan(
+        self,
+        segments_path: Path,
+        output_path: Optional[Path] = None,
+        title: Optional[str] = None,
+    ) -> str:
+        """
+        Generate a structured plan document from transcript segments.
+
+        Args:
+            segments_path: Path to segments JSON file
+            output_path: Optional path to save plan markdown file
+            title: Optional title for the plan (default: filename)
+
+        Returns:
+            Generated plan as markdown string
+        """
+        # Load and convert segments
+        segments = self.load_segments(segments_path)
+        transcript = self.segments_to_text(segments)
+
+        # Extract structured data
+        plan_data = self.extract_plan_data(transcript)
+
+        # Generate plan document
+        if title is None:
+            title = segments_path.stem.replace("_", " ").title()
+
+        plan_md = PLAN_TEMPLATE.format(
             title=title,
-            generated_date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            source_file=str(self.segments_file),
-            sections=sections
+            date=datetime.now().strftime("%Y-%m-%d"),
+            source=segments_path.name,
+            problem=plan_data["problem"],
+            users=plan_data["users"],
+            goals=plan_data["goals"],
+            acceptance_criteria=plan_data["acceptance_criteria"],
+            risks=plan_data["risks"],
+            notes=plan_data["notes"],
         )
 
-        return plan
+        # Save to file if requested
+        if output_path:
+            logger.info(f"Saving plan to {output_path}")
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(output_path, "w", encoding="utf-8") as f:
+                f.write(plan_md)
 
-    def save_plan(self, plan: Plan, output_file: Path, format: str = "markdown"):
-        """Save plan to file."""
-        if format == "markdown":
-            content = plan.to_markdown()
-            output_file.write_text(content, encoding='utf-8')
-            logger.info(f"Saved plan to {output_file}")
-        elif format == "json":
-            # Convert to JSON-serializable format
-            plan_dict = asdict(plan)
-            with open(output_file, 'w', encoding='utf-8') as f:
-                json.dump(plan_dict, f, indent=2, ensure_ascii=False)
-            logger.info(f"Saved plan to {output_file}")
-        else:
-            raise ValueError(f"Unsupported format: {format}")
+        return plan_md
 
 
 def main():
-    """Main entry point."""
+    """CLI entry point."""
     parser = argparse.ArgumentParser(
-        description="Extract structured plan from transcript segments"
+        description="Generate structured PRD/plan from transcript segments"
     )
     parser.add_argument(
-        "segments_file",
+        "--input", "-i", type=Path, required=True, help="Input segments JSON file"
+    )
+    parser.add_argument(
+        "--output",
+        "-o",
         type=Path,
-        help="Path to segments JSON file"
+        help="Output plan markdown file (default: input_name_plan.md)",
     )
     parser.add_argument(
-        "-o", "--output",
-        type=Path,
-        help="Output file path (default: plan.md in same directory)"
+        "--title", "-t", type=str, help="Plan title (default: derived from filename)"
     )
     parser.add_argument(
-        "-f", "--format",
-        choices=["markdown", "json"],
-        default="markdown",
-        help="Output format (default: markdown)"
-    )
-    parser.add_argument(
-        "-t", "--title",
+        "--model",
         type=str,
-        help="Plan title (default: auto-generated from filename)"
+        choices=["claude", "gpt"],
+        default="claude",
+        help="LLM model to use (default: claude)",
     )
     parser.add_argument(
-        "--google-docs",
-        action="store_true",
-        help="Push plan to Google Docs after generation"
+        "--google-docs", action="store_true", help="Upload plan to Google Docs"
+    )
+    parser.add_argument(
+        "--google-docs-title",
+        type=str,
+        help="Google Docs document title (default: same as plan title)",
     )
 
     args = parser.parse_args()
 
     # Validate input
-    if not args.segments_file.exists():
-        logger.error(f"Segments file not found: {args.segments_file}")
+    if not args.input.exists():
+        logger.error(f"Input file not found: {args.input}")
         return 1
 
-    # Set output file
+    # Set default output path
     if args.output is None:
-        output_ext = ".md" if args.format == "markdown" else ".json"
-        args.output = args.segments_file.parent / f"plan{output_ext}"
+        args.output = args.input.parent / f"{args.input.stem}_plan.md"
 
-    # Extract plan
-    logger.info(f"Processing segments from {args.segments_file}")
-    extractor = PlanExtractor(args.segments_file)
-    plan = extractor.extract_plan(title=args.title)
+    # Generate plan
+    try:
+        generator = PlanGenerator(model_type=args.model)
+        plan_md = generator.generate_plan(
+            segments_path=args.input, output_path=args.output, title=args.title
+        )
 
-    # Report statistics
-    total_items = sum(len(section.content) for section in plan.sections.values())
-    logger.info(f"Extracted {len(plan.sections)} sections with {total_items} total items")
+        logger.info(f"Plan generated successfully: {args.output}")
 
-    # Save plan
-    extractor.save_plan(plan, args.output, format=args.format)
+        # Upload to Google Docs if requested
+        if args.google_docs:
+            try:
+                from pipeline.google_docs_integration import GoogleDocsUploader
 
-    # Optional: Push to Google Docs
-    if args.google_docs:
-        try:
-            from pipeline.google_docs_integration import GoogleDocsPublisher
+                uploader = GoogleDocsUploader()
+                doc_title = args.google_docs_title or args.title or args.input.stem
+                doc_url = uploader.create_document_from_markdown(plan_md, doc_title)
 
-            logger.info("Pushing plan to Google Docs...")
-            publisher = GoogleDocsPublisher()
-            doc_url = publisher.create_document(plan)
-            logger.info(f"Plan published to Google Docs: {doc_url}")
-        except ImportError:
-            logger.error("Google Docs integration not available. Install required dependencies.")
-            return 1
-        except Exception as e:
-            logger.error(f"Failed to push to Google Docs: {e}")
-            return 1
+                logger.info(f"Plan uploaded to Google Docs: {doc_url}")
+                print(f"\nGoogle Docs URL: {doc_url}")
 
-    logger.info("Plan generation completed successfully")
-    return 0
+            except ImportError:
+                logger.error(
+                    "Google Docs integration not available. Check google_docs_integration.py"
+                )
+                return 1
+            except Exception as e:
+                logger.error(f"Failed to upload to Google Docs: {e}")
+                return 1
+
+        print(f"\nPlan saved to: {args.output}")
+        return 0
+
+    except Exception as e:
+        logger.error(f"Failed to generate plan: {e}", exc_info=True)
+        return 1
 
 
 if __name__ == "__main__":

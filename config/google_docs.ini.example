@@ -1,16 +1,24 @@
 [google_docs]
-# Path to Google Cloud service account credentials JSON file
-# Download from: https://console.cloud.google.com/iam-admin/serviceaccounts
-credentials_file = config/service-account-credentials.json
+# Path to OAuth 2.0 credentials file downloaded from Google Cloud Console
+# To obtain:
+#   1. Go to https://console.cloud.google.com/
+#   2. Create a new project or select existing
+#   3. Enable Google Docs API and Google Drive API
+#   4. Create OAuth 2.0 credentials (Desktop application)
+#   5. Download credentials.json
+credentials_file = config/credentials.json
 
-# Optional: Google Drive folder ID to store created documents
-# Leave empty to create in root directory
-# To get folder ID: Open folder in browser, copy ID from URL
+# Path to store OAuth token (auto-generated after first authentication)
+token_file = config/token.json
+
+# Sharing settings for created documents
+# Options: private, anyone, domain
+sharing = private
+
+# Domain for domain-wide sharing (only used if sharing=domain)
+# Example: example.com
+domain =
+
+# Optional: Default folder ID in Google Drive to store documents
+# Leave empty to store in root "My Drive"
 folder_id =
-
-# Optional: Comma-separated list of emails to share documents with
-# Leave empty to skip automatic sharing
-share_with_emails =
-
-# Permission level for shared users: reader, commenter, or writer
-share_permission = writer

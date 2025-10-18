@@ -1,276 +1,251 @@
 # Google Docs Integration Setup Guide
 
-This guide explains how to set up Google Docs API integration for TalkSmith to publish generated plans directly to Google Docs.
+This guide explains how to set up the Google Docs API integration for TalkSmith to automatically publish plan documents to Google Docs.
 
 ## Overview
 
 The Google Docs integration allows you to:
-- Automatically create Google Docs from generated plans
+- Convert transcript segments into structured PRD/plan documents using LLM
+- Automatically push plans to Google Docs for collaborative editing
 - Share documents with team members
-- Organize documents in specific Google Drive folders
-- Enable collaborative editing of PRD/plan documents
+- Manage multiple plan documents from transcripts
 
 ## Prerequisites
 
-- Google Cloud Platform (GCP) account
 - Python 3.8 or higher
-- TalkSmith installed with required dependencies
+- A Google account
+- Access to Google Cloud Console
+- API key for either Anthropic (Claude) or OpenAI (GPT)
 
-## Step 1: Create Google Cloud Project
+## Setup Steps
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Click "Select a project" → "New Project"
-3. Enter project name (e.g., "TalkSmith Integration")
+### 1. Create a Google Cloud Project
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
+2. Click "Select a project" at the top, then "New Project"
+3. Enter a project name (e.g., "TalkSmith Google Docs")
 4. Click "Create"
-5. Wait for project creation to complete
 
-## Step 2: Enable Required APIs
+### 2. Enable Required APIs
 
-1. In the Google Cloud Console, navigate to "APIs & Services" → "Library"
+1. In your Google Cloud project, navigate to "APIs & Services" > "Library"
 2. Search for and enable the following APIs:
    - **Google Docs API**
    - **Google Drive API**
 
-For each API:
-- Click on the API name
-- Click "Enable"
-- Wait for activation
+### 3. Create OAuth 2.0 Credentials
 
-## Step 3: Create Service Account
-
-1. Navigate to "APIs & Services" → "Credentials"
-2. Click "Create Credentials" → "Service Account"
-3. Enter service account details:
-   - **Name:** TalkSmith Document Publisher
-   - **Description:** Service account for automated document creation
-4. Click "Create and Continue"
-5. Skip optional role assignment (click "Continue")
-6. Click "Done"
-
-## Step 4: Generate Service Account Key
-
-1. In the Credentials page, find your service account under "Service Accounts"
-2. Click on the service account email
-3. Go to the "Keys" tab
-4. Click "Add Key" → "Create new key"
-5. Select "JSON" format
+1. Go to "APIs & Services" > "Credentials"
+2. Click "Create Credentials" > "OAuth client ID"
+3. If prompted, configure the OAuth consent screen:
+   - Choose "External" user type
+   - Fill in required fields (app name, user support email, developer email)
+   - Add your email to "Test users" (for development)
+   - Save and continue
+4. Back on the credentials page, select "Desktop app" as the application type
+5. Enter a name (e.g., "TalkSmith Desktop Client")
 6. Click "Create"
-7. Save the downloaded JSON file securely
+7. Download the credentials JSON file
 
-**Important:** This file contains sensitive credentials. Never commit it to version control.
+### 4. Install Required Dependencies
 
-## Step 5: Configure TalkSmith
+Install LLM provider (choose one or both):
 
-1. Move the credentials file to your TalkSmith config directory:
-   ```bash
-   mkdir -p config
-   mv ~/Downloads/your-service-account-key.json config/service-account-credentials.json
-   ```
+```bash
+# For Claude (recommended)
+pip install anthropic
 
-2. Copy the example configuration:
-   ```bash
-   cp config/google_docs.ini.example config/google_docs.ini
-   ```
+# For GPT
+pip install openai
+```
 
-3. Edit `config/google_docs.ini`:
-   ```ini
-   [google_docs]
-   credentials_file = config/service-account-credentials.json
-   folder_id = <optional-folder-id>
-   share_with_emails = user1@example.com, user2@example.com
-   share_permission = writer
-   ```
-
-## Step 6: Optional - Set Up Shared Folder
-
-To organize all generated documents in a specific folder:
-
-1. Create a folder in Google Drive
-2. Open the folder in your browser
-3. Copy the folder ID from the URL:
-   ```
-   https://drive.google.com/drive/folders/FOLDER_ID_HERE
-   ```
-4. Add the folder ID to `config/google_docs.ini`
-5. Share the folder with the service account email:
-   - Right-click folder → "Share"
-   - Add service account email (found in credentials JSON: `client_email`)
-   - Set permission to "Editor"
-
-## Step 7: Install Python Dependencies
-
-Install required Google API libraries:
+Install Google Docs integration:
 
 ```bash
 pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
 ```
 
-Or install all TalkSmith dependencies:
-
+Or install all dependencies from requirements.txt:
 ```bash
 pip install -r requirements.txt
 ```
 
-## Usage
+### 5. Configure LLM API Key
 
-### Generate and Publish Plan to Google Docs
+Set your API key as an environment variable:
 
 ```bash
-# Generate plan from transcript segments
-python pipeline/plan_from_transcript.py \
-  data/segments.json \
-  --output output/plan.md \
-  --google-docs
+# For Claude
+export ANTHROPIC_API_KEY="sk-ant-..."
 
-# Or publish existing plan separately
-python pipeline/google_docs_integration.py data/segments.json
+# For GPT
+export OPENAI_API_KEY="sk-..."
 ```
 
-### Command Line Options
+Or add to your `.env` file (recommended for development).
+
+### 6. Configure Google Docs
+
+1. Copy the example configuration file:
+   ```bash
+   cp config/google_docs.ini.example config/google_docs.ini
+   ```
+
+2. Move the downloaded credentials file to your project:
+   ```bash
+   mv ~/Downloads/client_secret_*.json config/credentials.json
+   ```
+
+3. Edit `config/google_docs.ini` to set the credentials path:
+   ```ini
+   [google_docs]
+   credentials_file = config/credentials.json
+   token_file = config/token.json
+   sharing = private
+   ```
+
+### 7. First-Time Authentication
+
+The first time you run the Google Docs integration, you'll need to authenticate:
 
 ```bash
-python pipeline/plan_from_transcript.py --help
+python -m pipeline.plan_from_transcript --input segments.json --google-docs --google-docs-title "My Plan"
+```
 
-Options:
-  segments_file          Path to transcript segments JSON
-  -o, --output          Output file path (default: plan.md)
-  -f, --format          Output format: markdown or json (default: markdown)
-  -t, --title           Custom plan title
-  --google-docs         Publish to Google Docs after generation
+This will:
+1. Open your web browser
+2. Ask you to sign in to your Google account
+3. Request permission to access Google Docs and Drive
+4. Save an authentication token to `config/token.json` for future use
+
+**Important:** The token file contains sensitive credentials. Never commit it to version control.
+
+## Usage
+
+### Basic Usage: Generate Local Markdown
+
+```bash
+# Using Claude (default)
+python -m pipeline.plan_from_transcript --input segments.json --output plan.md
+
+# Using GPT
+python -m pipeline.plan_from_transcript --input segments.json --output plan.md --model gpt
+```
+
+### Push to Google Docs
+
+```bash
+# Generate plan and upload to Google Docs
+python -m pipeline.plan_from_transcript \
+    --input segments.json \
+    --google-docs \
+    --google-docs-title "Project Plan"
+
+# Specify custom title and model
+python -m pipeline.plan_from_transcript \
+    --input segments.json \
+    --output plan.md \
+    --google-docs \
+    --title "Product Requirements" \
+    --google-docs-title "Q4 2025 Product Requirements" \
+    --model claude
 ```
 
 ## Configuration Options
 
-### credentials_file
-Path to service account JSON key file.
+Edit `config/google_docs.ini` to customize behavior:
 
-**Required:** Yes
+```ini
+[google_docs]
+# Path to OAuth credentials (required)
+credentials_file = config/credentials.json
 
-**Example:** `config/service-account-credentials.json`
+# Path to store auth token (auto-generated)
+token_file = config/token.json
 
-### folder_id
-Google Drive folder ID where documents will be created.
+# Sharing settings: private, anyone, domain
+sharing = private
 
-**Required:** No (creates in root if not specified)
+# Domain for domain-wide sharing (optional)
+domain = example.com
 
-**Example:** `1a2b3c4d5e6f7g8h9i0j`
+# Google Drive folder ID (optional)
+folder_id = 1a2b3c4d5e6f7g8h9i
+```
 
-### share_with_emails
-Comma-separated list of email addresses to automatically share documents with.
+### Sharing Options
 
-**Required:** No
-
-**Example:** `alice@example.com, bob@example.com`
-
-### share_permission
-Permission level for shared users.
-
-**Required:** No (defaults to `writer`)
-
-**Options:**
-- `reader` - View only
-- `commenter` - Can add comments
-- `writer` - Can edit
+- **private** (default): Only you can access the document
+- **anyone**: Anyone with the link can view the document
+- **domain**: Anyone in your organization domain can view the document
 
 ## Troubleshooting
 
-### Error: "Credentials file not found"
+### "credentials.json not found"
 
-**Solution:** Verify the `credentials_file` path in `config/google_docs.ini` is correct and the file exists.
+Make sure you've downloaded the OAuth credentials from Google Cloud Console and placed them in the correct location specified in `config/google_docs.ini`.
 
-### Error: "API has not been enabled"
+### "Invalid client_id"
 
-**Solution:** Ensure Google Docs API and Google Drive API are enabled in your GCP project.
+The credentials file may be corrupted or for a different application type. Download fresh credentials from Google Cloud Console and ensure you selected "Desktop app" as the application type.
 
-### Error: "Permission denied"
+### "Access denied" or "Insufficient permissions"
 
-**Solution:**
-1. Check that the service account has access to the folder (if `folder_id` is specified)
-2. Share the folder with the service account email address
+1. Check that you've enabled both Google Docs API and Google Drive API
+2. Delete `config/token.json` and re-authenticate
+3. Ensure your Google account has permission to create documents
 
-### Error: "Invalid credentials"
+### "Token expired"
 
-**Solution:**
-1. Verify the JSON credentials file is not corrupted
-2. Regenerate service account key if necessary
-3. Ensure credentials file has correct permissions
+Delete `config/token.json` and run the script again to re-authenticate.
 
-### Documents not appearing in shared folder
+### Browser doesn't open during authentication
 
-**Solution:**
-1. Verify `folder_id` is correct
-2. Share folder with service account email (found in credentials JSON)
-3. Grant "Editor" permission to service account
-
-### Auto-sharing not working
-
-**Solution:**
-1. Check `share_with_emails` is properly formatted (comma-separated, no quotes)
-2. Verify email addresses are correct
-3. Check Google Drive API is enabled
+The OAuth flow requires a browser. If you're on a headless server:
+1. Run the script on your local machine first to generate `token.json`
+2. Copy `token.json` to your server
+3. Update `config/google_docs.ini` to point to this token file
 
 ## Security Best Practices
 
-1. **Never commit credentials to version control**
-   - Add to `.gitignore`:
-     ```
-     config/google_docs.ini
-     config/*.json
-     ```
+1. **Never commit credentials to version control:**
+   - Add `config/credentials.json` to `.gitignore`
+   - Add `config/token.json` to `.gitignore`
+   - Add `config/google_docs.ini` to `.gitignore`
 
-2. **Restrict service account permissions**
-   - Only grant necessary API access
-   - Use folder-level sharing instead of organization-wide access
+2. **Use service accounts for production:**
+   - For automated systems, consider using service account credentials instead of OAuth
 
-3. **Rotate credentials periodically**
-   - Generate new service account keys every 90 days
-   - Delete old keys after rotation
+3. **Limit API scopes:**
+   - The integration only requests necessary scopes (documents and drive.file)
+   - Never grant more permissions than needed
 
-4. **Monitor API usage**
-   - Check Google Cloud Console for unusual activity
-   - Set up billing alerts
-
-## API Limits
-
-Google Docs API has the following limits:
-- **Read requests:** 300 per minute per user
-- **Write requests:** 60 per minute per user
-
-For high-volume use cases:
-- Implement exponential backoff
-- Batch multiple operations
-- Cache results where possible
+4. **Rotate credentials regularly:**
+   - Periodically regenerate OAuth credentials in Google Cloud Console
+   - Update your configuration files accordingly
 
 ## Example Workflow
 
-Complete workflow from transcript to Google Doc:
+Here's a complete workflow from transcript to Google Doc:
 
 ```bash
 # 1. Transcribe audio
-python pipeline/transcribe.py audio/meeting.mp3 --output data/segments.json
+python pipeline/transcribe.py meeting.mp3 --output segments.json
 
-# 2. Generate and publish plan
-python pipeline/plan_from_transcript.py \
-  data/segments.json \
-  --title "Q4 Product Planning Meeting" \
-  --google-docs
+# 2. Generate plan and push to Google Docs
+python pipeline/plan_from_transcript.py segments.json \
+    --google-docs \
+    --title "Q4 Product Planning Meeting"
 
-# Output:
-# Plan generated successfully
-# Document created: https://docs.google.com/document/d/DOCUMENT_ID/edit
-# Shared with: alice@example.com, bob@example.com
+# Output: Success! Document created: https://docs.google.com/document/d/...
 ```
-
-## Additional Resources
-
-- [Google Docs API Documentation](https://developers.google.com/docs/api)
-- [Google Drive API Documentation](https://developers.google.com/drive/api)
-- [Service Account Authentication](https://cloud.google.com/iam/docs/service-accounts)
-- [API Rate Limits](https://developers.google.com/docs/api/limits)
 
 ## Support
 
-For issues or questions:
+For issues specific to Google Docs API:
+- [Google Docs API Documentation](https://developers.google.com/docs/api)
+- [Google Drive API Documentation](https://developers.google.com/drive/api)
+
+For TalkSmith-specific issues:
 - Check existing [GitHub Issues](https://github.com/irsiksoftware/TalkSmith/issues)
-- Open a new issue with tag `google-docs-integration`
-- Include relevant error messages and configuration (redact credentials)
+- Create a new issue with the `google-docs` label

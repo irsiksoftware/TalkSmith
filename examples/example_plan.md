@@ -1,53 +1,61 @@
-# Product Redesign Plan
+# Example Project Plan
 
-**Generated:** 2025-10-16 14:30:00
-**Source:** examples/meeting_transcript_segments.json
+*Generated from transcript on 2025-10-16 14:30*
 
 ---
 
 ## Problem Statement
 
-- Current user interface is confusing and leads to high abandonment rates during onboarding
-- Users struggle to find key features like settings and account management
-- Mobile responsiveness issues cause frustration on smaller devices
-- Search functionality is slow and returns irrelevant results
-
-*Referenced timestamps: 00:45, 02:15, 08:30, 12:00*
+- [02:15] We're seeing high churn rates among new users during the onboarding process
+- [02:45] Users report confusion about the dashboard layout and where to find key features
+- [03:20] Support tickets show that 60% of issues are related to basic navigation problems
 
 ## Target Users
 
-- Small to medium business owners managing invoicing and payments
-- Enterprise customers requiring advanced reporting capabilities
-- Mobile-first users who primarily access the platform on smartphones
-- Non-technical users who need simple, intuitive workflows
-
-*Referenced timestamps: 01:30, 03:45, 09:15*
+- [04:10] Primary users are small business owners with limited technical expertise
+- [04:35] Secondary users include team managers who need to delegate tasks
+- [05:05] User research shows our audience is typically 35-55 years old, busy professionals
 
 ## Goals & Objectives
 
-- Achieve 80% completion rate for new user onboarding within first session
-- Reduce time to first value from 15 minutes to under 5 minutes
-- Improve mobile user satisfaction score from 3.2 to 4.5 out of 5
-- Implement sub-second search response times across all features
-
-*Referenced timestamps: 04:20, 07:00, 13:45*
+- [06:20] Reduce onboarding time from 15 minutes to under 5 minutes
+- [06:50] Achieve 80% task completion rate for first-time users
+- [07:15] Increase user retention from 45% to 70% within first month
+- [07:40] Improve user satisfaction scores from 3.2 to 4.5 out of 5
 
 ## Acceptance Criteria
 
-- Settings page must be accessible within 2 clicks from any screen
-- Onboarding flow must complete in maximum 5 steps
-- All features must be fully responsive on devices 320px and above
-- Search results must return within 500ms for queries under 100 characters
-- User testing must show 90% success rate for core workflows
-
-*Referenced timestamps: 05:30, 10:15, 14:00*
+- [09:10] New interactive tutorial must cover all core features
+  - Implement guided walkthrough for dashboard
+  - Create tooltip system for feature discovery
+  - Add progress tracking for tutorial completion
+- [09:45] Dashboard redesign must pass usability testing with 90% success rate
+  - Design simplified navigation menu
+  - Test with minimum 20 representative users
+  - Ensure accessibility compliance (WCAG 2.1 AA)
+- [10:20] Analytics tracking must capture user journey data
+  - Implement event tracking for all user interactions
+  - Create funnel analysis for onboarding steps
+- [10:50] Documentation must be updated to reflect new interface
+  - Add video tutorials for key workflows
+  - Ensure help text is contextual and searchable
 
 ## Risks & Considerations
 
-- Significant UI changes may confuse existing power users
-- Performance improvements require backend infrastructure upgrades
-- Mobile redesign timeline may extend beyond current quarter deadline
-- Search optimization needs additional engineering resources not yet allocated
-- User testing feedback might reveal need for scope adjustments
+- [12:05] Redesign might alienate existing power users who know the current layout
+- [12:30] Development timeline is tight - only 6 weeks until target launch
+- [12:55] Need buy-in from marketing team for updated onboarding emails
+- [13:20] Potential performance concerns with interactive tutorial on slower devices
+- [13:45] Localization requirements may delay international rollout
 
-*Referenced timestamps: 06:45, 11:30, 15:20*
+## Additional Notes
+
+- [15:10] Consider A/B testing different tutorial approaches before full rollout
+- [15:35] Product marketing wants to feature the new onboarding in next quarter's campaign
+- [16:00] Engineering team suggests using existing component library to speed development
+- [16:25] Customer success team volunteers to help with beta testing
+
+---
+
+**Source:** `sample_segments.json`
+**Segments processed:** 24

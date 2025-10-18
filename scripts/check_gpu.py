@@ -50,6 +50,14 @@ def check_cuda_availability() -> Dict[str, any]:
             "torch_version": torch.__version__,
             "cuda_available": cuda_available,
             "cuda_version": cuda_version,
+            "cudnn_available": (
+                torch.backends.cudnn.is_available() if cuda_available else False
+            ),
+            "cudnn_version": (
+                torch.backends.cudnn.version()
+                if cuda_available and torch.backends.cudnn.is_available()
+                else None
+            ),
             "device_count": device_count,
             "devices": devices,
         }
@@ -58,6 +66,8 @@ def check_cuda_availability() -> Dict[str, any]:
             "torch_version": None,
             "cuda_available": False,
             "cuda_version": None,
+            "cudnn_available": False,
+            "cudnn_version": None,
             "device_count": 0,
             "devices": [],
             "error": "PyTorch not installed",
@@ -67,6 +77,8 @@ def check_cuda_availability() -> Dict[str, any]:
             "torch_version": None,
             "cuda_available": False,
             "cuda_version": None,
+            "cudnn_available": False,
+            "cudnn_version": None,
             "device_count": 0,
             "devices": [],
             "error": str(e),
@@ -152,6 +164,13 @@ def main():
     if cuda_info["cuda_available"]:
         print_status("CUDA Version", cuda_info["cuda_version"])
         print_status("GPU Device Count", cuda_info["device_count"])
+        print_status(
+            "CuDNN Available",
+            cuda_info["cudnn_available"],
+            cuda_info["cudnn_available"],
+        )
+        if cuda_info["cudnn_available"]:
+            print_status("CuDNN Version", cuda_info["cudnn_version"])
     else:
         print("  ⚠ CUDA is not available to PyTorch")
         if driver_version:

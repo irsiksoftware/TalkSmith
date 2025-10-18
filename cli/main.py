@@ -2,8 +2,12 @@
 TalkSmith CLI - Unified command-line interface for transcription pipeline.
 
 Provides subcommands for:
+- transcribe: Transcribe audio files
+- preprocess: Preprocess audio for better quality
+- diarize: Speaker diarization
 - export: Export segments to various formats
 - batch: Batch process multiple files
+- plan: Generate PRD/plan from transcript (optional Google Docs upload)
 - demo: Demonstrate logging and error handling
 """
 
@@ -49,8 +53,7 @@ def export_command(args: argparse.Namespace) -> int:
         # Load segments from JSON
         if not input_path.exists():
             exit_code = logger.log_error_exit(
-                f"Input file not found: {input_path}",
-                file=str(input_path)
+                f"Input file not found: {input_path}", file=str(input_path)
             )
             return exit_code
 
@@ -61,7 +64,9 @@ def export_command(args: argparse.Namespace) -> int:
         logger.info(f"Loaded {len(segments)} segments", segment_count=len(segments))
 
         # Export to formats
-        formats = args.formats.split(",") if args.formats else ["txt", "srt", "vtt", "json"]
+        formats = (
+            args.formats.split(",") if args.formats else ["txt", "srt", "vtt", "json"]
+        )
         base_name = args.name or input_path.stem
 
         logger.info("Exporting to formats", formats=formats, base_name=base_name)
@@ -70,12 +75,12 @@ def export_command(args: argparse.Namespace) -> int:
             segments=segments,
             output_dir=output_dir,
             base_name=base_name,
-            formats=formats
+            formats=formats,
         )
 
         logger.log_complete(
             "export",
-            output_files={fmt: str(path) for fmt, path in output_files.items()}
+            output_files={fmt: str(path) for fmt, path in output_files.items()},
         )
 
         # Print output paths for user
@@ -98,7 +103,45 @@ def batch_command(args: argparse.Namespace) -> int:
     - BatchLogSummary for tracking successes/failures
     - Proper exit code handling
     - Per-file logging
+    - Multi-GPU parallel processing support
     """
+    # Check if multi-GPU mode is requested
+    if args.multi_gpu:
+        # Delegate to launcher_multigpu.py
+        import subprocess
+
+        launcher_path = Path(__file__).parent.parent / "launcher_multigpu.py"
+        if not launcher_path.exists():
+            print(f"ERROR: launcher_multigpu.py not found at {launcher_path}")
+            return 1
+
+        cmd = [
+            sys.executable,
+            str(launcher_path),
+            "--input-dir",
+            args.input_dir,
+            "--output-dir",
+            args.output_dir,
+        ]
+
+        if args.gpus:
+            cmd.extend(["--gpus", args.gpus])
+        else:
+            cmd.extend(["--gpus", "auto"])
+
+        if args.model_size:
+            cmd.extend(["--model-size", args.model_size])
+
+        if args.language:
+            cmd.extend(["--language", args.language])
+
+        if args.pattern:
+            cmd.extend(["--pattern", args.pattern])
+
+        print(f"Launching multi-GPU transcription: {' '.join(cmd)}\n")
+        result = subprocess.run(cmd)
+        return result.returncode
+
     input_dir = Path(args.input_dir)
     output_dir = Path(args.output_dir)
 
@@ -144,13 +187,13 @@ def batch_command(args: argparse.Namespace) -> int:
                 segments=segments,
                 output_dir=output_dir / json_file.stem,
                 base_name=json_file.stem,
-                formats=formats
+                formats=formats,
             )
 
             file_logger.log_complete(
                 "export",
                 segment_count=len(segments),
-                output_files={fmt: str(path) for fmt, path in output_files.items()}
+                output_files={fmt: str(path) for fmt, path in output_files.items()},
             )
 
             batch_summary.record_success(str(json_file))
@@ -176,6 +219,368 @@ def batch_command(args: argparse.Namespace) -> int:
     return batch_summary.get_exit_code()
 
 
+def transcribe_command(args: argparse.Namespace) -> int:
+    """
+    Transcribe audio file with optional diarization.
+
+    Demonstrates:
+    - Integration with transcribe_fw.py
+    - Optional diarization integration
+    - Automatic export to multiple formats
+    - Structured logging
+    """
+    # Lazy import to avoid import errors when dependencies not installed
+    from pipeline.transcribe_fw import transcribe_file
+
+    input_path = Path(args.input)
+
+    # Create slug for logging
+    slug = create_slug_from_filename(input_path.name)
+    logger = get_logger(__name__, slug=slug)
+
+    logger.log_start(
+        "transcribe",
+        input_file=str(input_path),
+        model=args.model,
+        diarize=args.diarize,
+    )
+
+    try:
+        # Check input file exists
+        if not input_path.exists():
+            exit_code = logger.log_error_exit(
+                f"Input file not found: {input_path}", file=str(input_path)
+            )
+            return exit_code
+
+        # Set output directory
+        output_dir = Path(args.output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        # Transcribe audio
+        logger.info(
+            f"Transcribing with {args.model} model",
+            model=args.model,
+            device=args.device,
+        )
+
+        result = transcribe_file(
+            audio_path=str(input_path),
+            output_dir=str(output_dir),
+            model_size=args.model,
+            device=args.device,
+            language=args.language,
+        )
+
+        logger.log_metrics(
+            {
+                "duration": result["duration"],
+                "processing_time": result["processing_time"],
+                "rtf": result["rtf"],
+                "language": result["language"],
+                "language_probability": result["language_probability"],
+            }
+        )
+
+        # Optional diarization
+        if args.diarize:
+            from pipeline.diarize_alt import diarize_file
+
+            logger.info("Running speaker diarization")
+
+            # Get transcript JSON path
+            transcript_json = output_dir / f"{input_path.stem}.json"
+
+            # Run diarization
+            diarized_json = output_dir / f"{input_path.stem}_diarized.json"
+            diarize_file(
+                audio_path=str(input_path),
+                output_path=str(diarized_json),
+                num_speakers=args.num_speakers,
+                transcript_path=str(transcript_json),
+            )
+
+            logger.info("Diarization complete", output=str(diarized_json))
+
+            # Load diarized segments for export
+            with open(diarized_json, "r", encoding="utf-8") as f:
+                diarized_data = json.load(f)
+                segments = diarized_data.get("segments", [])
+        else:
+            segments = result["segments"]
+
+        # Auto-export to formats
+        if args.formats:
+            formats = args.formats.split(",")
+            base_name = input_path.stem
+
+            logger.info("Exporting to formats", formats=formats)
+
+            output_files = export_all(
+                segments=segments,
+                output_dir=output_dir,
+                base_name=base_name,
+                formats=formats,
+            )
+
+            print(f"\nExported to:")
+            for fmt, path in output_files.items():
+                print(f"  {fmt.upper()}: {path}")
+
+        logger.log_complete("transcribe")
+
+        print(f"\nTranscription complete!")
+        print(f"Duration: {result['duration']:.2f}s")
+        print(f"Processing time: {result['processing_time']:.2f}s")
+        print(f"RTF: {result['rtf']:.3f}")
+        print(
+            f"Language: {result['language']} " f"({result['language_probability']:.2%})"
+        )
+
+        return 0
+
+    except Exception as e:
+        logger.exception("Transcription failed", error=str(e))
+        print(f"ERROR: {e}")
+        return 1
+
+
+def preprocess_command(args: argparse.Namespace) -> int:
+    """
+    Preprocess audio file for better transcription quality.
+
+    Demonstrates:
+    - Integration with preprocess.py
+    - Audio quality improvement options
+    - Metrics logging
+    """
+    # Lazy import to avoid import errors when dependencies not installed
+    from pipeline.preprocess import preprocess_audio
+
+    input_path = Path(args.input)
+
+    # Create slug for logging
+    slug = create_slug_from_filename(input_path.name)
+    logger = get_logger(__name__, slug=slug)
+
+    logger.log_start(
+        "preprocess",
+        input_file=str(input_path),
+        denoise=args.denoise,
+        trim=args.trim,
+    )
+
+    try:
+        # Check input file exists
+        if not input_path.exists():
+            exit_code = logger.log_error_exit(
+                f"Input file not found: {input_path}", file=str(input_path)
+            )
+            return exit_code
+
+        # Set output path
+        if args.output:
+            output_path = Path(args.output)
+        else:
+            output_path = input_path.parent / f"{input_path.stem}_preprocessed.wav"
+
+        # Preprocess audio
+        logger.info(
+            "Preprocessing audio",
+            denoise=args.denoise,
+            loudnorm=args.loudnorm,
+            trim_silence=args.trim,
+        )
+
+        output_path, metrics = preprocess_audio(
+            input_path=input_path,
+            output_path=output_path,
+            denoise=args.denoise,
+            loudnorm=args.loudnorm,
+            trim_silence=args.trim,
+            silence_threshold_db=args.silence_threshold,
+            high_pass_filter=args.high_pass_filter,
+        )
+
+        logger.log_metrics(metrics)
+        logger.log_complete("preprocess", output_file=str(output_path))
+
+        print(f"\nPreprocessed audio saved to: {output_path}")
+        print("\nMetrics:")
+        print(f"  Original duration: {metrics['original_duration_seconds']:.2f}s")
+        print(f"  Final duration: {metrics['final_duration_seconds']:.2f}s")
+        print(f"  Steps applied: {', '.join(metrics['steps_applied'])}")
+
+        return 0
+
+    except Exception as e:
+        logger.exception("Preprocessing failed", error=str(e))
+        print(f"ERROR: {e}")
+        return 1
+
+
+def diarize_command(args: argparse.Namespace) -> int:
+    """
+    Perform speaker diarization on audio file.
+
+    Demonstrates:
+    - Integration with diarize_alt.py
+    - Speaker detection and labeling
+    - Optional transcript alignment
+    """
+    # Lazy import to avoid import errors when dependencies not installed
+    from pipeline.diarize_alt import diarize_file
+
+    input_path = Path(args.input)
+
+    # Create slug for logging
+    slug = create_slug_from_filename(input_path.name)
+    logger = get_logger(__name__, slug=slug)
+
+    logger.log_start(
+        "diarize",
+        input_file=str(input_path),
+        num_speakers=args.num_speakers,
+    )
+
+    try:
+        # Check input file exists
+        if not input_path.exists():
+            exit_code = logger.log_error_exit(
+                f"Input file not found: {input_path}", file=str(input_path)
+            )
+            return exit_code
+
+        # Set output path
+        if args.output:
+            output_path = Path(args.output)
+        else:
+            output_path = input_path.parent / f"{input_path.stem}_diarized.json"
+
+        # Run diarization
+        logger.info(
+            "Running speaker diarization",
+            num_speakers=args.num_speakers or "auto",
+        )
+
+        segments = diarize_file(
+            audio_path=str(input_path),
+            output_path=str(output_path),
+            num_speakers=args.num_speakers,
+            transcript_path=args.transcript,
+            window_size=args.window_size,
+        )
+
+        num_speakers = len(set(seg["speaker"] for seg in segments))
+
+        logger.log_metrics(
+            {
+                "num_speakers": num_speakers,
+                "num_segments": len(segments),
+            }
+        )
+
+        logger.log_complete("diarize", output_file=str(output_path))
+
+        print(f"\nDiarization complete!")
+        print(f"Speakers detected: {num_speakers}")
+        print(f"Segments created: {len(segments)}")
+        print(f"Output: {output_path}")
+
+        return 0
+
+    except Exception as e:
+        logger.exception("Diarization failed", error=str(e))
+        print(f"ERROR: {e}")
+        return 1
+
+
+def plan_command(args: argparse.Namespace) -> int:
+    """
+    Generate structured PRD/plan document from transcript.
+
+    Demonstrates:
+    - LLM-based extraction of plan structure
+    - Markdown plan generation
+    - Optional Google Docs upload
+    """
+    from pipeline.plan_from_transcript import PlanGenerator
+
+    input_path = Path(args.input)
+
+    # Create slug for logging
+    slug = create_slug_from_filename(input_path.name)
+    logger = get_logger(__name__, slug=slug)
+
+    logger.log_start(
+        "plan_generation",
+        input_file=str(input_path),
+        model=args.model,
+        google_docs=args.google_docs,
+    )
+
+    try:
+        # Check input file exists
+        if not input_path.exists():
+            exit_code = logger.log_error_exit(
+                f"Input file not found: {input_path}", file=str(input_path)
+            )
+            return exit_code
+
+        # Set output path
+        if args.output:
+            output_path = Path(args.output)
+        else:
+            output_path = input_path.parent / f"{input_path.stem}_plan.md"
+
+        # Generate plan
+        logger.info(
+            f"Generating plan using {args.model}",
+            model=args.model,
+        )
+
+        generator = PlanGenerator(model_type=args.model)
+        plan_md = generator.generate_plan(
+            segments_path=input_path, output_path=output_path, title=args.title
+        )
+
+        logger.info("Plan generated successfully", output_file=str(output_path))
+
+        # Upload to Google Docs if requested
+        if args.google_docs:
+            try:
+                from pipeline.google_docs_integration import GoogleDocsUploader
+
+                logger.info("Uploading to Google Docs")
+                uploader = GoogleDocsUploader()
+                doc_title = args.google_docs_title or args.title or input_path.stem
+                doc_url = uploader.create_document_from_markdown(plan_md, doc_title)
+
+                logger.info(f"Plan uploaded to Google Docs: {doc_url}")
+                print(f"\nGoogle Docs URL: {doc_url}")
+
+            except ImportError as e:
+                logger.error(f"Google Docs integration not available: {e}")
+                print(f"WARNING: Could not upload to Google Docs: {e}")
+                print("Plan was still saved locally.")
+            except Exception as e:
+                logger.error(f"Failed to upload to Google Docs: {e}")
+                print(f"WARNING: Failed to upload to Google Docs: {e}")
+                print("Plan was still saved locally.")
+
+        logger.log_complete("plan_generation", output_file=str(output_path))
+
+        print(f"\nPlan generated successfully!")
+        print(f"Saved to: {output_path}")
+
+        return 0
+
+    except Exception as e:
+        logger.exception("Plan generation failed", error=str(e))
+        print(f"ERROR: {e}")
+        return 1
+
+
 def demo_command(args: argparse.Namespace) -> int:
     """
     Demonstrate logging features including retry/backoff.
@@ -197,12 +602,14 @@ def demo_command(args: argparse.Namespace) -> int:
 
     # 2. Metrics logging
     print("2. Metrics logging:")
-    logger.log_metrics({
-        "rtf": 0.12,
-        "duration_seconds": 3600,
-        "model": "large-v3",
-        "gpu_memory_mb": 8192
-    })
+    logger.log_metrics(
+        {
+            "rtf": 0.12,
+            "duration_seconds": 3600,
+            "model": "large-v3",
+            "gpu_memory_mb": 8192,
+        }
+    )
 
     # 3. Retry with transient errors
     print("3. Retry mechanism with exponential backoff:")
@@ -216,13 +623,17 @@ def demo_command(args: argparse.Namespace) -> int:
         print(f"   Attempt {attempt_count['count']}...")
 
         if attempt_count["count"] < 3:
-            raise TransientError(f"Simulated transient failure (attempt {attempt_count['count']})")
+            raise TransientError(
+                f"Simulated transient failure (attempt {attempt_count['count']})"
+            )
 
         return {"status": "success", "data": "result"}
 
     try:
         result = simulated_api_call()
-        logger.info("API call succeeded", result=result, total_attempts=attempt_count["count"])
+        logger.info(
+            "API call succeeded", result=result, total_attempts=attempt_count["count"]
+        )
         print(f"   [OK] Success after {attempt_count['count']} attempts")
     except TransientError as e:
         logger.error("API call failed after all retries", error=str(e))
@@ -238,7 +649,9 @@ def demo_command(args: argparse.Namespace) -> int:
     batch.record_failure("file5.wav", "Corrupted audio")
     batch.print_summary()
 
-    print(f"   Total: {batch.total}, Success: {batch.successful}, Failed: {batch.failed}")
+    print(
+        f"   Total: {batch.total}, Success: {batch.successful}, Failed: {batch.failed}"
+    )
     print(f"   Exit code would be: {batch.get_exit_code()}")
 
     # 5. Complete operation
@@ -259,61 +672,214 @@ def main():
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
+    # Transcribe command
+    transcribe_parser = subparsers.add_parser(
+        "transcribe", help="Transcribe audio file"
+    )
+    transcribe_parser.add_argument("input", help="Input audio file")
+    transcribe_parser.add_argument(
+        "-o",
+        "--output-dir",
+        default="data/outputs",
+        help="Output directory (default: data/outputs)",
+    )
+    transcribe_parser.add_argument(
+        "-m",
+        "--model",
+        default="base",
+        choices=["tiny", "base", "small", "medium", "medium.en", "large-v3"],
+        help="Whisper model size (default: base)",
+    )
+    transcribe_parser.add_argument(
+        "--device",
+        default="cuda",
+        choices=["cuda", "cpu"],
+        help="Device to use (default: cuda)",
+    )
+    transcribe_parser.add_argument(
+        "-l",
+        "--language",
+        help="Language code (e.g., 'en'). Auto-detect if not specified.",
+    )
+    transcribe_parser.add_argument(
+        "--diarize",
+        action="store_true",
+        help="Enable speaker diarization",
+    )
+    transcribe_parser.add_argument(
+        "--num-speakers",
+        type=int,
+        help="Number of speakers for diarization (auto-detect if not specified)",
+    )
+    transcribe_parser.add_argument(
+        "-f",
+        "--formats",
+        help="Comma-separated export formats: txt,srt,vtt,json (e.g., 'txt,srt')",
+    )
+
+    # Preprocess command
+    preprocess_parser = subparsers.add_parser(
+        "preprocess", help="Preprocess audio for better quality"
+    )
+    preprocess_parser.add_argument("input", help="Input audio file")
+    preprocess_parser.add_argument(
+        "-o",
+        "--output",
+        help="Output file (default: <input>_preprocessed.wav)",
+    )
+    preprocess_parser.add_argument(
+        "--denoise",
+        action="store_true",
+        help="Enable denoising",
+    )
+    preprocess_parser.add_argument(
+        "--loudnorm",
+        action="store_true",
+        help="Enable loudness normalization",
+    )
+    preprocess_parser.add_argument(
+        "--trim",
+        action="store_true",
+        help="Trim silence from audio",
+    )
+    preprocess_parser.add_argument(
+        "--silence-threshold",
+        type=float,
+        default=-40.0,
+        help="Silence threshold in dB (default: -40)",
+    )
+    preprocess_parser.add_argument(
+        "--high-pass-filter",
+        action="store_true",
+        help="Enable high-pass filter",
+    )
+
+    # Diarize command
+    diarize_parser = subparsers.add_parser(
+        "diarize", help="Perform speaker diarization"
+    )
+    diarize_parser.add_argument("input", help="Input audio file")
+    diarize_parser.add_argument(
+        "-o",
+        "--output",
+        help="Output JSON path (default: <input>_diarized.json)",
+    )
+    diarize_parser.add_argument(
+        "--num-speakers",
+        type=int,
+        help="Number of speakers (default: auto-detect)",
+    )
+    diarize_parser.add_argument(
+        "--transcript",
+        help="Path to transcript JSON for alignment",
+    )
+    diarize_parser.add_argument(
+        "--window-size",
+        type=float,
+        default=1.5,
+        help="Window size in seconds (default: 1.5)",
+    )
+
     # Export command
     export_parser = subparsers.add_parser(
-        "export",
-        help="Export segments to various formats"
+        "export", help="Export segments to various formats"
     )
+    export_parser.add_argument("input", help="Input JSON file with segments")
     export_parser.add_argument(
-        "input",
-        help="Input JSON file with segments"
-    )
-    export_parser.add_argument(
-        "-o", "--output-dir",
+        "-o",
+        "--output-dir",
         default="data/outputs",
-        help="Output directory (default: data/outputs)"
+        help="Output directory (default: data/outputs)",
     )
     export_parser.add_argument(
-        "-f", "--formats",
-        help="Comma-separated list of formats: txt,srt,vtt,json (default: all)"
+        "-f",
+        "--formats",
+        help="Comma-separated list of formats: txt,srt,vtt,json (default: all)",
     )
     export_parser.add_argument(
-        "-n", "--name",
-        help="Base name for output files (default: input filename)"
+        "-n", "--name", help="Base name for output files (default: input filename)"
     )
 
     # Batch command
     batch_parser = subparsers.add_parser(
-        "batch",
-        help="Batch export multiple segment files"
+        "batch", help="Batch export multiple segment files"
     )
     batch_parser.add_argument(
-        "input_dir",
-        help="Input directory containing JSON segment files"
+        "input_dir", help="Input directory containing JSON segment files"
     )
     batch_parser.add_argument(
-        "-o", "--output-dir",
+        "-o",
+        "--output-dir",
         default="data/outputs",
-        help="Output directory (default: data/outputs)"
+        help="Output directory (default: data/outputs)",
     )
     batch_parser.add_argument(
-        "-p", "--pattern",
+        "-p",
+        "--pattern",
         default="*.json",
-        help="File pattern to match (default: *.json)"
+        help="File pattern to match (default: *.json)",
     )
     batch_parser.add_argument(
-        "-f", "--formats",
-        help="Comma-separated list of formats (default: txt,srt,vtt,json)"
+        "-f",
+        "--formats",
+        help="Comma-separated list of formats (default: txt,srt,vtt,json)",
+    )
+    batch_parser.add_argument(
+        "--multi-gpu",
+        action="store_true",
+        help="Enable multi-GPU processing (requires launcher_multigpu.py)",
+    )
+    batch_parser.add_argument(
+        "--gpus",
+        help="Comma-separated GPU IDs for multi-GPU mode (e.g., '0,1,2') or 'auto'",
+    )
+    batch_parser.add_argument(
+        "--model-size",
+        default="base",
+        help="Model size for transcription in multi-GPU mode (default: base)",
+    )
+    batch_parser.add_argument(
+        "--language",
+        help="Language code for transcription in multi-GPU mode (e.g., 'en')",
+    )
+
+    # Plan command
+    plan_parser = subparsers.add_parser(
+        "plan", help="Generate structured PRD/plan from transcript"
+    )
+    plan_parser.add_argument("input", help="Input segments JSON file")
+    plan_parser.add_argument(
+        "-o",
+        "--output",
+        help="Output markdown file (default: <input>_plan.md)",
+    )
+    plan_parser.add_argument(
+        "-t",
+        "--title",
+        help="Plan title (default: derived from filename)",
+    )
+    plan_parser.add_argument(
+        "--model",
+        choices=["claude", "gpt"],
+        default="claude",
+        help="LLM model to use (default: claude)",
+    )
+    plan_parser.add_argument(
+        "--google-docs",
+        action="store_true",
+        help="Upload plan to Google Docs",
+    )
+    plan_parser.add_argument(
+        "--google-docs-title",
+        help="Google Docs document title (default: same as plan title)",
     )
 
     # Demo command
     demo_parser = subparsers.add_parser(
-        "demo",
-        help="Demonstrate logging and error handling features"
+        "demo", help="Demonstrate logging and error handling features"
     )
     demo_parser.add_argument(
-        "-t", "--demo-type",
-        help="Type of demo to run (optional metadata)"
+        "-t", "--demo-type", help="Type of demo to run (optional metadata)"
     )
 
     args = parser.parse_args()
@@ -323,10 +889,18 @@ def main():
         return 0
 
     # Route to appropriate command
-    if args.command == "export":
+    if args.command == "transcribe":
+        return transcribe_command(args)
+    elif args.command == "preprocess":
+        return preprocess_command(args)
+    elif args.command == "diarize":
+        return diarize_command(args)
+    elif args.command == "export":
         return export_command(args)
     elif args.command == "batch":
         return batch_command(args)
+    elif args.command == "plan":
+        return plan_command(args)
     elif args.command == "demo":
         return demo_command(args)
     else:

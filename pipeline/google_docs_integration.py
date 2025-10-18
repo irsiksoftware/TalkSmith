@@ -1,406 +1,294 @@
-#!/usr/bin/env python3
 """
-Google Docs API integration for plan publishing.
+Google Docs API integration for pushing plan documents.
 
-Pushes structured plan documents to Google Docs for collaborative editing.
-Requires Google Cloud project with Docs API enabled and service account credentials.
+Handles authentication and document creation/updating via Google Docs API.
+
+Setup:
+    1. Create a Google Cloud project
+    2. Enable Google Docs API and Google Drive API
+    3. Create OAuth 2.0 credentials (Desktop app)
+    4. Download credentials.json to config/
+    5. Copy config/google_docs.ini.example to config/google_docs.ini
+    6. Update config with credentials path
 """
 
-import logging
 import configparser
+import logging
+import os
 from pathlib import Path
-from typing import Optional, Dict, List
-from dataclasses import dataclass
+from typing import Optional, Dict, Any
 
 try:
-    from google.oauth2 import service_account
+    from google.oauth2.credentials import Credentials
+    from google.auth.transport.requests import Request
+    from google_auth_oauthlib.flow import InstalledAppFlow
     from googleapiclient.discovery import build
     from googleapiclient.errors import HttpError
+
     GOOGLE_AVAILABLE = True
 except ImportError:
     GOOGLE_AVAILABLE = False
-    logging.warning("Google API libraries not installed. Run: pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client")
 
 
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class GoogleDocsConfig:
-    """Configuration for Google Docs integration."""
-    credentials_file: Path
-    folder_id: Optional[str] = None
-    share_with_emails: Optional[List[str]] = None
-    share_permission: str = "writer"  # reader, commenter, writer
-
-    @classmethod
-    def from_config_file(cls, config_file: Path = None) -> "GoogleDocsConfig":
-        """Load configuration from INI file."""
-        if config_file is None:
-            config_file = Path("config/google_docs.ini")
-
-        if not config_file.exists():
-            raise FileNotFoundError(
-                f"Configuration file not found: {config_file}\n"
-                f"Create it from config/google_docs.ini.example"
-            )
-
-        config = configparser.ConfigParser()
-        config.read(config_file)
-
-        credentials_file = Path(config.get("google_docs", "credentials_file"))
-        folder_id = config.get("google_docs", "folder_id", fallback=None)
-
-        share_emails = config.get("google_docs", "share_with_emails", fallback="")
-        share_with_emails = [e.strip() for e in share_emails.split(",") if e.strip()]
-
-        share_permission = config.get("google_docs", "share_permission", fallback="writer")
-
-        return cls(
-            credentials_file=credentials_file,
-            folder_id=folder_id,
-            share_with_emails=share_with_emails if share_with_emails else None,
-            share_permission=share_permission
-        )
+# OAuth 2.0 scopes required for Google Docs
+SCOPES = [
+    "https://www.googleapis.com/auth/documents",
+    "https://www.googleapis.com/auth/drive.file",
+]
 
 
-class GoogleDocsPublisher:
-    """Publishes plan documents to Google Docs."""
+class GoogleDocsUploader:
+    """Client for uploading plan documents to Google Docs."""
 
-    SCOPES = [
-        'https://www.googleapis.com/auth/documents',
-        'https://www.googleapis.com/auth/drive.file'
-    ]
+    def __init__(self, config_path: Optional[str] = None):
+        """
+        Initialize Google Docs uploader.
 
-    def __init__(self, config: Optional[GoogleDocsConfig] = None):
-        """Initialize publisher with configuration."""
+        Args:
+            config_path: Path to configuration INI file (default: config/google_docs.ini)
+        """
         if not GOOGLE_AVAILABLE:
-            raise RuntimeError(
-                "Google API libraries not installed. Run:\n"
+            raise ImportError(
+                "Google API packages not installed. Run:\n"
                 "pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client"
             )
 
-        if config is None:
-            config = GoogleDocsConfig.from_config_file()
+        if config_path is None:
+            config_path = "config/google_docs.ini"
 
-        self.config = config
-        self.credentials = self._get_credentials()
-        self.docs_service = build('docs', 'v1', credentials=self.credentials)
-        self.drive_service = build('drive', 'v3', credentials=self.credentials)
+        self.config = self._load_config(config_path)
+        self.credentials = None
+        self.docs_service = None
+        self.drive_service = None
+        self._authenticate()
 
-    def _get_credentials(self):
-        """Get service account credentials."""
-        if not self.config.credentials_file.exists():
-            raise FileNotFoundError(
-                f"Credentials file not found: {self.config.credentials_file}\n"
-                f"Download service account JSON from Google Cloud Console"
-            )
+    def _load_config(self, config_path: str) -> configparser.ConfigParser:
+        """Load configuration from INI file."""
+        config = configparser.ConfigParser()
+        if not os.path.exists(config_path):
+            raise FileNotFoundError(f"Config file not found: {config_path}")
 
-        credentials = service_account.Credentials.from_service_account_file(
-            str(self.config.credentials_file),
-            scopes=self.SCOPES
-        )
-        return credentials
+        config.read(config_path)
 
-    def create_document(self, plan, share: bool = True) -> str:
-        """
-        Create Google Doc from plan.
+        # Validate required sections and keys
+        if "google_docs" not in config:
+            raise ValueError("Missing [google_docs] section in config")
 
-        Args:
-            plan: Plan object with title and sections
-            share: Whether to share document with configured emails
+        required_keys = ["credentials_file"]
+        for key in required_keys:
+            if key not in config["google_docs"]:
+                raise ValueError(f"Missing required config key: {key}")
 
-        Returns:
-            URL of created Google Doc
-        """
-        try:
-            # Create document
-            doc_metadata = {'title': plan.title}
-            if self.config.folder_id:
-                doc_metadata['parents'] = [self.config.folder_id]
+        return config
 
-            doc = self.docs_service.documents().create(body={'title': plan.title}).execute()
-            doc_id = doc['documentId']
-            logger.info(f"Created document: {plan.title} (ID: {doc_id})")
+    def _authenticate(self):
+        """Authenticate with Google APIs using OAuth 2.0."""
+        creds = None
+        token_file = self.config["google_docs"].get("token_file", "config/token.json")
+        credentials_file = self.config["google_docs"]["credentials_file"]
 
-            # Build content requests
-            requests = self._build_content_requests(plan)
+        # Load existing token if available
+        if os.path.exists(token_file):
+            creds = Credentials.from_authorized_user_file(token_file, SCOPES)
 
-            # Update document with content
-            if requests:
-                self.docs_service.documents().batchUpdate(
-                    documentId=doc_id,
-                    body={'requests': requests}
-                ).execute()
-                logger.info(f"Added content to document")
-
-            # Move to folder if specified
-            if self.config.folder_id:
-                self._move_to_folder(doc_id, self.config.folder_id)
-
-            # Share document
-            if share and self.config.share_with_emails:
-                self._share_document(doc_id, self.config.share_with_emails)
-
-            doc_url = f"https://docs.google.com/document/d/{doc_id}/edit"
-            return doc_url
-
-        except HttpError as e:
-            logger.error(f"Google Docs API error: {e}")
-            raise
-        except Exception as e:
-            logger.error(f"Failed to create document: {e}")
-            raise
-
-    def _build_content_requests(self, plan) -> List[Dict]:
-        """Build batch update requests for document content."""
-        requests = []
-        index = 1
-
-        # Add metadata
-        requests.append({
-            'insertText': {
-                'location': {'index': index},
-                'text': f"\n\nGenerated: {plan.generated_date}\nSource: {plan.source_file}\n\n"
-            }
-        })
-        index += len(f"\n\nGenerated: {plan.generated_date}\nSource: {plan.source_file}\n\n")
-
-        # Style metadata as small text
-        requests.append({
-            'updateTextStyle': {
-                'range': {
-                    'startIndex': 1,
-                    'endIndex': index
-                },
-                'textStyle': {
-                    'fontSize': {
-                        'magnitude': 9,
-                        'unit': 'PT'
-                    },
-                    'foregroundColor': {
-                        'color': {
-                            'rgbColor': {
-                                'red': 0.5,
-                                'green': 0.5,
-                                'blue': 0.5
-                            }
-                        }
-                    }
-                },
-                'fields': 'fontSize,foregroundColor'
-            }
-        })
-
-        # Add separator
-        requests.append({
-            'insertText': {
-                'location': {'index': index},
-                'text': "—" * 50 + "\n\n"
-            }
-        })
-        index += 52
-
-        # Add sections
-        section_order = [
-            "problem_statement",
-            "target_users",
-            "goals_objectives",
-            "acceptance_criteria",
-            "risks_considerations"
-        ]
-
-        for section_key in section_order:
-            if section_key not in plan.sections:
-                continue
-
-            section = plan.sections[section_key]
-
-            # Add section heading
-            heading_text = f"{section.title}\n"
-            requests.append({
-                'insertText': {
-                    'location': {'index': index},
-                    'text': heading_text
-                }
-            })
-
-            # Style heading
-            requests.append({
-                'updateParagraphStyle': {
-                    'range': {
-                        'startIndex': index,
-                        'endIndex': index + len(heading_text)
-                    },
-                    'paragraphStyle': {
-                        'namedStyleType': 'HEADING_2'
-                    },
-                    'fields': 'namedStyleType'
-                }
-            })
-            index += len(heading_text)
-
-            # Add content items
-            for item in section.content:
-                item_text = f"• {item}\n"
-                requests.append({
-                    'insertText': {
-                        'location': {'index': index},
-                        'text': item_text
-                    }
-                })
-                index += len(item_text)
-
-            # Add timestamps reference
-            if section.timestamps:
-                timestamp_text = f"\nReferenced timestamps: {', '.join(section.timestamps)}\n\n"
-                requests.append({
-                    'insertText': {
-                        'location': {'index': index},
-                        'text': timestamp_text
-                    }
-                })
-
-                # Style timestamps as italic
-                requests.append({
-                    'updateTextStyle': {
-                        'range': {
-                            'startIndex': index,
-                            'endIndex': index + len(timestamp_text) - 2
-                        },
-                        'textStyle': {
-                            'italic': True,
-                            'fontSize': {
-                                'magnitude': 9,
-                                'unit': 'PT'
-                            }
-                        },
-                        'fields': 'italic,fontSize'
-                    }
-                })
-                index += len(timestamp_text)
+        # Refresh or obtain new credentials
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
             else:
-                requests.append({
-                    'insertText': {
-                        'location': {'index': index},
-                        'text': "\n"
-                    }
-                })
-                index += 1
+                if not os.path.exists(credentials_file):
+                    raise FileNotFoundError(
+                        f"Credentials file not found: {credentials_file}\n"
+                        "Download from Google Cloud Console and save to this location."
+                    )
 
-        return requests
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    credentials_file, SCOPES
+                )
+                creds = flow.run_local_server(port=0)
 
-    def _move_to_folder(self, doc_id: str, folder_id: str):
-        """Move document to specified folder."""
-        try:
-            # Get current parents
-            file_metadata = self.drive_service.files().get(
-                fileId=doc_id,
-                fields='parents'
-            ).execute()
+            # Save token for future use
+            Path(token_file).parent.mkdir(parents=True, exist_ok=True)
+            with open(token_file, "w") as token:
+                token.write(creds.to_json())
 
-            previous_parents = ','.join(file_metadata.get('parents', []))
+        self.credentials = creds
+        self.docs_service = build("docs", "v1", credentials=creds)
+        self.drive_service = build("drive", "v3", credentials=creds)
 
-            # Move to new folder
-            self.drive_service.files().update(
-                fileId=doc_id,
-                addParents=folder_id,
-                removeParents=previous_parents,
-                fields='id, parents'
-            ).execute()
-
-            logger.info(f"Moved document to folder: {folder_id}")
-        except HttpError as e:
-            logger.warning(f"Failed to move document to folder: {e}")
-
-    def _share_document(self, doc_id: str, emails: List[str]):
-        """Share document with specified emails."""
-        for email in emails:
-            try:
-                permission = {
-                    'type': 'user',
-                    'role': self.config.share_permission,
-                    'emailAddress': email
-                }
-
-                self.drive_service.permissions().create(
-                    fileId=doc_id,
-                    body=permission,
-                    sendNotificationEmail=True
-                ).execute()
-
-                logger.info(f"Shared document with {email} ({self.config.share_permission})")
-            except HttpError as e:
-                logger.warning(f"Failed to share with {email}: {e}")
-
-    def update_document(self, doc_id: str, plan) -> str:
+    def create_document_from_markdown(self, markdown_content: str, title: str) -> str:
         """
-        Update existing Google Doc with new plan content.
+        Create a new Google Doc with markdown content.
 
         Args:
-            doc_id: Google Doc ID
-            plan: Plan object with updated content
+            markdown_content: Markdown-formatted content to insert
+            title: Document title
 
         Returns:
-            URL of updated Google Doc
+            URL of created document
         """
         try:
-            # Clear existing content (delete from index 1 to end)
-            doc = self.docs_service.documents().get(documentId=doc_id).execute()
-            content_length = doc['body']['content'][-1]['endIndex']
+            logger.info(f"Creating Google Doc: {title}")
 
-            delete_request = {
-                'deleteContentRange': {
-                    'range': {
-                        'startIndex': 1,
-                        'endIndex': content_length - 1
-                    }
-                }
-            }
+            # Create blank document
+            doc = self.docs_service.documents().create(body={"title": title}).execute()
+            doc_id = doc["documentId"]
+            logger.info(f"Document created with ID: {doc_id}")
+
+            # Convert markdown to plain text (basic conversion)
+            # For production, consider using a markdown parser
+            plain_content = self._markdown_to_plain(markdown_content)
+
+            # Insert content
+            requests = [
+                {"insertText": {"location": {"index": 1}, "text": plain_content}}
+            ]
 
             self.docs_service.documents().batchUpdate(
-                documentId=doc_id,
-                body={'requests': [delete_request]}
+                documentId=doc_id, body={"requests": requests}
+            ).execute()
+            logger.info("Content inserted successfully")
+
+            # Set sharing permissions if configured
+            sharing = self.config["google_docs"].get("sharing", "private")
+            if sharing == "anyone":
+                logger.info("Sharing document with anyone")
+                self._share_document(doc_id, "anyone", "reader")
+            elif sharing == "domain":
+                domain = self.config["google_docs"].get("domain", "")
+                if domain:
+                    logger.info(f"Sharing document with domain: {domain}")
+                    self._share_document(doc_id, f"domain:{domain}", "reader")
+
+            doc_url = f"https://docs.google.com/document/d/{doc_id}/edit"
+            logger.info(f"Document created: {doc_url}")
+            return doc_url
+
+        except HttpError as error:
+            logger.error(f"Failed to create Google Doc: {error}")
+            raise RuntimeError(f"Failed to create Google Doc: {error}")
+
+    def update_document(self, doc_id: str, markdown_content: str) -> str:
+        """
+        Update an existing Google Doc with new content.
+
+        Args:
+            doc_id: Google Docs document ID
+            markdown_content: Markdown-formatted content to insert
+
+        Returns:
+            URL of updated document
+        """
+        try:
+            # Get document to find end index
+            doc = self.docs_service.documents().get(documentId=doc_id).execute()
+            content = doc.get("body").get("content")
+            end_index = content[-1].get("endIndex", 1)
+
+            # Convert markdown to plain text
+            plain_content = self._markdown_to_plain(markdown_content)
+
+            # Replace all content
+            requests = [
+                {
+                    "deleteContentRange": {
+                        "range": {"startIndex": 1, "endIndex": end_index - 1}
+                    }
+                },
+                {"insertText": {"location": {"index": 1}, "text": plain_content}},
+            ]
+
+            self.docs_service.documents().batchUpdate(
+                documentId=doc_id, body={"requests": requests}
             ).execute()
 
-            # Add new content
-            requests = self._build_content_requests(plan)
-            if requests:
-                self.docs_service.documents().batchUpdate(
-                    documentId=doc_id,
-                    body={'requests': requests}
-                ).execute()
-
-            logger.info(f"Updated document: {doc_id}")
             return f"https://docs.google.com/document/d/{doc_id}/edit"
 
-        except HttpError as e:
-            logger.error(f"Failed to update document: {e}")
-            raise
+        except HttpError as error:
+            raise RuntimeError(f"Failed to update Google Doc: {error}")
 
+    def _share_document(self, doc_id: str, email_or_domain: str, role: str = "reader"):
+        """
+        Share document with specific user or domain.
 
-def main():
-    """Test Google Docs integration."""
-    import argparse
-    from plan_from_transcript import PlanExtractor
+        Args:
+            doc_id: Document ID
+            email_or_domain: Email address, 'anyone', or 'domain:example.com'
+            role: Permission role ('reader', 'writer', 'commenter')
+        """
+        try:
+            permission = {
+                "type": "user" if "@" in email_or_domain else "anyone",
+                "role": role,
+            }
 
-    parser = argparse.ArgumentParser(description="Test Google Docs integration")
-    parser.add_argument("segments_file", type=Path, help="Segments JSON file")
-    parser.add_argument("-c", "--config", type=Path, help="Config file path")
+            if email_or_domain.startswith("domain:"):
+                permission["type"] = "domain"
+                permission["domain"] = email_or_domain.split(":", 1)[1]
+            elif email_or_domain == "anyone":
+                permission["type"] = "anyone"
+            else:
+                permission["emailAddress"] = email_or_domain
 
-    args = parser.parse_args()
+            self.drive_service.permissions().create(
+                fileId=doc_id, body=permission
+            ).execute()
 
-    # Extract plan
-    extractor = PlanExtractor(args.segments_file)
-    plan = extractor.extract_plan()
+        except HttpError as error:
+            # Non-fatal: document is still created, just not shared
+            print(f"Warning: Failed to share document: {error}")
 
-    # Publish to Google Docs
-    config = GoogleDocsConfig.from_config_file(args.config) if args.config else None
-    publisher = GoogleDocsPublisher(config)
-    doc_url = publisher.create_document(plan)
+    def _markdown_to_plain(self, markdown: str) -> str:
+        """
+        Convert markdown to plain text (basic implementation).
 
-    print(f"Document created: {doc_url}")
+        For production use, consider integrating a proper markdown parser
+        that preserves formatting using Google Docs API formatting requests.
 
+        Args:
+            markdown: Markdown content
 
-if __name__ == "__main__":
-    main()
+        Returns:
+            Plain text version
+        """
+        # Basic markdown stripping (preserves structure but loses formatting)
+        text = markdown
+
+        # Remove markdown bold/italic
+        text = text.replace("**", "").replace("__", "")
+        text = text.replace("*", "").replace("_", "")
+
+        # Keep checkbox format
+        text = text.replace("- [ ]", "☐")
+        text = text.replace("- [x]", "☑")
+
+        return text
+
+    def list_documents(self, max_results: int = 10) -> list:
+        """
+        List recent Google Docs documents.
+
+        Args:
+            max_results: Maximum number of documents to return
+
+        Returns:
+            List of document metadata dictionaries
+        """
+        try:
+            results = (
+                self.drive_service.files()
+                .list(
+                    q="mimeType='application/vnd.google-apps.document'",
+                    pageSize=max_results,
+                    fields="files(id, name, createdTime, modifiedTime, webViewLink)",
+                )
+                .execute()
+            )
+
+            return results.get("files", [])
+
+        except HttpError as error:
+            raise RuntimeError(f"Failed to list documents: {error}")
