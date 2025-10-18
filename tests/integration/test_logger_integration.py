@@ -68,9 +68,9 @@ class TestLoggerWorkflow:
             assert metrics_entry["metrics"]["rtf"] == 0.12
 
             # Explicitly close logger handlers to release file locks on Windows
-            for handler in logger.handlers[:]:
+            for handler in logger.logger.handlers[:]:
                 handler.close()
-                logger.removeHandler(handler)
+                logger.logger.removeHandler(handler)
 
     def test_batch_processing_with_summary(self, temp_dir):
         """Test batch processing with logging summary."""
