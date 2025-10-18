@@ -99,8 +99,8 @@ Respond in JSON format with these exact keys:
 
 Be concise but comprehensive. Use bullet points where appropriate. """
     """If a section has no clear information, write """
-    '''"Not specified in transcript."
-'''
+    """"Not specified in transcript."
+"""
 )
 
 
