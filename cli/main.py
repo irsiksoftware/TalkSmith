@@ -15,7 +15,6 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import List, Optional
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -27,7 +26,6 @@ from pipeline.logger import (
     TransientError,
 )
 from pipeline.exporters import export_all
-from config.settings import get_config
 
 
 def create_slug_from_filename(filename: str) -> str:
@@ -206,13 +204,13 @@ def batch_command(args: argparse.Namespace) -> int:
     batch_summary.print_summary()
     logger.log_complete("batch_export", total=batch_summary.total)
 
-    print(f"\nBatch processing complete:")
+    print("\nBatch processing complete:")
     print(f"  Total: {batch_summary.total}")
     print(f"  Successful: {batch_summary.successful}")
     print(f"  Failed: {batch_summary.failed}")
 
     if batch_summary.errors:
-        print(f"\nFailed files:")
+        print("\nFailed files:")
         for error in batch_summary.errors:
             print(f"  - {error['item']}: {error['error']}")
 
@@ -323,18 +321,19 @@ def transcribe_command(args: argparse.Namespace) -> int:
                 formats=formats,
             )
 
-            print(f"\nExported to:")
+            print("\nExported to:")
             for fmt, path in output_files.items():
                 print(f"  {fmt.upper()}: {path}")
 
         logger.log_complete("transcribe")
 
-        print(f"\nTranscription complete!")
+        print("\nTranscription complete!")
         print(f"Duration: {result['duration']:.2f}s")
         print(f"Processing time: {result['processing_time']:.2f}s")
         print(f"RTF: {result['rtf']:.3f}")
         print(
-            f"Language: {result['language']} " f"({result['language_probability']:.2%})"
+            f"Language: {result['language']} "
+            f"({result['language_probability']:.2%})"
         )
 
         return 0
@@ -482,7 +481,7 @@ def diarize_command(args: argparse.Namespace) -> int:
 
         logger.log_complete("diarize", output_file=str(output_path))
 
-        print(f"\nDiarization complete!")
+        print("\nDiarization complete!")
         print(f"Speakers detected: {num_speakers}")
         print(f"Segments created: {len(segments)}")
         print(f"Output: {output_path}")
@@ -570,7 +569,7 @@ def plan_command(args: argparse.Namespace) -> int:
 
         logger.log_complete("plan_generation", output_file=str(output_path))
 
-        print(f"\nPlan generated successfully!")
+        print("\nPlan generated successfully!")
         print(f"Saved to: {output_path}")
 
         return 0
@@ -658,7 +657,7 @@ def demo_command(args: argparse.Namespace) -> int:
     logger.log_complete("demo_operation", duration_seconds=2.5)
 
     print("\n[OK] Demo complete! Check logs at: data/outputs/demo/logs/demo.log")
-    print(f"  (if configured with slug-based logging)")
+    print("  (if configured with slug-based logging)")
 
     return 0
 

@@ -52,12 +52,27 @@ class TestPlanGenerator:
     def mock_llm_response(self):
         """Mock LLM response with structured plan data."""
         return {
-            "problem": "User authentication is slow and causes friction in the login process.",
-            "users": "Developers and product managers who need quick access to the system.",
+            "problem": (
+                "User authentication is slow and causes friction in "
+                "the login process."
+            ),
+            "users": (
+                "Developers and product managers who need quick "
+                "access to the system."
+            ),
             "goals": "- Reduce login time by 50%\n- Improve user satisfaction",
-            "acceptance_criteria": "- Login completes in under 2 seconds\n- No breaking changes to existing integrations",
-            "risks": "- Risk of breaking existing integrations\n- Performance issues under load",
-            "notes": "Implementation requires careful testing of authentication flow.",
+            "acceptance_criteria": (
+                "- Login completes in under 2 seconds\n"
+                "- No breaking changes to existing integrations"
+            ),
+            "risks": (
+                "- Risk of breaking existing integrations\n"
+                "- Performance issues under load"
+            ),
+            "notes": (
+                "Implementation requires careful testing of "
+                "authentication flow."
+            ),
         }
 
     @patch("pipeline.plan_from_transcript.anthropic")

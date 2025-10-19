@@ -369,7 +369,7 @@ class TestRealWorldScenarios:
                 logger.error(f"Permanent error for item {i}", item_id=i)
             except TransientError:
                 # Should not reach here due to retry
-                logger.error(f"Failed after all retries", attempts=attempt_counts[i])
+                logger.error("Failed after all retries", attempts=attempt_counts[i])
 
         # Items 1, 3, 4 should succeed; item 2 fails permanently
         assert len(results) == 3
