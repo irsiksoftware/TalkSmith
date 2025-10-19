@@ -216,8 +216,8 @@ def generate_report(results: List[BenchmarkResult], output_dir: Path) -> None:
 
             # Format the table
             f.write(
-                "| Model | Device | Compute | Diarization | RTF | WER |"
-                " Memory (MB) | Process Time (s) |\n"
+                "| Model | Device | Compute | Diarization | RTF | WER | "
+                "Memory (MB) | Process Time (s) |\n"
             )
             f.write(
                 "|-------|--------|---------|-------------|-----|-----|"

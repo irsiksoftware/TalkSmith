@@ -30,11 +30,8 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from pipeline.plan_from_transcript import (
-    PlanGenerator,
-    load_segments,
-    save_markdown,
-)
+import json
+from pipeline.plan_from_transcript import PlanGenerator, load_segments, save_markdown
 from pipeline.google_docs_integration import GoogleDocsClient
 
 
@@ -102,20 +99,18 @@ def main():
     print(f"      > Loaded {len(segments)} segments")
 
     # Step 2: Extract plan structure
-    print("[2/4] Extracting plan structure...")
+    print(f"[2/4] Extracting plan structure...")
     generator = PlanGenerator(segments)
     plan_sections = generator.extract_sections()
 
     # Count total items across sections
     total_items = sum(len(items) for items in plan_sections.values())
-    filled_sections = len([k for k, v in plan_sections.items() if v])
     print(
-        f"      > Found {total_items} items across "
-        f"{filled_sections} sections"
+        f"      > Found {total_items} items across {len([k for k, v in plan_sections.items() if v])} sections"
     )
 
     # Step 3: Format as markdown
-    print("[3/4] Formatting markdown...")
+    print(f"[3/4] Formatting markdown...")
     markdown = generator.generate_markdown(title=args.title)
 
     # Save locally
@@ -125,7 +120,7 @@ def main():
 
     # Step 4: Publish to Google Docs (if requested)
     if args.publish:
-        print("[4/4] Publishing to Google Docs...")
+        print(f"[4/4] Publishing to Google Docs...")
 
         if not args.config.exists():
             print(f"      [ERROR]: Config file not found: {args.config}")
@@ -150,7 +145,7 @@ def main():
 
             # Share if requested
             if args.share:
-                print("      Sharing document...")
+                print(f"      Sharing document...")
                 for email in args.share:
                     try:
                         client._share_document(doc_id, email, args.role)
@@ -176,7 +171,7 @@ def main():
             print(f"      [ERROR]: {e}")
             sys.exit(1)
     else:
-        print("[4/4] Skipping Google Docs publish (use --publish flag)")
+        print(f"[4/4] Skipping Google Docs publish (use --publish flag)")
         print()
         print("=" * 60)
         print("SUCCESS!")
@@ -184,7 +179,7 @@ def main():
         print(f"Local file: {args.output}")
         print()
         print("To publish to Google Docs, run:")
-        print("  python examples/google_docs_example.py --publish")
+        print(f"  python examples/google_docs_example.py --publish")
         print()
 
     # Show preview
