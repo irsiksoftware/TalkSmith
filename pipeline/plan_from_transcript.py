@@ -16,7 +16,6 @@ Usage:
 import argparse
 import json
 import logging
-import sys
 from pathlib import Path
 from typing import Dict, List, Optional
 from datetime import datetime
@@ -67,7 +66,8 @@ PLAN_TEMPLATE = """# {title}
 """
 
 
-EXTRACTION_PROMPT = """You are analyzing a meeting or interview transcript to extract structured information for a Product Requirements Document (PRD) or project plan.
+EXTRACTION_PROMPT = """You are analyzing a meeting or interview transcript to extract \
+structured information for a Product Requirements Document (PRD) or project plan.
 
 Review the following transcript and extract:
 
@@ -91,7 +91,8 @@ Respond in JSON format with these exact keys:
   "notes": "string"
 }}
 
-Be concise but comprehensive. Use bullet points where appropriate. If a section has no clear information, write "Not specified in transcript."
+Be concise but comprehensive. Use bullet points where appropriate. If a section \
+has no clear information, write "Not specified in transcript."
 """
 
 

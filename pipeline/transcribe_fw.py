@@ -52,8 +52,9 @@ class FasterWhisperTranscriber:
                 suggested_model = suggest_model_for_vram(mem_info["free_gb"])
                 if model_size == "large-v3" and mem_info["free_gb"] < 10:
                     self.logger.warning(
-                        f"Model '{model_size}' may require more VRAM than available. "
-                        f"Consider using '{suggested_model}' model for {mem_info['free_gb']} GB VRAM"
+                        f"Model '{model_size}' may require more VRAM than "
+                        f"available. Consider using '{suggested_model}' model "
+                        f"for {mem_info['free_gb']} GB VRAM"
                     )
 
         # Adjust compute type for CPU

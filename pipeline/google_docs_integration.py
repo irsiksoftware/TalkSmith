@@ -16,7 +16,7 @@ import configparser
 import logging
 import os
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional
 
 try:
     from google.oauth2.credentials import Credentials
@@ -53,7 +53,8 @@ class GoogleDocsUploader:
         if not GOOGLE_AVAILABLE:
             raise ImportError(
                 "Google API packages not installed. Run:\n"
-                "pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client"
+                "pip install google-auth google-auth-oauthlib "
+                "google-auth-httplib2 google-api-python-client"
             )
 
         if config_path is None:
