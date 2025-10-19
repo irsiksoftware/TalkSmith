@@ -246,6 +246,8 @@ class TestMain:
             "torch_version": "2.0.0",
             "cuda_available": True,
             "cuda_version": "11.8",
+            "cudnn_available": True,
+            "cudnn_version": 8902,
             "device_count": 1,
             "devices": [
                 {
@@ -341,6 +343,8 @@ class TestMain:
             "torch_version": "2.0.0",
             "cuda_available": True,
             "cuda_version": "11.8",
+            "cudnn_available": True,
+            "cudnn_version": 8902,
             "device_count": 4,
             "devices": [
                 {
@@ -383,6 +387,8 @@ class TestMain:
             "torch_version": "2.0.0",
             "cuda_available": True,
             "cuda_version": "11.8",
+            "cudnn_available": True,
+            "cudnn_version": 8902,
             "device_count": 1,
             "devices": [
                 {

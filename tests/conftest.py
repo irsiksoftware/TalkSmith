@@ -17,9 +17,23 @@ def temp_dir() -> Generator[Path, None, None]:
 
 @pytest.fixture
 def sample_audio_path(temp_dir: Path) -> Path:
-    """Create a sample audio file path (not actual audio, just path)."""
+    """Create a sample audio file with actual audio data."""
+    try:
+        import soundfile as sf
+    except ImportError:
+        pytest.skip("soundfile not available")
+
     audio_path = temp_dir / "sample.wav"
-    audio_path.touch()
+
+    # Generate 1 second of sine wave audio at 440 Hz
+    sample_rate = 16000
+    duration = 1.0
+    frequency = 440.0
+    t = np.linspace(0, duration, int(sample_rate * duration))
+    audio = (np.sin(2 * np.pi * frequency * t) * 0.3).astype(np.float32)
+
+    # Write actual audio file
+    sf.write(audio_path, audio, sample_rate)
     return audio_path
 
 
