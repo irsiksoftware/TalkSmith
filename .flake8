@@ -2,5 +2,7 @@
 max-line-length = 100
 extend-ignore = E203,E402
 per-file-ignores =
-    tests/*:F401,F841
+    tests/*:F401,F841,E501
     scripts/*:F401,F841,F541
+    cli/main.py:F401,F541
+    examples/*:F401,F541,E501
