@@ -320,10 +320,7 @@ def run_multi_gpu(
     print(f"Total files: {len(files)}")
     print(f"Successful: {batch_summary.successful}")
     print(f"Failed: {batch_summary.failed}")
-    print(
-        f"Total audio duration: {total_duration:.2f}s "
-        f"({total_duration/60:.2f}m)"
-    )
+    print(f"Total audio duration: {total_duration:.2f}s " f"({total_duration/60:.2f}m)")
     print(
         f"Total processing time: {total_processing_time:.2f}s "
         f"({total_processing_time/60:.2f}m)"
