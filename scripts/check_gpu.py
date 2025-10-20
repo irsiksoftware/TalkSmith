@@ -152,7 +152,8 @@ def main():
         print("\n  ⚠ PyTorch is not installed or could not be imported")
         print("  ⚠ Please install PyTorch with CUDA support:")
         print(
-            "     pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118"
+            "     pip install torch torchvision torchaudio "
+            "--index-url https://download.pytorch.org/whl/cu118"
         )
         return 1
 
