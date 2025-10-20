@@ -181,11 +181,13 @@ class TestRetryIntegration:
                 raise TransientError("Service unavailable")
             elif call_count["count"] == 2:
                 raise ConnectionError("Connection reset")
+            elif call_count["count"] == 3:
+                raise TimeoutError("Request timeout")
             return "success"
 
         result = unstable_operation()
         assert result == "success"
-        assert call_count["count"] == 3
+        assert call_count["count"] == 4
 
     def test_retry_functional_approach(self):
         """Test retry using functional approach (retry_operation)."""
