@@ -1,0 +1,170 @@
+{
+  "segments": [
+    {
+      "id": 0,
+      "start": 0.0,
+      "end": 8.5,
+      "text": "Welcome everyone to the product planning meeting. Today we're going to discuss the new mobile app feature.",
+      "timestamp": "00:00",
+      "speaker": "Alice"
+    },
+    {
+      "id": 1,
+      "start": 8.5,
+      "end": 18.2,
+      "text": "The main problem we're seeing is that users are struggling to find relevant products quickly. Our analytics show high bounce rates on search results pages.",
+      "timestamp": "00:08",
+      "speaker": "Bob"
+    },
+    {
+      "id": 2,
+      "start": 18.2,
+      "end": 26.7,
+      "text": "Our target users are busy professionals aged 25-45 who shop during their commute. They need quick, accurate results.",
+      "timestamp": "00:18",
+      "speaker": "Charlie"
+    },
+    {
+      "id": 3,
+      "start": 26.7,
+      "end": 35.1,
+      "text": "The primary goal is to reduce search time by 50% and increase conversion rate from search by at least 20%.",
+      "timestamp": "00:26",
+      "speaker": "Dave"
+    },
+    {
+      "id": 4,
+      "start": 35.1,
+      "end": 44.8,
+      "text": "We need to implement AI-powered search with natural language processing. This should understand user intent, not just keywords.",
+      "timestamp": "00:35",
+      "speaker": "Alice"
+    },
+    {
+      "id": 5,
+      "start": 44.8,
+      "end": 53.2,
+      "text": "Another goal is to add personalized recommendations based on browsing history and purchase patterns.",
+      "timestamp": "00:44",
+      "speaker": "Bob"
+    },
+    {
+      "id": 6,
+      "start": 53.2,
+      "end": 62.5,
+      "text": "For acceptance criteria, we need to ensure search results are relevant at least 85% of the time based on user feedback.",
+      "timestamp": "00:53",
+      "speaker": "Charlie"
+    },
+    {
+      "id": 7,
+      "start": 62.5,
+      "end": 70.9,
+      "text": "The system must handle at least 1000 concurrent searches without degradation. Response time should be under 200 milliseconds.",
+      "timestamp": "01:02",
+      "speaker": "Dave"
+    },
+    {
+      "id": 8,
+      "start": 70.9,
+      "end": 79.3,
+      "text": "We should create a fallback mechanism if the AI service is unavailable. Maybe use traditional keyword search as backup.",
+      "timestamp": "01:10",
+      "speaker": "Alice"
+    },
+    {
+      "id": 9,
+      "start": 79.3,
+      "end": 88.7,
+      "text": "One major risk is the AI model might have bias in recommendations. We need to test across diverse user groups.",
+      "timestamp": "01:19",
+      "speaker": "Bob"
+    },
+    {
+      "id": 10,
+      "start": 88.7,
+      "end": 96.4,
+      "text": "There's also a concern about privacy. We must ensure user data is anonymized and comply with GDPR requirements.",
+      "timestamp": "01:28",
+      "speaker": "Charlie"
+    },
+    {
+      "id": 11,
+      "start": 96.4,
+      "end": 104.8,
+      "text": "The technical risk is integration complexity. Our current infrastructure might not handle the ML pipeline efficiently.",
+      "timestamp": "01:36",
+      "speaker": "Dave"
+    },
+    {
+      "id": 12,
+      "start": 104.8,
+      "end": 112.2,
+      "text": "We need to design a scalable architecture. Should we use microservices or serverless for the search API?",
+      "timestamp": "01:44",
+      "speaker": "Alice"
+    },
+    {
+      "id": 13,
+      "start": 112.2,
+      "end": 119.6,
+      "text": "For our stakeholders, this includes the product team, marketing, and customer success. They all need to be aligned.",
+      "timestamp": "01:52",
+      "speaker": "Bob"
+    },
+    {
+      "id": 14,
+      "start": 119.6,
+      "end": 127.1,
+      "text": "Let's add to the acceptance criteria that we need A/B test results showing statistical significance before full rollout.",
+      "timestamp": "01:59",
+      "speaker": "Charlie"
+    },
+    {
+      "id": 15,
+      "start": 127.1,
+      "end": 134.5,
+      "text": "We should also build analytics dashboards to track search performance metrics in real-time.",
+      "timestamp": "02:07",
+      "speaker": "Dave"
+    },
+    {
+      "id": 16,
+      "start": 134.5,
+      "end": 141.9,
+      "text": "Another concern is budget. The AI service costs could escalate if search volume grows faster than expected.",
+      "timestamp": "02:14",
+      "speaker": "Alice"
+    },
+    {
+      "id": 17,
+      "start": 141.9,
+      "end": 148.3,
+      "text": "We'll need to implement cost monitoring and set up alerts for unusual spending patterns.",
+      "timestamp": "02:21",
+      "speaker": "Bob"
+    },
+    {
+      "id": 18,
+      "start": 148.3,
+      "end": 154.7,
+      "text": "That covers the main points. Let's schedule a technical deep dive for next week.",
+      "timestamp": "02:28",
+      "speaker": "Charlie"
+    },
+    {
+      "id": 19,
+      "start": 154.7,
+      "end": 159.2,
+      "text": "Thanks everyone for your input. Meeting adjourned.",
+      "timestamp": "02:34",
+      "speaker": "Dave"
+    }
+  ],
+  "metadata": {
+    "source": "product_planning_meeting.wav",
+    "duration": 159.2,
+    "language": "en",
+    "generated_at": "2025-10-16T10:30:00Z"
+  }
+}

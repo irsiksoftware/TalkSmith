@@ -13,7 +13,7 @@ import sys
 import time
 from pathlib import Path
 from queue import Empty
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional
 
 try:
     import torch
@@ -236,7 +236,7 @@ def run_multi_gpu(
         return 0
 
     logger.info(f"Found {len(files)} files to process", file_count=len(files))
-    print(f"\n=== Multi-GPU Transcription ===")
+    print("\n=== Multi-GPU Transcription ===")
     print(f"Files: {len(files)}")
     print(f"GPUs: {gpus}")
     print(f"Model: {model_size}")
@@ -316,24 +316,25 @@ def run_multi_gpu(
     speedup = total_duration / total_processing_time if total_processing_time > 0 else 0
 
     # Print summary
-    print(f"\n=== Summary ===")
+    print("\n=== Summary ===")
     print(f"Total files: {len(files)}")
     print(f"Successful: {batch_summary.successful}")
     print(f"Failed: {batch_summary.failed}")
-    print(f"Total audio duration: {total_duration:.2f}s ({total_duration/60:.2f}m)")
+    print(f"Total audio duration: {total_duration:.2f}s " f"({total_duration/60:.2f}m)")
     print(
-        f"Total processing time: {total_processing_time:.2f}s ({total_processing_time/60:.2f}m)"
+        f"Total processing time: {total_processing_time:.2f}s "
+        f"({total_processing_time/60:.2f}m)"
     )
     print(f"Overall RTF: {overall_rtf:.3f}")
     print(f"Speedup: {speedup:.2f}x")
 
-    print(f"\n=== Per-GPU Stats ===")
+    print("\n=== Per-GPU Stats ===")
     for gpu_id in sorted(gpu_stats.keys()):
         stats = gpu_stats[gpu_id]
         print(f"GPU {gpu_id}: {stats['processed']} files, {stats['time']:.2f}s")
 
     if batch_summary.errors:
-        print(f"\n=== Failed Files ===")
+        print("\n=== Failed Files ===")
         for error in batch_summary.errors:
             print(f"  - {error['item']}: {error['error']}")
 

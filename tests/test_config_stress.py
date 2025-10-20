@@ -210,10 +210,10 @@ class TestConfigMemoryEfficiency:
 
     def test_singleton_memory_efficiency(self):
         """Test singleton pattern doesn't create extra instances."""
-        from config import get_config
+        from config import get_config as get_singleton_config
 
         # Get config 100 times
-        configs = [get_config() for _ in range(100)]
+        configs = [get_singleton_config() for _ in range(100)]
 
         # All should be the same instance
         assert all(c is configs[0] for c in configs)
