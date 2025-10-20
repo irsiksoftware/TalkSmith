@@ -106,6 +106,7 @@ class TalkSmithLogger:
         self.slug = slug
         self.log_format = log_format
         self.config = get_config()
+        self._file_handler = None
 
         # Set log level from config
         level = self.config.get("Logging", "level", fallback="INFO")
@@ -145,10 +146,11 @@ class TalkSmithLogger:
             log_file = log_dir / f"{self.slug}.log"
 
             file_handler = RotatingFileHandler(
-                log_file, maxBytes=10 * 1024 * 1024, backupCount=5  # 10MB
+                log_file, maxBytes=10 * 1024 * 1024, backupCount=5, delay=True  # 10MB
             )
             file_handler.setFormatter(formatter)
             self.logger.addHandler(file_handler)
+            self._file_handler = file_handler
 
     def _get_log_dir(self) -> Path:
         """
@@ -243,6 +245,13 @@ class TalkSmithLogger:
         """
         self.error(message, exit_code=exit_code, **kwargs)
         return exit_code
+
+    def close(self):
+        """Close file handlers to release file locks (important for Windows)."""
+        if self._file_handler:
+            self._file_handler.close()
+            self.logger.removeHandler(self._file_handler)
+            self._file_handler = None
 
 
 def get_logger(

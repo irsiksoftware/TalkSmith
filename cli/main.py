@@ -2,6 +2,9 @@
 TalkSmith CLI - Unified command-line interface for transcription pipeline.
 
 Provides subcommands for:
+- transcribe: Transcribe audio files
+- preprocess: Preprocess audio for better quality
+- diarize: Speaker diarization
 - export: Export segments to various formats
 - batch: Batch process multiple files
 - demo: Demonstrate logging and error handling
@@ -215,6 +218,282 @@ def batch_command(args: argparse.Namespace) -> int:
     return batch_summary.get_exit_code()
 
 
+def transcribe_command(args: argparse.Namespace) -> int:
+    """
+    Transcribe audio file with optional diarization.
+
+    Demonstrates:
+    - Integration with transcribe_fw.py
+    - Optional diarization integration
+    - Automatic export to multiple formats
+    - Structured logging
+    """
+    # Lazy import to avoid import errors when dependencies not installed
+    from pipeline.transcribe_fw import transcribe_file
+
+    input_path = Path(args.input)
+
+    # Create slug for logging
+    slug = create_slug_from_filename(input_path.name)
+    logger = get_logger(__name__, slug=slug)
+
+    logger.log_start(
+        "transcribe",
+        input_file=str(input_path),
+        model=args.model,
+        diarize=args.diarize,
+    )
+
+    try:
+        # Check input file exists
+        if not input_path.exists():
+            exit_code = logger.log_error_exit(
+                f"Input file not found: {input_path}", file=str(input_path)
+            )
+            return exit_code
+
+        # Set output directory
+        output_dir = Path(args.output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        # Transcribe audio
+        logger.info(
+            f"Transcribing with {args.model} model",
+            model=args.model,
+            device=args.device,
+        )
+
+        result = transcribe_file(
+            audio_path=str(input_path),
+            output_dir=str(output_dir),
+            model_size=args.model,
+            device=args.device,
+            language=args.language,
+        )
+
+        logger.log_metrics(
+            {
+                "duration": result["duration"],
+                "processing_time": result["processing_time"],
+                "rtf": result["rtf"],
+                "language": result["language"],
+                "language_probability": result["language_probability"],
+            }
+        )
+
+        # Optional diarization
+        if args.diarize:
+            from pipeline.diarize_alt import diarize_file
+
+            logger.info("Running speaker diarization")
+
+            # Get transcript JSON path
+            transcript_json = output_dir / f"{input_path.stem}.json"
+
+            # Run diarization
+            diarized_json = output_dir / f"{input_path.stem}_diarized.json"
+            diarize_file(
+                audio_path=str(input_path),
+                output_path=str(diarized_json),
+                num_speakers=args.num_speakers,
+                transcript_path=str(transcript_json),
+            )
+
+            logger.info("Diarization complete", output=str(diarized_json))
+
+            # Load diarized segments for export
+            with open(diarized_json, "r", encoding="utf-8") as f:
+                diarized_data = json.load(f)
+                segments = diarized_data.get("segments", [])
+        else:
+            segments = result["segments"]
+
+        # Auto-export to formats
+        if args.formats:
+            formats = args.formats.split(",")
+            base_name = input_path.stem
+
+            logger.info("Exporting to formats", formats=formats)
+
+            output_files = export_all(
+                segments=segments,
+                output_dir=output_dir,
+                base_name=base_name,
+                formats=formats,
+            )
+
+            print(f"\nExported to:")
+            for fmt, path in output_files.items():
+                print(f"  {fmt.upper()}: {path}")
+
+        logger.log_complete("transcribe")
+
+        print(f"\nTranscription complete!")
+        print(f"Duration: {result['duration']:.2f}s")
+        print(f"Processing time: {result['processing_time']:.2f}s")
+        print(f"RTF: {result['rtf']:.3f}")
+        print(
+            f"Language: {result['language']} " f"({result['language_probability']:.2%})"
+        )
+
+        return 0
+
+    except Exception as e:
+        logger.exception("Transcription failed", error=str(e))
+        print(f"ERROR: {e}")
+        return 1
+
+
+def preprocess_command(args: argparse.Namespace) -> int:
+    """
+    Preprocess audio file for better transcription quality.
+
+    Demonstrates:
+    - Integration with preprocess.py
+    - Audio quality improvement options
+    - Metrics logging
+    """
+    # Lazy import to avoid import errors when dependencies not installed
+    from pipeline.preprocess import preprocess_audio
+
+    input_path = Path(args.input)
+
+    # Create slug for logging
+    slug = create_slug_from_filename(input_path.name)
+    logger = get_logger(__name__, slug=slug)
+
+    logger.log_start(
+        "preprocess",
+        input_file=str(input_path),
+        denoise=args.denoise,
+        trim=args.trim,
+    )
+
+    try:
+        # Check input file exists
+        if not input_path.exists():
+            exit_code = logger.log_error_exit(
+                f"Input file not found: {input_path}", file=str(input_path)
+            )
+            return exit_code
+
+        # Set output path
+        if args.output:
+            output_path = Path(args.output)
+        else:
+            output_path = input_path.parent / f"{input_path.stem}_preprocessed.wav"
+
+        # Preprocess audio
+        logger.info(
+            "Preprocessing audio",
+            denoise=args.denoise,
+            loudnorm=args.loudnorm,
+            trim_silence=args.trim,
+        )
+
+        output_path, metrics = preprocess_audio(
+            input_path=input_path,
+            output_path=output_path,
+            denoise=args.denoise,
+            loudnorm=args.loudnorm,
+            trim_silence=args.trim,
+            silence_threshold_db=args.silence_threshold,
+            high_pass_filter=args.high_pass_filter,
+        )
+
+        logger.log_metrics(metrics)
+        logger.log_complete("preprocess", output_file=str(output_path))
+
+        print(f"\nPreprocessed audio saved to: {output_path}")
+        print("\nMetrics:")
+        print(f"  Original duration: {metrics['original_duration_seconds']:.2f}s")
+        print(f"  Final duration: {metrics['final_duration_seconds']:.2f}s")
+        print(f"  Steps applied: {', '.join(metrics['steps_applied'])}")
+
+        return 0
+
+    except Exception as e:
+        logger.exception("Preprocessing failed", error=str(e))
+        print(f"ERROR: {e}")
+        return 1
+
+
+def diarize_command(args: argparse.Namespace) -> int:
+    """
+    Perform speaker diarization on audio file.
+
+    Demonstrates:
+    - Integration with diarize_alt.py
+    - Speaker detection and labeling
+    - Optional transcript alignment
+    """
+    # Lazy import to avoid import errors when dependencies not installed
+    from pipeline.diarize_alt import diarize_file
+
+    input_path = Path(args.input)
+
+    # Create slug for logging
+    slug = create_slug_from_filename(input_path.name)
+    logger = get_logger(__name__, slug=slug)
+
+    logger.log_start(
+        "diarize",
+        input_file=str(input_path),
+        num_speakers=args.num_speakers,
+    )
+
+    try:
+        # Check input file exists
+        if not input_path.exists():
+            exit_code = logger.log_error_exit(
+                f"Input file not found: {input_path}", file=str(input_path)
+            )
+            return exit_code
+
+        # Set output path
+        if args.output:
+            output_path = Path(args.output)
+        else:
+            output_path = input_path.parent / f"{input_path.stem}_diarized.json"
+
+        # Run diarization
+        logger.info(
+            "Running speaker diarization",
+            num_speakers=args.num_speakers or "auto",
+        )
+
+        segments = diarize_file(
+            audio_path=str(input_path),
+            output_path=str(output_path),
+            num_speakers=args.num_speakers,
+            transcript_path=args.transcript,
+            window_size=args.window_size,
+        )
+
+        num_speakers = len(set(seg["speaker"] for seg in segments))
+
+        logger.log_metrics(
+            {
+                "num_speakers": num_speakers,
+                "num_segments": len(segments),
+            }
+        )
+
+        logger.log_complete("diarize", output_file=str(output_path))
+
+        print(f"\nDiarization complete!")
+        print(f"Speakers detected: {num_speakers}")
+        print(f"Segments created: {len(segments)}")
+        print(f"Output: {output_path}")
+
+        return 0
+
+    except Exception as e:
+        logger.exception("Diarization failed", error=str(e))
+        print(f"ERROR: {e}")
+        return 1
+
+
 def demo_command(args: argparse.Namespace) -> int:
     """
     Demonstrate logging features including retry/backoff.
@@ -306,6 +585,114 @@ def main():
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
+    # Transcribe command
+    transcribe_parser = subparsers.add_parser(
+        "transcribe", help="Transcribe audio file"
+    )
+    transcribe_parser.add_argument("input", help="Input audio file")
+    transcribe_parser.add_argument(
+        "-o",
+        "--output-dir",
+        default="data/outputs",
+        help="Output directory (default: data/outputs)",
+    )
+    transcribe_parser.add_argument(
+        "-m",
+        "--model",
+        default="base",
+        choices=["tiny", "base", "small", "medium", "medium.en", "large-v3"],
+        help="Whisper model size (default: base)",
+    )
+    transcribe_parser.add_argument(
+        "--device",
+        default="cuda",
+        choices=["cuda", "cpu"],
+        help="Device to use (default: cuda)",
+    )
+    transcribe_parser.add_argument(
+        "-l",
+        "--language",
+        help="Language code (e.g., 'en'). Auto-detect if not specified.",
+    )
+    transcribe_parser.add_argument(
+        "--diarize",
+        action="store_true",
+        help="Enable speaker diarization",
+    )
+    transcribe_parser.add_argument(
+        "--num-speakers",
+        type=int,
+        help="Number of speakers for diarization (auto-detect if not specified)",
+    )
+    transcribe_parser.add_argument(
+        "-f",
+        "--formats",
+        help="Comma-separated export formats: txt,srt,vtt,json (e.g., 'txt,srt')",
+    )
+
+    # Preprocess command
+    preprocess_parser = subparsers.add_parser(
+        "preprocess", help="Preprocess audio for better quality"
+    )
+    preprocess_parser.add_argument("input", help="Input audio file")
+    preprocess_parser.add_argument(
+        "-o",
+        "--output",
+        help="Output file (default: <input>_preprocessed.wav)",
+    )
+    preprocess_parser.add_argument(
+        "--denoise",
+        action="store_true",
+        help="Enable denoising",
+    )
+    preprocess_parser.add_argument(
+        "--loudnorm",
+        action="store_true",
+        help="Enable loudness normalization",
+    )
+    preprocess_parser.add_argument(
+        "--trim",
+        action="store_true",
+        help="Trim silence from audio",
+    )
+    preprocess_parser.add_argument(
+        "--silence-threshold",
+        type=float,
+        default=-40.0,
+        help="Silence threshold in dB (default: -40)",
+    )
+    preprocess_parser.add_argument(
+        "--high-pass-filter",
+        action="store_true",
+        help="Enable high-pass filter",
+    )
+
+    # Diarize command
+    diarize_parser = subparsers.add_parser(
+        "diarize", help="Perform speaker diarization"
+    )
+    diarize_parser.add_argument("input", help="Input audio file")
+    diarize_parser.add_argument(
+        "-o",
+        "--output",
+        help="Output JSON path (default: <input>_diarized.json)",
+    )
+    diarize_parser.add_argument(
+        "--num-speakers",
+        type=int,
+        help="Number of speakers (default: auto-detect)",
+    )
+    diarize_parser.add_argument(
+        "--transcript",
+        help="Path to transcript JSON for alignment",
+    )
+    diarize_parser.add_argument(
+        "--window-size",
+        type=float,
+        default=1.5,
+        help="Window size in seconds (default: 1.5)",
+    )
+
     # Export command
     export_parser = subparsers.add_parser(
         "export", help="Export segments to various formats"
@@ -384,7 +771,13 @@ def main():
         return 0
 
     # Route to appropriate command
-    if args.command == "export":
+    if args.command == "transcribe":
+        return transcribe_command(args)
+    elif args.command == "preprocess":
+        return preprocess_command(args)
+    elif args.command == "diarize":
+        return diarize_command(args)
+    elif args.command == "export":
         return export_command(args)
     elif args.command == "batch":
         return batch_command(args)

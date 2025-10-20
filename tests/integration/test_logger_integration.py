@@ -34,43 +34,50 @@ class TestLoggerWorkflow:
 
             logger = get_logger(__name__, slug="test-workflow")
 
-            # Simulate transcription workflow
-            logger.log_start("transcription", audio_file="test.wav", model="large-v3")
+            try:
+                # Simulate transcription workflow
+                logger.log_start(
+                    "transcription", audio_file="test.wav", model="large-v3"
+                )
 
-            # Log progress
-            logger.info("Loading model", stage="model_load")
-            logger.info("Processing audio", stage="processing", progress=50)
+                # Log progress
+                logger.info("Loading model", stage="model_load")
+                logger.info("Processing audio", stage="processing", progress=50)
 
-            # Log metrics
-            logger.log_metrics(
-                {"rtf": 0.12, "duration": 300, "segments": 45}, level="INFO"
-            )
+                # Log metrics
+                logger.log_metrics(
+                    {"rtf": 0.12, "duration": 300, "segments": 45}, level="INFO"
+                )
 
-            # Complete operation
-            logger.log_complete("transcription", duration=36.5)
+                # Complete operation
+                logger.log_complete("transcription", duration=36.5)
 
-            # Close all handlers to release file locks on Windows
-            for handler in logger.logger.handlers[:]:
-                handler.close()
-                logger.logger.removeHandler(handler)
+                # Verify log file created
+                log_file = temp_dir / "test-workflow" / "logs" / "test-workflow.log"
+                assert log_file.exists()
 
-            # Verify log file created
-            log_file = temp_dir / "test-workflow" / "logs" / "test-workflow.log"
-            assert log_file.exists()
+                # Parse and verify log entries
+                with open(log_file, encoding="utf-8") as f:
+                    log_entries = [json.loads(line) for line in f]
 
-            # Parse and verify log entries
-            with open(log_file, encoding="utf-8") as f:
-                log_entries = [json.loads(line) for line in f]
+                # Verify workflow logged correctly
+                assert any(
+                    "Starting transcription" in e["message"] for e in log_entries
+                )
+                assert any("Loading model" in e["message"] for e in log_entries)
+                assert any(
+                    "Completed transcription" in e["message"] for e in log_entries
+                )
 
-            # Verify workflow logged correctly
-            assert any("Starting transcription" in e["message"] for e in log_entries)
-            assert any("Loading model" in e["message"] for e in log_entries)
-            assert any("Completed transcription" in e["message"] for e in log_entries)
-
-            # Verify metrics logged
-            metrics_entry = next((e for e in log_entries if "metrics" in e), None)
-            assert metrics_entry is not None
-            assert metrics_entry["metrics"]["rtf"] == 0.12
+                # Verify metrics logged
+                metrics_entry = next((e for e in log_entries if "metrics" in e), None)
+                assert metrics_entry is not None
+                assert metrics_entry["metrics"]["rtf"] == 0.12
+            finally:
+                # Ensure cleanup even if test fails - close logger to release file handle
+                for handler in logger.logger.handlers[:]:
+                    handler.close()
+                    logger.logger.removeHandler(handler)
 
     def test_batch_processing_with_summary(self, temp_dir):
         """Test batch processing with logging summary."""
