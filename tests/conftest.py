@@ -23,14 +23,16 @@ def sample_audio_path(temp_dir: Path) -> Path:
     except ImportError:
         pytest.skip("soundfile not available")
 
-    # Generate simple audio data
+    audio_path = temp_dir / "sample.wav"
+
+    # Generate 1 second of sine wave audio at 440 Hz
     sample_rate = 16000
     duration = 1.0
-    frequency = 440.0  # A4 note
+    frequency = 440.0
     t = np.linspace(0, duration, int(sample_rate * duration))
-    audio = np.sin(2 * np.pi * frequency * t).astype(np.float32)
+    audio = (np.sin(2 * np.pi * frequency * t) * 0.3).astype(np.float32)
 
-    audio_path = temp_dir / "sample.wav"
+    # Write actual audio file
     sf.write(audio_path, audio, sample_rate)
     return audio_path
 
