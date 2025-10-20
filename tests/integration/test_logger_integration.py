@@ -79,11 +79,6 @@ class TestLoggerWorkflow:
                     handler.close()
                     logger.logger.removeHandler(handler)
 
-            # Force close logger handlers to release file locks on Windows
-            for handler in logger.logger.handlers[:]:
-                handler.close()
-                logger.logger.removeHandler(handler)
-
     def test_batch_processing_with_summary(self, temp_dir):
         """Test batch processing with logging summary."""
         logger = get_logger(__name__)
