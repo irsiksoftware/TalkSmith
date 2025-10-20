@@ -36,7 +36,9 @@ class TestLoggerWorkflow:
 
             try:
                 # Simulate transcription workflow
-                logger.log_start("transcription", audio_file="test.wav", model="large-v3")
+                logger.log_start(
+                    "transcription", audio_file="test.wav", model="large-v3"
+                )
 
                 # Log progress
                 logger.info("Loading model", stage="model_load")
@@ -59,9 +61,13 @@ class TestLoggerWorkflow:
                     log_entries = [json.loads(line) for line in f]
 
                 # Verify workflow logged correctly
-                assert any("Starting transcription" in e["message"] for e in log_entries)
+                assert any(
+                    "Starting transcription" in e["message"] for e in log_entries
+                )
                 assert any("Loading model" in e["message"] for e in log_entries)
-                assert any("Completed transcription" in e["message"] for e in log_entries)
+                assert any(
+                    "Completed transcription" in e["message"] for e in log_entries
+                )
 
                 # Verify metrics logged
                 metrics_entry = next((e for e in log_entries if "metrics" in e), None)
