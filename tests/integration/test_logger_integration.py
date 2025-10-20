@@ -34,38 +34,45 @@ class TestLoggerWorkflow:
 
             logger = get_logger(__name__, slug="test-workflow")
 
-            # Simulate transcription workflow
-            logger.log_start("transcription", audio_file="test.wav", model="large-v3")
+            try:
+                # Simulate transcription workflow
+                logger.log_start("transcription", audio_file="test.wav", model="large-v3")
 
-            # Log progress
-            logger.info("Loading model", stage="model_load")
-            logger.info("Processing audio", stage="processing", progress=50)
+                # Log progress
+                logger.info("Loading model", stage="model_load")
+                logger.info("Processing audio", stage="processing", progress=50)
 
-            # Log metrics
-            logger.log_metrics(
-                {"rtf": 0.12, "duration": 300, "segments": 45}, level="INFO"
-            )
+                # Log metrics
+                logger.log_metrics(
+                    {"rtf": 0.12, "duration": 300, "segments": 45}, level="INFO"
+                )
 
-            # Complete operation
-            logger.log_complete("transcription", duration=36.5)
+                # Complete operation
+                logger.log_complete("transcription", duration=36.5)
 
-            # Verify log file created
-            log_file = temp_dir / "test-workflow" / "logs" / "test-workflow.log"
-            assert log_file.exists()
+                # Close logger to release file handle (important for Windows)
+                logger.close()
 
-            # Parse and verify log entries
-            with open(log_file, encoding="utf-8") as f:
-                log_entries = [json.loads(line) for line in f]
+                # Verify log file created
+                log_file = temp_dir / "test-workflow" / "logs" / "test-workflow.log"
+                assert log_file.exists()
 
-            # Verify workflow logged correctly
-            assert any("Starting transcription" in e["message"] for e in log_entries)
-            assert any("Loading model" in e["message"] for e in log_entries)
-            assert any("Completed transcription" in e["message"] for e in log_entries)
+                # Parse and verify log entries
+                with open(log_file, encoding="utf-8") as f:
+                    log_entries = [json.loads(line) for line in f]
 
-            # Verify metrics logged
-            metrics_entry = next((e for e in log_entries if "metrics" in e), None)
-            assert metrics_entry is not None
-            assert metrics_entry["metrics"]["rtf"] == 0.12
+                # Verify workflow logged correctly
+                assert any("Starting transcription" in e["message"] for e in log_entries)
+                assert any("Loading model" in e["message"] for e in log_entries)
+                assert any("Completed transcription" in e["message"] for e in log_entries)
+
+                # Verify metrics logged
+                metrics_entry = next((e for e in log_entries if "metrics" in e), None)
+                assert metrics_entry is not None
+                assert metrics_entry["metrics"]["rtf"] == 0.12
+            finally:
+                # Ensure cleanup even if test fails
+                logger.close()
 
     def test_batch_processing_with_summary(self, temp_dir):
         """Test batch processing with logging summary."""
