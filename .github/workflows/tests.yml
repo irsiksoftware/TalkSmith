@@ -8,7 +8,8 @@ on:
 
 jobs:
   test:
-    runs-on: ${{ matrix.os }}
+    runs-on: [self-hosted, windows]
+    timeout-minutes: 5
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
@@ -57,7 +58,8 @@ jobs:
         fail_ci_if_error: false
 
   lint:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, windows]
+    timeout-minutes: 5
 
     steps:
     - uses: actions/checkout@v3
