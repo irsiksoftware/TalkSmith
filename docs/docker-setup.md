@@ -5,6 +5,7 @@ This guide covers Docker setup for TalkSmith with CUDA GPU acceleration support.
 ## Overview
 
 TalkSmith includes Docker and Docker Compose configurations for:
+
 - **Reproducible GPU environments** across development machines
 - **CUDA-enabled containers** for GPU-accelerated transcription
 - **Multi-GPU support** for parallel processing
@@ -13,11 +14,13 @@ TalkSmith includes Docker and Docker Compose configurations for:
 ## Prerequisites
 
 ### Required
+
 - **Docker Engine** 20.10+ ([Install Guide](https://docs.docker.com/engine/install/))
 - **NVIDIA GPU** with CUDA support
 - **nvidia-container-toolkit** or nvidia-docker2 ([Install Guide](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html))
 
 ### System Requirements
+
 - **Linux:** Ubuntu 18.04+, Debian 10+, CentOS 7+, or compatible
 - **GPU:** NVIDIA GPU with Compute Capability 3.5+ (GTX 700 series or newer)
 - **Driver:** NVIDIA Driver 450.80.02+ (for CUDA 11.x support)
@@ -25,7 +28,9 @@ TalkSmith includes Docker and Docker Compose configurations for:
 - **Disk:** 20GB+ for Docker images and model cache
 
 ### Windows/macOS Note
+
 Docker CUDA support is **Linux-only**. For Windows/macOS:
+
 - Use **WSL2** with Docker Desktop on Windows ([WSL2 + GPU Guide](https://docs.nvidia.com/cuda/wsl-user-guide/index.html))
 - Use **native installation** or cloud instances on macOS
 
@@ -34,6 +39,7 @@ Docker CUDA support is **Linux-only**. For Windows/macOS:
 ### 1. Install NVIDIA Container Toolkit
 
 #### Ubuntu/Debian
+
 ```bash
 # Add NVIDIA GPG key
 distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
@@ -53,6 +59,7 @@ sudo systemctl restart docker
 ```
 
 #### CentOS/RHEL
+
 ```bash
 # Add repository
 distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
@@ -67,6 +74,7 @@ sudo systemctl restart docker
 ```
 
 ### 2. Verify GPU Access
+
 ```bash
 # Test NVIDIA runtime
 docker run --rm --gpus all nvidia/cuda:11.8.0-base-ubuntu22.04 nvidia-smi
@@ -75,6 +83,7 @@ docker run --rm --gpus all nvidia/cuda:11.8.0-base-ubuntu22.04 nvidia-smi
 ```
 
 ### 3. Clone TalkSmith Repository
+
 ```bash
 git clone https://github.com/DakotaIrsik/TalkSmith.git
 cd TalkSmith
@@ -155,21 +164,25 @@ services:
 ### GPU Selection
 
 #### All GPUs (default)
+
 ```yaml
 count: all  # Use all available GPUs
 ```
 
 #### Specific GPU Count
+
 ```yaml
 count: 1  # Use only 1 GPU
 ```
 
 #### Specific GPU IDs
+
 ```yaml
 device_ids: ['0']  # Use only GPU 0
 ```
 
 #### Multiple Specific GPUs
+
 ```yaml
 device_ids: ['0', '1']  # Use GPUs 0 and 1
 ```
@@ -192,6 +205,7 @@ services:
 ## Usage Examples
 
 ### Prefetch Models
+
 ```bash
 # Download models for offline use
 docker compose run --rm talksmith \
@@ -199,6 +213,7 @@ docker compose run --rm talksmith \
 ```
 
 ### Export Segments
+
 ```bash
 # Export to multiple formats
 docker compose run --rm talksmith python cli/main.py export \
@@ -208,6 +223,7 @@ docker compose run --rm talksmith python cli/main.py export \
 ```
 
 ### Batch Processing
+
 ```bash
 # Process directory of segment files
 docker compose run --rm talksmith python cli/main.py batch \
@@ -217,6 +233,7 @@ docker compose run --rm talksmith python cli/main.py batch \
 ```
 
 ### Speaker Post-Processing
+
 ```bash
 # Normalize speakers and merge short utterances
 docker compose run --rm talksmith python pipeline/postprocess_speakers.py \
@@ -226,6 +243,7 @@ docker compose run --rm talksmith python pipeline/postprocess_speakers.py \
 ```
 
 ### Generate Outlines
+
 ```bash
 # Create timestamped outline
 docker compose run --rm talksmith python pipeline/outline_from_segments.py \
@@ -236,6 +254,7 @@ docker compose run --rm talksmith python pipeline/outline_from_segments.py \
 ```
 
 ### Interactive Shell
+
 ```bash
 # Start interactive bash session
 docker compose run --rm talksmith bash
@@ -249,6 +268,7 @@ python -c "import torch; print(torch.cuda.is_available())"
 ## Volumes and Data
 
 ### Default Volumes
+
 ```
 ./data       →  /workspace/data       (inputs/outputs)
 ./.cache     →  /workspace/.cache     (model cache)
@@ -257,6 +277,7 @@ python -c "import torch; print(torch.cuda.is_available())"
 ### Custom Volume Mounts
 
 Add to `docker-compose.yml`:
+
 ```yaml
 volumes:
   - ./my-audio:/workspace/audio:ro  # Read-only audio files
@@ -270,6 +291,7 @@ volumes:
 **Symptom:** `RuntimeError: CUDA not available` or `nvidia-smi` fails
 
 **Solutions:**
+
 ```bash
 # 1. Verify NVIDIA driver
 nvidia-smi
@@ -292,6 +314,7 @@ docker compose build --no-cache
 **Symptom:** Container crashes or `CUDA out of memory` errors
 
 **Solutions:**
+
 ```bash
 # 1. Use smaller model
 docker compose run -e TALKSMITH_MODELS_WHISPER_MODEL=medium.en talksmith ...
@@ -309,6 +332,7 @@ docker compose run -e CUDA_VISIBLE_DEVICES=0 talksmith ...
 **Symptom:** Cannot write to mounted volumes
 
 **Solutions:**
+
 ```bash
 # 1. Fix ownership of mounted directories
 sudo chown -R $USER:$USER ./data ./.cache
@@ -320,6 +344,7 @@ docker compose run --user $(id -u):$(id -g) talksmith ...
 ```
 
 Update `docker-compose.yml`:
+
 ```yaml
 services:
   talksmith:
@@ -329,6 +354,7 @@ services:
 ### Slow Build Times
 
 **Solutions:**
+
 ```bash
 # 1. Use BuildKit for parallel builds
 DOCKER_BUILDKIT=1 docker compose build
@@ -345,6 +371,7 @@ docker pull nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
 **Symptom:** Cannot download models or packages
 
 **Solutions:**
+
 ```bash
 # 1. Use host network for troubleshooting
 docker run --rm --gpus all --network host talksmith:cuda ...
@@ -361,6 +388,7 @@ docker build --build-arg HTTP_PROXY=http://proxy:port -f Dockerfile.cuda .
 ### Custom CUDA Version
 
 Modify `Dockerfile.cuda`:
+
 ```dockerfile
 FROM nvidia/cuda:12.1.0-cudnn8-runtime-ubuntu22.04
 # Update CUDA version as needed
@@ -369,6 +397,7 @@ FROM nvidia/cuda:12.1.0-cudnn8-runtime-ubuntu22.04
 ### Multiple Compose Profiles
 
 Create `docker-compose.override.yml` for development:
+
 ```yaml
 services:
   talksmith:
@@ -452,6 +481,7 @@ docker compose run --rm talksmith python -c "import torch; print(f'CUDA availabl
 ---
 
 **Next Steps:**
+
 1. Follow [Quick Start](#quick-start) to get running
 2. Review [Usage Examples](#usage-examples) for common workflows
 3. Customize [Configuration](#configuration) for your environment

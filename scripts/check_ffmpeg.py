@@ -4,9 +4,9 @@ FFmpeg Verification Script for TalkSmith
 Verifies FFmpeg installation and functionality.
 """
 
-import sys
-import subprocess
 import shutil
+import subprocess
+import sys
 from typing import Optional, Tuple
 
 
@@ -80,9 +80,7 @@ def main():
     print_section("FFmpeg Installation", "-")
 
     ffmpeg_installed = check_ffmpeg_installed()
-    print_status(
-        "FFmpeg", "Installed" if ffmpeg_installed else "NOT FOUND", ffmpeg_installed
-    )
+    print_status("FFmpeg", "Installed" if ffmpeg_installed else "NOT FOUND", ffmpeg_installed)
 
     if not ffmpeg_installed:
         success = False

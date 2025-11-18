@@ -5,9 +5,11 @@ This directory contains the plan generation and Google Docs integration modules 
 ## Files
 
 ### `plan_from_transcript.py`
+
 Core module for generating structured PRD/plan documents from transcript segments using LLM technology.
 
 **Key Classes:**
+
 - `PlanGenerator`: Main class for plan generation
   - Supports both Claude and GPT models
   - Converts transcript segments to readable format
@@ -15,6 +17,7 @@ Core module for generating structured PRD/plan documents from transcript segment
   - Generates markdown-formatted plans
 
 **Usage:**
+
 ```python
 from pipeline.plan_from_transcript import PlanGenerator
 
@@ -27,6 +30,7 @@ plan_md = generator.generate_plan(
 ```
 
 **CLI Usage:**
+
 ```bash
 python -m pipeline.plan_from_transcript \
   --input segments.json \
@@ -35,9 +39,11 @@ python -m pipeline.plan_from_transcript \
 ```
 
 ### `google_docs_integration.py`
+
 Module for uploading plan documents to Google Docs via OAuth 2.0 authentication.
 
 **Key Classes:**
+
 - `GoogleDocsUploader`: Client for Google Docs API
   - OAuth 2.0 authentication flow
   - Document creation from markdown
@@ -45,6 +51,7 @@ Module for uploading plan documents to Google Docs via OAuth 2.0 authentication.
   - Sharing and permissions management
 
 **Usage:**
+
 ```python
 from pipeline.google_docs_integration import GoogleDocsUploader
 
@@ -59,6 +66,7 @@ print(f"Document URL: {doc_url}")
 ## Dependencies
 
 ### Required for Plan Generation
+
 ```bash
 # Install at least one LLM provider
 pip install anthropic  # For Claude models
@@ -66,6 +74,7 @@ pip install openai     # For GPT models
 ```
 
 ### Required for Google Docs Integration
+
 ```bash
 pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
 ```
@@ -73,6 +82,7 @@ pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-pyt
 ## Configuration
 
 ### LLM API Keys
+
 Set environment variables for your chosen LLM provider:
 
 ```bash
@@ -86,6 +96,7 @@ export OPENAI_API_KEY="your-api-key"
 ### Google Docs Setup
 
 1. Copy example configuration:
+
    ```bash
    cp config/google_docs.ini.example config/google_docs.ini
    ```
@@ -96,6 +107,7 @@ export OPENAI_API_KEY="your-api-key"
    - Save as `config/credentials.json`
 
 3. Edit `config/google_docs.ini`:
+
    ```ini
    [google_docs]
    credentials_file = config/credentials.json
@@ -148,6 +160,7 @@ The LLM responds in JSON format, which is then formatted into the markdown templ
 ## Error Handling
 
 ### Plan Generation Errors
+
 - **ImportError**: LLM package not installed
   - Solution: `pip install anthropic` or `pip install openai`
 - **ValueError**: Invalid model type or segment format
@@ -156,6 +169,7 @@ The LLM responds in JSON format, which is then formatted into the markdown templ
   - Verify API keys and check provider status
 
 ### Google Docs Errors
+
 - **FileNotFoundError**: Missing credentials file
   - Download from Google Cloud Console
 - **HttpError 403**: API not enabled or permissions issue
@@ -167,11 +181,13 @@ The LLM responds in JSON format, which is then formatted into the markdown templ
 ## Testing
 
 Run the test suite:
+
 ```bash
 pytest tests/test_plan_from_transcript.py -v
 ```
 
 Test coverage includes:
+
 - PlanGenerator initialization (Claude and GPT)
 - Segment loading (array and object formats)
 - Text conversion with timestamps
@@ -182,6 +198,7 @@ Test coverage includes:
 ## Examples
 
 ### Basic Plan Generation
+
 ```python
 from pathlib import Path
 from pipeline.plan_from_transcript import PlanGenerator
@@ -194,6 +211,7 @@ plan = generator.generate_plan(
 ```
 
 ### With Google Docs Upload
+
 ```python
 from pipeline.plan_from_transcript import PlanGenerator
 from pipeline.google_docs_integration import GoogleDocsUploader
@@ -211,6 +229,7 @@ doc_url = uploader.create_document_from_markdown(plan_md, 'Sprint Plan')
 ```
 
 ### Batch Processing
+
 ```python
 from pathlib import Path
 from pipeline.plan_from_transcript import PlanGenerator
@@ -240,15 +259,18 @@ python -m cli.main plan data/outputs/meeting_diarized.json \
 ## Performance Considerations
 
 ### Token Usage
+
 - Average meeting (30 min): ~10,000 input tokens
 - LLM response: ~1,000 output tokens
 - Typical API call: 1-3 seconds
 
 ### Cost Estimates
+
 - Claude: $0.03-0.05 per plan
 - GPT-4: $0.30-0.60 per plan
 
 ### Optimization Tips
+
 1. Use Claude for cost efficiency
 2. Batch process multiple plans
 3. Cache common prompts
@@ -257,16 +279,19 @@ python -m cli.main plan data/outputs/meeting_diarized.json \
 ## Security Notes
 
 ### API Keys
+
 - Never commit API keys to version control
 - Use environment variables or secure vaults
 - Rotate keys periodically
 
 ### Google OAuth
+
 - Keep `credentials.json` secure (add to .gitignore)
 - Token file is auto-generated and contains access tokens
 - Use domain-restricted credentials when possible
 
 ### Data Privacy
+
 - Transcripts may contain sensitive information
 - Consider on-premises LLM for confidential data
 - Review sharing settings before uploading to Google Docs
@@ -274,6 +299,7 @@ python -m cli.main plan data/outputs/meeting_diarized.json \
 ## Contributing
 
 When extending this module:
+
 1. Maintain backward compatibility with existing segments format
 2. Add tests for new features
 3. Update documentation

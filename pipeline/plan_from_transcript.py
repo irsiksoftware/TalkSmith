@@ -16,9 +16,9 @@ Usage:
 import argparse
 import json
 import logging
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
-from datetime import datetime
 
 try:
     import anthropic
@@ -119,22 +119,16 @@ class PlanGenerator:
 
         if self.model_type == "claude":
             if not ANTHROPIC_AVAILABLE:
-                raise ImportError(
-                    "anthropic package not installed. Run: pip install anthropic"
-                )
+                raise ImportError("anthropic package not installed. Run: pip install anthropic")
             self.client = anthropic.Anthropic(api_key=api_key)
             self.model = "claude-3-5-sonnet-20241022"
         elif self.model_type == "gpt":
             if not OPENAI_AVAILABLE:
-                raise ImportError(
-                    "openai package not installed. Run: pip install openai"
-                )
+                raise ImportError("openai package not installed. Run: pip install openai")
             self.client = openai.OpenAI(api_key=api_key)
             self.model = "gpt-4o"
         else:
-            raise ValueError(
-                f"Unsupported model_type: {model_type}. Use 'claude' or 'gpt'."
-            )
+            raise ValueError(f"Unsupported model_type: {model_type}. Use 'claude' or 'gpt'.")
 
     def load_segments(self, segments_path: Path) -> List[Dict]:
         """Load transcript segments from JSON file."""
@@ -148,9 +142,7 @@ class PlanGenerator:
         elif isinstance(data, dict) and "segments" in data:
             segments = data["segments"]
         else:
-            raise ValueError(
-                "Invalid segments format. Expected list or dict with 'segments' key."
-            )
+            raise ValueError("Invalid segments format. Expected list or dict with 'segments' key.")
 
         logger.info(f"Loaded {len(segments)} segments")
         return segments
@@ -283,9 +275,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Generate structured PRD/plan from transcript segments"
     )
-    parser.add_argument(
-        "--input", "-i", type=Path, required=True, help="Input segments JSON file"
-    )
+    parser.add_argument("--input", "-i", type=Path, required=True, help="Input segments JSON file")
     parser.add_argument(
         "--output",
         "-o",
@@ -302,9 +292,7 @@ def main():
         default="claude",
         help="LLM model to use (default: claude)",
     )
-    parser.add_argument(
-        "--google-docs", action="store_true", help="Upload plan to Google Docs"
-    )
+    parser.add_argument("--google-docs", action="store_true", help="Upload plan to Google Docs")
     parser.add_argument(
         "--google-docs-title",
         type=str,

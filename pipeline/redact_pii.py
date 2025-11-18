@@ -208,9 +208,7 @@ class PIIRedactor:
 
         return redacted_segments
 
-    def redact_transcript_file(
-        self, input_path: str, output_path: Optional[str] = None
-    ) -> str:
+    def redact_transcript_file(self, input_path: str, output_path: Optional[str] = None) -> str:
         """
         Redact PII from a text transcript file.
 
@@ -232,9 +230,7 @@ class PIIRedactor:
 
         # Determine output path
         if output_path is None:
-            output_path = (
-                input_file.parent / f"{input_file.stem}_redacted{input_file.suffix}"
-            )
+            output_path = input_file.parent / f"{input_file.stem}_redacted{input_file.suffix}"
         else:
             output_path = Path(output_path)
 

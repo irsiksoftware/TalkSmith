@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from typing import List, Dict, Any, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:
     from pipeline.logger import TalkSmithLogger
@@ -216,9 +216,7 @@ def export_all(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     if logger:
-        logger.info(
-            f"Exporting to {len(formats)} formats", formats=formats, base_name=base_name
-        )
+        logger.info(f"Exporting to {len(formats)} formats", formats=formats, base_name=base_name)
 
     format_handlers = {
         "txt": (export_txt, ".txt"),

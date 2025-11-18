@@ -9,11 +9,7 @@ import numpy as np
 import pytest
 import soundfile as sf
 
-from pipeline.preprocess import (
-    AudioPreprocessor,
-    preprocess_audio,
-    NOISEREDUCE_AVAILABLE,
-)
+from pipeline.preprocess import NOISEREDUCE_AVAILABLE, AudioPreprocessor, preprocess_audio
 
 
 @pytest.mark.unit
@@ -102,9 +98,7 @@ class TestAudioPreprocessor:
             sf.write(temp_path, audio, sample_rate)
 
         try:
-            preprocessor = AudioPreprocessor(
-                trim_silence=True, silence_threshold_db=-40.0
-            )
+            preprocessor = AudioPreprocessor(trim_silence=True, silence_threshold_db=-40.0)
             output_path, metrics = preprocessor.process(temp_path)
 
             assert "trim_silence" in metrics["steps_applied"]
@@ -149,9 +143,7 @@ class TestAudioPreprocessor:
 
     def test_multiple_operations(self, sample_audio_path):
         """Test applying multiple preprocessing operations."""
-        preprocessor = AudioPreprocessor(
-            loudnorm=True, trim_silence=True, high_pass_filter=True
-        )
+        preprocessor = AudioPreprocessor(loudnorm=True, trim_silence=True, high_pass_filter=True)
 
         output_path, metrics = preprocessor.process(sample_audio_path)
 

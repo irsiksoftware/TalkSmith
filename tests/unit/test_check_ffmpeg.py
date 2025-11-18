@@ -1,17 +1,18 @@
 """Unit tests for FFmpeg verification script."""
 
 import subprocess
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 import pytest
 
 from scripts.check_ffmpeg import (
-    check_ffmpeg_installed,
-    get_ffmpeg_version,
     check_ffmpeg_codecs,
+    check_ffmpeg_installed,
     check_ffprobe_installed,
+    get_ffmpeg_version,
+    main,
     print_section,
     print_status,
-    main,
 )
 
 
@@ -52,9 +53,7 @@ class TestGetFFmpegVersion:
 
     def test_get_version_timeout(self):
         """Test timeout handling."""
-        with patch(
-            "subprocess.run", side_effect=subprocess.TimeoutExpired("ffmpeg", 5)
-        ):
+        with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("ffmpeg", 5)):
             version = get_ffmpeg_version()
 
             assert version is None
@@ -144,9 +143,7 @@ class TestCheckFFmpegCodecs:
 
     def test_codecs_check_timeout(self):
         """Test timeout handling for codec check."""
-        with patch(
-            "subprocess.run", side_effect=subprocess.TimeoutExpired("ffmpeg", 5)
-        ):
+        with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("ffmpeg", 5)):
             has_pcm, has_aac = check_ffmpeg_codecs()
 
             assert has_pcm is False
@@ -212,9 +209,7 @@ class TestMain:
     @patch("scripts.check_ffmpeg.check_ffprobe_installed")
     @patch("scripts.check_ffmpeg.get_ffmpeg_version")
     @patch("scripts.check_ffmpeg.check_ffmpeg_installed")
-    def test_main_all_checks_pass(
-        self, mock_installed, mock_version, mock_ffprobe, mock_codecs
-    ):
+    def test_main_all_checks_pass(self, mock_installed, mock_version, mock_ffprobe, mock_codecs):
         """Test main when all checks pass."""
         mock_installed.return_value = True
         mock_version.return_value = "ffmpeg version 4.4.2"
@@ -243,9 +238,7 @@ class TestMain:
     @patch("scripts.check_ffmpeg.check_ffprobe_installed")
     @patch("scripts.check_ffmpeg.get_ffmpeg_version")
     @patch("scripts.check_ffmpeg.check_ffmpeg_installed")
-    def test_main_ffprobe_missing(
-        self, mock_installed, mock_version, mock_ffprobe, mock_codecs
-    ):
+    def test_main_ffprobe_missing(self, mock_installed, mock_version, mock_ffprobe, mock_codecs):
         """Test main when ffprobe is missing."""
         mock_installed.return_value = True
         mock_version.return_value = "ffmpeg version 4.4.2"
@@ -265,9 +258,7 @@ class TestMain:
     @patch("scripts.check_ffmpeg.check_ffprobe_installed")
     @patch("scripts.check_ffmpeg.get_ffmpeg_version")
     @patch("scripts.check_ffmpeg.check_ffmpeg_installed")
-    def test_main_missing_codecs(
-        self, mock_installed, mock_version, mock_ffprobe, mock_codecs
-    ):
+    def test_main_missing_codecs(self, mock_installed, mock_version, mock_ffprobe, mock_codecs):
         """Test main when essential codecs are missing."""
         mock_installed.return_value = True
         mock_version.return_value = "ffmpeg version 4.4.2"

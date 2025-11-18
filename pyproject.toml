@@ -1,0 +1,186 @@
+# TalkSmith - Project Configuration
+# Tool configurations for Black, isort, mypy, and Bandit
+
+# ============================================================================
+# Black (code formatter)
+# ============================================================================
+[tool.black]
+line-length = 100
+target-version = ['py310', 'py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # Directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | \.cache
+)/
+'''
+
+# ============================================================================
+# isort (import sorting)
+# ============================================================================
+[tool.isort]
+profile = "black"
+line_length = 100
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+skip_gitignore = true
+skip = [".venv", "venv", ".cache", "build", "dist"]
+
+# ============================================================================
+# mypy (type checking)
+# ============================================================================
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+ignore_missing_imports = true
+
+# Per-module options
+[[tool.mypy.overrides]]
+module = "tests.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "scripts.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "pipeline.redact_pii"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "config.settings"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "pipeline.gpu_utils"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "pipeline.google_docs_integration"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "pipeline.diarize_whisperx"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "pipeline.diarize_alt"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "pipeline.plan_from_transcript"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "pipeline.logger"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "pipeline.transcribe_fw"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "pipeline.preprocess"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "pipeline.postprocess_speakers"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "pipeline.outline_from_segments"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "pipeline.exporters"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "cli.main"
+ignore_errors = true
+
+# ============================================================================
+# Bandit (security linter)
+# ============================================================================
+[tool.bandit]
+exclude_dirs = ["tests/", "benchmarks/", ".venv/", "venv/", ".cache/", "scripts/"]
+skips = [
+    "B101",  # Skip assert_used (we use asserts in tests)
+    "B404",  # Skip subprocess import warnings (false positive for system commands)
+    "B603",  # Skip subprocess without shell warnings (false positive)
+    "B607",  # Skip partial executable path (false positive for system commands)
+    "B311",  # Skip random in test/demo code
+    "B306",  # Skip mktemp (used in preprocessing pipeline)
+]
+
+# ============================================================================
+# pytest (testing framework)
+# ============================================================================
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--tb=short",
+    "--cov=pipeline",
+    "--cov=cli",
+    "--cov=config",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "slow: Slow tests that may take a long time",
+]
+
+# ============================================================================
+# Coverage.py
+# ============================================================================
+[tool.coverage.run]
+source = ["pipeline", "cli", "config"]
+omit = [
+    "tests/*",
+    "*/tests/*",
+    "scripts/*",
+    "*/__pycache__/*",
+    "*/site-packages/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@(abc\\.)?abstractmethod",
+]

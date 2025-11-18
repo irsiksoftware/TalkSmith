@@ -7,6 +7,7 @@ This directory contains example scripts and sample data for demonstrating TalkSm
 ### Sample Data
 
 **sample_segments.json** - Example transcript segments from a product planning meeting
+
 - Contains 20 segments with timestamps, speakers, and text
 - Demonstrates various plan sections: problems, goals, users, acceptance criteria, risks
 - Ready to use with plan generation scripts
@@ -14,6 +15,7 @@ This directory contains example scripts and sample data for demonstrating TalkSm
 ### Example Scripts
 
 **google_docs_example.py** - Complete workflow demonstration
+
 - Load transcript segments
 - Extract structured plan sections
 - Generate markdown-formatted plan
@@ -23,11 +25,13 @@ This directory contains example scripts and sample data for demonstrating TalkSm
 ### Generated Output
 
 **example_plan.md** - Sample markdown plan output
+
 - Shows expected format and structure
 - Demonstrates section organization
 - Includes timestamps and speaker attribution
 
 **sample_plan_output.md** - Another example output
+
 - Alternative format example
 - Reference for expected results
 
@@ -42,6 +46,7 @@ python examples/google_docs_example.py
 ```
 
 This will:
+
 1. Load `examples/sample_segments.json`
 2. Extract plan sections using keyword classification
 3. Generate markdown formatted plan
@@ -56,6 +61,7 @@ python examples/google_docs_example.py --publish
 ```
 
 Prerequisites:
+
 - Google Cloud project with Docs API enabled
 - OAuth credentials downloaded to `config/credentials.json`
 - Configuration file at `config/google_docs.ini`
@@ -75,6 +81,7 @@ python examples/google_docs_example.py \
 ```
 
 Options:
+
 - `--share EMAIL` - Share with email address (can be used multiple times)
 - `--role ROLE` - Sharing permission: `reader`, `writer`, or `commenter` (default: writer)
 
@@ -139,6 +146,7 @@ Transcript segments should be JSON with this structure:
 ```
 
 Required fields per segment:
+
 - `text` - The transcribed text
 - `timestamp` - Display timestamp (e.g., "00:00" or "00:00:00")
 - `speaker` - Speaker name or ID (optional, defaults to "Unknown")
@@ -182,6 +190,7 @@ First time publishing to Google Docs will open a browser for authentication:
 3. Token saved to `config/token.json` for future use
 
 If authentication fails:
+
 - Delete `config/token.json` and try again
 - Verify credentials file exists at `config/credentials.json`
 - Check API is enabled in Google Cloud Console

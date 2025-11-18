@@ -54,6 +54,7 @@ def test_example(temp_dir, sample_audio_path, sample_segments):
 ```
 
 Available fixtures:
+
 - `temp_dir` - Temporary directory
 - `sample_audio_path` - Audio file path
 - `sample_audio_data` - Numpy audio array
@@ -93,6 +94,7 @@ class TestMyFeature:
 ## CI/CD
 
 Tests run automatically on:
+
 - Push to main/develop
 - Pull requests
 - Multi-platform (Ubuntu, Windows)

@@ -27,9 +27,7 @@ def get_gpu_info() -> Dict:
                     {
                         "id": i,
                         "name": device_props.name,
-                        "total_memory_gb": round(
-                            device_props.total_memory / (1024**3), 2
-                        ),
+                        "total_memory_gb": round(device_props.total_memory / (1024**3), 2),
                         "total_memory_bytes": device_props.total_memory,
                         "compute_capability": f"{device_props.major}.{device_props.minor}",
                     }
@@ -126,9 +124,7 @@ def select_device(device: str = "auto", logger: Optional[logging.Logger] = None)
                     "CUDA requested but not available. "
                     "Please check GPU setup with: python scripts/check_gpu.py"
                 )
-            raise RuntimeError(
-                "CUDA not available. Run 'python scripts/check_gpu.py' to diagnose."
-            )
+            raise RuntimeError("CUDA not available. Run 'python scripts/check_gpu.py' to diagnose.")
         if logger:
             logger.info(
                 f"Using CUDA (user specified) - {gpu_info['device_count']} GPU(s) available"
@@ -140,9 +136,7 @@ def select_device(device: str = "auto", logger: Optional[logging.Logger] = None)
 
     if gpu_info["cuda_available"] and gpu_info["device_count"] > 0:
         if logger:
-            logger.info(
-                f"Auto-selected CUDA - {gpu_info['device_count']} GPU(s) detected"
-            )
+            logger.info(f"Auto-selected CUDA - {gpu_info['device_count']} GPU(s) detected")
             for device_info in gpu_info["devices"]:
                 logger.info(
                     f"  GPU {device_info['id']}: {device_info['name']} "
@@ -208,9 +202,7 @@ def get_memory_info(device_id: int = 0) -> Dict:
             "total_gb": round(total_memory / (1024**3), 2),
             "free_gb": round(free_memory / (1024**3), 2),
             "used_gb": round((total_memory - free_memory) / (1024**3), 2),
-            "utilization_percent": round(
-                ((total_memory - free_memory) / total_memory) * 100, 1
-            ),
+            "utilization_percent": round(((total_memory - free_memory) / total_memory) * 100, 1),
         }
     except Exception as e:
         return {"error": str(e)}

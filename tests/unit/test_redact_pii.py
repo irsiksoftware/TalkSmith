@@ -1,9 +1,10 @@
 """Unit tests for PII redaction module."""
 
-import pytest
-from pathlib import Path
-import tempfile
 import json
+import tempfile
+from pathlib import Path
+
+import pytest
 
 from pipeline.redact_pii import PIIRedactor, create_whitelist_template
 
@@ -183,9 +184,7 @@ class TestPIIRedactor:
 
     def test_redact_segments_preserves_structure(self, redactor):
         """Test that redaction preserves segment structure."""
-        segments = [
-            {"start": 0.0, "end": 2.0, "text": "Hello there", "speaker": "SPEAKER_01"}
-        ]
+        segments = [{"start": 0.0, "end": 2.0, "text": "Hello there", "speaker": "SPEAKER_01"}]
         result = redactor.redact_segments(segments)
         assert result[0]["start"] == 0.0
         assert result[0]["end"] == 2.0

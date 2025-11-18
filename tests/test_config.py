@@ -3,9 +3,10 @@
 import os
 import tempfile
 from pathlib import Path
+
 import pytest
 
-from config.settings import TalkSmithConfig, get_config, create_default_config
+from config.settings import TalkSmithConfig, create_default_config, get_config
 
 
 class TestTalkSmithConfig:

@@ -12,8 +12,8 @@ from typing import Dict, Optional
 
 from faster_whisper import WhisperModel
 
+from pipeline.gpu_utils import get_memory_info, select_device, suggest_model_for_vram
 from pipeline.logger import get_logger
-from pipeline.gpu_utils import select_device, get_memory_info, suggest_model_for_vram
 
 
 class FasterWhisperTranscriber:
@@ -61,9 +61,7 @@ class FasterWhisperTranscriber:
         if selected_device == "cpu":
             if compute_type == "float16":
                 compute_type = "int8"
-                self.logger.info(
-                    "Adjusted compute_type to 'int8' for CPU (float16 not supported)"
-                )
+                self.logger.info("Adjusted compute_type to 'int8' for CPU (float16 not supported)")
 
         self.model_size = model_size
         self.device = selected_device
@@ -75,9 +73,7 @@ class FasterWhisperTranscriber:
             device=selected_device,
             compute_type=compute_type,
         )
-        self.model = WhisperModel(
-            model_size, device=selected_device, compute_type=compute_type
-        )
+        self.model = WhisperModel(model_size, device=selected_device, compute_type=compute_type)
 
     def transcribe(
         self,
@@ -195,10 +191,7 @@ def transcribe_file(
     print(f"Duration: {result['duration']:.2f}s")
     print(f"Processing time: {result['processing_time']:.2f}s")
     print(f"RTF: {result['rtf']:.3f}")
-    print(
-        f"Language: {result['language']} "
-        f"(confidence: {result['language_probability']:.2%})"
-    )
+    print(f"Language: {result['language']} " f"(confidence: {result['language_probability']:.2%})")
 
     # Save outputs
     base_name = audio_path.stem
@@ -220,9 +213,7 @@ def transcribe_file(
 
 def main():
     """CLI entry point."""
-    parser = argparse.ArgumentParser(
-        description="Transcribe audio using faster-whisper"
-    )
+    parser = argparse.ArgumentParser(description="Transcribe audio using faster-whisper")
     parser.add_argument("audio", help="Path to audio file")
     parser.add_argument(
         "--model-size",
@@ -239,9 +230,7 @@ def main():
     parser.add_argument(
         "--language", help="Language code (e.g., 'en'). Auto-detect if not specified."
     )
-    parser.add_argument(
-        "--output-dir", help="Output directory (default: same as input file)"
-    )
+    parser.add_argument("--output-dir", help="Output directory (default: same as input file)")
 
     args = parser.parse_args()
 

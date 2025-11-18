@@ -71,14 +71,10 @@ class AudioPreprocessor:
         self.hpf_cutoff = hpf_cutoff
 
         if denoise and denoise_method == "noisereduce" and not NOISEREDUCE_AVAILABLE:
-            logger.warning(
-                "noisereduce not available, falling back to ffmpeg denoising"
-            )
+            logger.warning("noisereduce not available, falling back to ffmpeg denoising")
             self.denoise_method = "ffmpeg"
 
-    def process(
-        self, input_path: Path, output_path: Optional[Path] = None
-    ) -> Tuple[Path, dict]:
+    def process(self, input_path: Path, output_path: Optional[Path] = None) -> Tuple[Path, dict]:
         """
         Process audio file with configured preprocessing steps.
 
@@ -152,9 +148,7 @@ class AudioPreprocessor:
 
         if self.denoise_method == "noisereduce" and NOISEREDUCE_AVAILABLE:
             # Use noisereduce library
-            return nr.reduce_noise(
-                y=audio, sr=sample_rate, stationary=True, prop_decrease=0.8
-            )
+            return nr.reduce_noise(y=audio, sr=sample_rate, stationary=True, prop_decrease=0.8)
         elif self.denoise_method == "ffmpeg":
             # Use ffmpeg's afftdn filter
             logger.warning(
@@ -179,9 +173,7 @@ class AudioPreprocessor:
 
         return audio
 
-    def _trim_silence(
-        self, audio: np.ndarray, sample_rate: int
-    ) -> Tuple[np.ndarray, float]:
+    def _trim_silence(self, audio: np.ndarray, sample_rate: int) -> Tuple[np.ndarray, float]:
         """Trim silence from beginning and end of audio."""
         logger.info(f"Trimming silence (threshold: {self.silence_threshold_db} dB)")
 
@@ -227,9 +219,7 @@ class AudioPreprocessor:
 
         return trimmed_audio, removed_seconds
 
-    def _apply_high_pass_filter(
-        self, audio: np.ndarray, sample_rate: int
-    ) -> np.ndarray:
+    def _apply_high_pass_filter(self, audio: np.ndarray, sample_rate: int) -> np.ndarray:
         """Apply high-pass filter to remove low-frequency noise."""
         logger.info(f"Applying high-pass filter (cutoff: {self.hpf_cutoff} Hz)")
 
@@ -306,21 +296,15 @@ def main():
         default="noisereduce",
         help="Denoising method",
     )
-    parser.add_argument(
-        "--loudnorm", action="store_true", help="Enable loudness normalization"
-    )
-    parser.add_argument(
-        "--trim-silence", action="store_true", help="Trim silence from audio"
-    )
+    parser.add_argument("--loudnorm", action="store_true", help="Enable loudness normalization")
+    parser.add_argument("--trim-silence", action="store_true", help="Trim silence from audio")
     parser.add_argument(
         "--silence-threshold",
         type=float,
         default=-40.0,
         help="Silence threshold in dB (default: -40)",
     )
-    parser.add_argument(
-        "--high-pass-filter", action="store_true", help="Enable high-pass filter"
-    )
+    parser.add_argument("--high-pass-filter", action="store_true", help="Enable high-pass filter")
     parser.add_argument(
         "--hpf-cutoff",
         type=int,

@@ -19,8 +19,8 @@ from pathlib import Path
 from typing import Optional
 
 try:
-    from google.oauth2.credentials import Credentials
     from google.auth.transport.requests import Request
+    from google.oauth2.credentials import Credentials
     from google_auth_oauthlib.flow import InstalledAppFlow
     from googleapiclient.discovery import build
     from googleapiclient.errors import HttpError
@@ -106,9 +106,7 @@ class GoogleDocsUploader:
                         "Download from Google Cloud Console and save to this location."
                     )
 
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    credentials_file, SCOPES
-                )
+                flow = InstalledAppFlow.from_client_secrets_file(credentials_file, SCOPES)
                 creds = flow.run_local_server(port=0)
 
             # Save token for future use
@@ -144,9 +142,7 @@ class GoogleDocsUploader:
             plain_content = self._markdown_to_plain(markdown_content)
 
             # Insert content
-            requests = [
-                {"insertText": {"location": {"index": 1}, "text": plain_content}}
-            ]
+            requests = [{"insertText": {"location": {"index": 1}, "text": plain_content}}]
 
             self.docs_service.documents().batchUpdate(
                 documentId=doc_id, body={"requests": requests}
@@ -194,11 +190,7 @@ class GoogleDocsUploader:
 
             # Replace all content
             requests = [
-                {
-                    "deleteContentRange": {
-                        "range": {"startIndex": 1, "endIndex": end_index - 1}
-                    }
-                },
+                {"deleteContentRange": {"range": {"startIndex": 1, "endIndex": end_index - 1}}},
                 {"insertText": {"location": {"index": 1}, "text": plain_content}},
             ]
 
@@ -234,9 +226,7 @@ class GoogleDocsUploader:
             else:
                 permission["emailAddress"] = email_or_domain
 
-            self.drive_service.permissions().create(
-                fileId=doc_id, body=permission
-            ).execute()
+            self.drive_service.permissions().create(fileId=doc_id, body=permission).execute()
 
         except HttpError as error:
             # Non-fatal: document is still created, just not shared

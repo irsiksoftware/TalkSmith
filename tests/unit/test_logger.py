@@ -5,20 +5,20 @@ Unit tests for pipeline.logger module.
 import json
 import logging
 import tempfile
-from pathlib import Path
 from logging.handlers import RotatingFileHandler
-from unittest.mock import patch, MagicMock
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from pipeline.logger import (
+    BatchLogSummary,
     JSONFormatter,
     TalkSmithLogger,
-    get_logger,
-    BatchLogSummary,
     TransientError,
-    with_retry,
+    get_logger,
     retry_operation,
+    with_retry,
 )
 
 
@@ -444,9 +444,7 @@ class TestRetryMechanism:
                 raise TransientError("Temporary failure")
             return "success"
 
-        result = retry_operation(
-            operation, max_attempts=3, initial_delay=0.01, logger=logger
-        )
+        result = retry_operation(operation, max_attempts=3, initial_delay=0.01, logger=logger)
 
         assert result == "success"
         assert call_count["count"] == 2
@@ -480,9 +478,7 @@ class TestRetryMechanism:
         logger = TalkSmithLogger(name="test")
         call_times = []
 
-        @with_retry(
-            max_attempts=3, initial_delay=0.1, backoff_factor=2.0, logger=logger
-        )
+        @with_retry(max_attempts=3, initial_delay=0.1, backoff_factor=2.0, logger=logger)
         def operation():
             call_times.append(time.time())
             if len(call_times) < 3:

@@ -5,8 +5,8 @@ Detects GPUs and logs driver/CUDA versions.
 Confirms GPU visibility to PyTorch.
 """
 
-import sys
 import platform
+import sys
 from typing import Dict, List, Optional
 
 
@@ -39,9 +39,7 @@ def check_cuda_availability() -> Dict[str, any]:
                     {
                         "id": i,
                         "name": device_props.name,
-                        "total_memory_gb": round(
-                            device_props.total_memory / (1024**3), 2
-                        ),
+                        "total_memory_gb": round(device_props.total_memory / (1024**3), 2),
                         "compute_capability": f"{device_props.major}.{device_props.minor}",
                     }
                 )
@@ -50,9 +48,7 @@ def check_cuda_availability() -> Dict[str, any]:
             "torch_version": torch.__version__,
             "cuda_available": cuda_available,
             "cuda_version": cuda_version,
-            "cudnn_available": (
-                torch.backends.cudnn.is_available() if cuda_available else False
-            ),
+            "cudnn_available": (torch.backends.cudnn.is_available() if cuda_available else False),
             "cudnn_version": (
                 torch.backends.cudnn.version()
                 if cuda_available and torch.backends.cudnn.is_available()
@@ -126,9 +122,7 @@ def main():
     # System Information
     print_section("System Information", "-")
     sys_info = get_system_info()
-    print_status(
-        "Operating System", f"{sys_info['platform']} {sys_info['platform_release']}"
-    )
+    print_status("Operating System", f"{sys_info['platform']} {sys_info['platform_release']}")
     print_status("Architecture", sys_info["architecture"])
     print_status("Python Version", sys_info["python_version"])
 
@@ -158,9 +152,7 @@ def main():
         return 1
 
     print_status("PyTorch Version", cuda_info["torch_version"])
-    print_status(
-        "CUDA Available", cuda_info["cuda_available"], cuda_info["cuda_available"]
-    )
+    print_status("CUDA Available", cuda_info["cuda_available"], cuda_info["cuda_available"])
 
     if cuda_info["cuda_available"]:
         print_status("CUDA Version", cuda_info["cuda_version"])
@@ -176,9 +168,7 @@ def main():
         print("  ⚠ CUDA is not available to PyTorch")
         if driver_version:
             print("  ⚠ NVIDIA driver detected but CUDA not available to PyTorch")
-            print(
-                "  ⚠ This may indicate a version mismatch or incorrect PyTorch installation"
-            )
+            print("  ⚠ This may indicate a version mismatch or incorrect PyTorch installation")
         return 1
 
     # GPU Devices

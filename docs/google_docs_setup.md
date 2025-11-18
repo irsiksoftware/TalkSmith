@@ -5,6 +5,7 @@ This guide explains how to set up the Google Docs API integration for TalkSmith 
 ## Overview
 
 The Google Docs integration allows you to:
+
 - Convert transcript segments into structured PRD/plan documents using LLM
 - Automatically push plans to Google Docs for collaborative editing
 - Share documents with team members
@@ -66,6 +67,7 @@ pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-pyt
 ```
 
 Or install all dependencies from requirements.txt:
+
 ```bash
 pip install -r requirements.txt
 ```
@@ -87,16 +89,19 @@ Or add to your `.env` file (recommended for development).
 ### 6. Configure Google Docs
 
 1. Copy the example configuration file:
+
    ```bash
    cp config/google_docs.ini.example config/google_docs.ini
    ```
 
 2. Move the downloaded credentials file to your project:
+
    ```bash
    mv ~/Downloads/client_secret_*.json config/credentials.json
    ```
 
 3. Edit `config/google_docs.ini` to set the credentials path:
+
    ```ini
    [google_docs]
    credentials_file = config/credentials.json
@@ -113,6 +118,7 @@ python -m pipeline.plan_from_transcript --input segments.json --google-docs --go
 ```
 
 This will:
+
 1. Open your web browser
 2. Ask you to sign in to your Google account
 3. Request permission to access Google Docs and Drive
@@ -202,6 +208,7 @@ Delete `config/token.json` and run the script again to re-authenticate.
 ### Browser doesn't open during authentication
 
 The OAuth flow requires a browser. If you're on a headless server:
+
 1. Run the script on your local machine first to generate `token.json`
 2. Copy `token.json` to your server
 3. Update `config/google_docs.ini` to point to this token file
@@ -243,9 +250,11 @@ python pipeline/plan_from_transcript.py segments.json \
 ## Support
 
 For issues specific to Google Docs API:
+
 - [Google Docs API Documentation](https://developers.google.com/docs/api)
 - [Google Drive API Documentation](https://developers.google.com/drive/api)
 
 For TalkSmith-specific issues:
+
 - Check existing [GitHub Issues](https://github.com/irsiksoftware/TalkSmith/issues)
 - Create a new issue with the `google-docs` label

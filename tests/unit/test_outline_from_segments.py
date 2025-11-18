@@ -1,12 +1,13 @@
 """Tests for outline generation from segments."""
 
 import pytest
+
 from pipeline.outline_from_segments import (
-    format_timestamp_anchor,
-    extract_key_phrases,
     detect_topic_change,
-    generate_outline,
+    extract_key_phrases,
     format_outline_markdown,
+    format_timestamp_anchor,
+    generate_outline,
 )
 
 
@@ -265,9 +266,7 @@ class TestGenerateOutline:
 
     def test_outline_summary_truncation(self, sample_segments):
         """Test that summaries are truncated appropriately."""
-        outline = generate_outline(
-            sample_segments, interval_seconds=60.0, max_summary_words=5
-        )
+        outline = generate_outline(sample_segments, interval_seconds=60.0, max_summary_words=5)
 
         # Check that long summaries are truncated
         for entry in outline:

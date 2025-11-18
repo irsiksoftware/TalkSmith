@@ -318,6 +318,7 @@ print(f"Config loaded from: {config.config_path}")
 ### Environment Variables Not Working
 
 Ensure correct format:
+
 - Must start with `TALKSMITH_`
 - Section and key in UPPERCASE
 - Example: `TALKSMITH_MODELS_WHISPER_MODEL` (not `talksmith_models_whisper_model`)

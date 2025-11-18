@@ -2,16 +2,12 @@
 
 import json
 import time
-import pytest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
-from pipeline.logger import (
-    get_logger,
-    BatchLogSummary,
-    TransientError,
-    with_retry,
-    retry_operation,
-)
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+from pipeline.logger import BatchLogSummary, TransientError, get_logger, retry_operation, with_retry
 
 
 @pytest.mark.integration
@@ -36,18 +32,14 @@ class TestLoggerWorkflow:
 
             try:
                 # Simulate transcription workflow
-                logger.log_start(
-                    "transcription", audio_file="test.wav", model="large-v3"
-                )
+                logger.log_start("transcription", audio_file="test.wav", model="large-v3")
 
                 # Log progress
                 logger.info("Loading model", stage="model_load")
                 logger.info("Processing audio", stage="processing", progress=50)
 
                 # Log metrics
-                logger.log_metrics(
-                    {"rtf": 0.12, "duration": 300, "segments": 45}, level="INFO"
-                )
+                logger.log_metrics({"rtf": 0.12, "duration": 300, "segments": 45}, level="INFO")
 
                 # Complete operation
                 logger.log_complete("transcription", duration=36.5)
@@ -61,13 +53,9 @@ class TestLoggerWorkflow:
                     log_entries = [json.loads(line) for line in f]
 
                 # Verify workflow logged correctly
-                assert any(
-                    "Starting transcription" in e["message"] for e in log_entries
-                )
+                assert any("Starting transcription" in e["message"] for e in log_entries)
                 assert any("Loading model" in e["message"] for e in log_entries)
-                assert any(
-                    "Completed transcription" in e["message"] for e in log_entries
-                )
+                assert any("Completed transcription" in e["message"] for e in log_entries)
 
                 # Verify metrics logged
                 metrics_entry = next((e for e in log_entries if "metrics" in e), None)
@@ -106,9 +94,7 @@ class TestLoggerWorkflow:
         logger = get_logger(__name__)
 
         # Test different error severities
-        exit_code_1 = logger.log_error_exit(
-            "Minor error occurred", exit_code=1, severity="low"
-        )
+        exit_code_1 = logger.log_error_exit("Minor error occurred", exit_code=1, severity="low")
         assert exit_code_1 == 1
 
         exit_code_2 = logger.log_error_exit(
@@ -142,9 +128,7 @@ class TestRetryIntegration:
         logger = get_logger(__name__)
         call_times = []
 
-        @with_retry(
-            max_attempts=4, initial_delay=0.05, backoff_factor=2.0, logger=logger
-        )
+        @with_retry(max_attempts=4, initial_delay=0.05, backoff_factor=2.0, logger=logger)
         def download_model():
             call_times.append(time.time())
             if len(call_times) < 3:
@@ -252,13 +236,9 @@ class TestLoggerErrorScenarios:
         results = []
 
         def log_operation(thread_id):
-            logger.info(
-                f"Thread {thread_id} started", thread_id=thread_id, operation="test"
-            )
+            logger.info(f"Thread {thread_id} started", thread_id=thread_id, operation="test")
             time.sleep(0.01)
-            logger.info(
-                f"Thread {thread_id} completed", thread_id=thread_id, operation="test"
-            )
+            logger.info(f"Thread {thread_id} completed", thread_id=thread_id, operation="test")
             results.append(thread_id)
 
         threads = []

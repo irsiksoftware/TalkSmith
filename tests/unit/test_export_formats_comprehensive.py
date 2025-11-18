@@ -9,17 +9,19 @@ This test suite provides full coverage for pipeline/exporters.py including:
 """
 
 import json
-import pytest
 from pathlib import Path
+
+import pytest
+
 from pipeline.exporters import (
+    export_all,
+    export_json,
+    export_srt,
+    export_txt,
+    export_vtt,
     format_timestamp_srt,
     format_timestamp_vtt,
     validate_segments,
-    export_txt,
-    export_srt,
-    export_vtt,
-    export_json,
-    export_all,
 )
 
 
@@ -129,9 +131,7 @@ class TestExportTxt:
     def test_export_txt_with_timestamps_and_speakers(self, sample_segments, temp_dir):
         """Test TXT export includes timestamps and speaker labels."""
         output_file = temp_dir / "output.txt"
-        export_txt(
-            sample_segments, output_file, include_timestamps=True, include_speakers=True
-        )
+        export_txt(sample_segments, output_file, include_timestamps=True, include_speakers=True)
         content = output_file.read_text(encoding="utf-8")
         assert "[00:00:00.000 --> 00:00:02.500]" in content
         assert "SPEAKER_00:" in content
@@ -171,9 +171,7 @@ class TestExportTxt:
 
     def test_export_txt_unicode_support(self, temp_dir):
         """Test TXT export handles Unicode characters."""
-        segments = [
-            {"start": 0.0, "end": 1.0, "text": "Hello 世界 🌍", "speaker": "SPEAKER_00"}
-        ]
+        segments = [{"start": 0.0, "end": 1.0, "text": "Hello 世界 🌍", "speaker": "SPEAKER_00"}]
         output_file = temp_dir / "unicode.txt"
         export_txt(segments, output_file)
         content = output_file.read_text(encoding="utf-8")
@@ -352,9 +350,7 @@ class TestExportJson:
 
     def test_export_json_unicode_support(self, temp_dir):
         """Test JSON export handles Unicode without ASCII escaping."""
-        segments = [
-            {"start": 0.0, "end": 1.0, "text": "Hello 世界 🌍", "speaker": "SPEAKER_00"}
-        ]
+        segments = [{"start": 0.0, "end": 1.0, "text": "Hello 世界 🌍", "speaker": "SPEAKER_00"}]
         output_file = temp_dir / "unicode.json"
         export_json(segments, output_file)
         content = output_file.read_text(encoding="utf-8")
@@ -379,9 +375,7 @@ class TestExportAll:
 
     def test_export_all_custom_formats(self, sample_segments, temp_dir):
         """Test export_all with custom format selection."""
-        output_files = export_all(
-            sample_segments, temp_dir, "test", formats=["txt", "json"]
-        )
+        output_files = export_all(sample_segments, temp_dir, "test", formats=["txt", "json"])
         assert len(output_files) == 2
         assert "txt" in output_files
         assert "json" in output_files
@@ -437,9 +431,7 @@ class TestEdgeCases:
 
     def test_long_duration_timestamp(self, temp_dir):
         """Test timestamp formatting for long durations (multiple hours)."""
-        segments = [
-            {"start": 7265.5, "end": 7270.0, "text": "Two hours in"}
-        ]  # 2h 1m 5.5s
+        segments = [{"start": 7265.5, "end": 7270.0, "text": "Two hours in"}]  # 2h 1m 5.5s
         output_file = temp_dir / "long.srt"
         export_srt(segments, output_file)
         content = output_file.read_text(encoding="utf-8")
@@ -462,9 +454,7 @@ class TestEdgeCases:
 
     def test_segment_without_words_field(self, temp_dir):
         """Test JSON export with segment missing words field."""
-        segments = [
-            {"start": 0.0, "end": 1.0, "text": "No words", "speaker": "SPEAKER_00"}
-        ]
+        segments = [{"start": 0.0, "end": 1.0, "text": "No words", "speaker": "SPEAKER_00"}]
         output_file = temp_dir / "nowords.json"
         export_json(segments, output_file, include_words=True)
         with open(output_file, encoding="utf-8") as f:

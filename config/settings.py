@@ -14,8 +14,8 @@ Usage:
     input_dir = config.get_path('Paths', 'input_dir')
 """
 
-import os
 import configparser
+import os
 from pathlib import Path
 from typing import Any, Optional
 
@@ -167,18 +167,14 @@ class TalkSmithConfig:
             return fallback
         return value.lower() in ("true", "yes", "1", "on")
 
-    def get_list(
-        self, section: str, key: str, separator: str = ",", fallback: list = None
-    ) -> list:
+    def get_list(self, section: str, key: str, separator: str = ",", fallback: list = None) -> list:
         """Get configuration value as list."""
         value = self.get(section, key)
         if value is None:
             return fallback or []
         return [item.strip() for item in value.split(separator) if item.strip()]
 
-    def get_path(
-        self, section: str, key: str, create: bool = False, fallback: str = None
-    ) -> Path:
+    def get_path(self, section: str, key: str, create: bool = False, fallback: str = None) -> Path:
         """
         Get configuration value as Path object.
 
@@ -237,18 +233,14 @@ class TalkSmithConfig:
 
     def to_dict(self) -> dict:
         """Convert configuration to dictionary."""
-        return {
-            section: dict(self.parser[section]) for section in self.parser.sections()
-        }
+        return {section: dict(self.parser[section]) for section in self.parser.sections()}
 
 
 # Global config instance
 _config: Optional[TalkSmithConfig] = None
 
 
-def get_config(
-    config_path: Optional[str] = None, reload: bool = False
-) -> TalkSmithConfig:
+def get_config(config_path: Optional[str] = None, reload: bool = False) -> TalkSmithConfig:
     """
     Get global configuration instance (singleton pattern).
 

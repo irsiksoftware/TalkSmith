@@ -371,9 +371,7 @@ def diarize_file(
 
 def main():
     """CLI entry point."""
-    parser = argparse.ArgumentParser(
-        description="Diarize audio using WhisperX + pyannote.audio"
-    )
+    parser = argparse.ArgumentParser(description="Diarize audio using WhisperX + pyannote.audio")
     parser.add_argument("audio", help="Path to audio file")
     parser.add_argument(
         "--model-size",
