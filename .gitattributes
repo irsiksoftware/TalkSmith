@@ -1,0 +1,65 @@
+# Git attributes for TalkSmith
+# Ensures consistent line endings and binary file handling
+
+# Default: Auto-detect text files and normalize line endings
+* text=auto
+
+# Python files - Always LF (Unix style)
+*.py text eol=lf
+
+# PowerShell scripts - Always CRLF (Windows requirement)
+*.ps1 text eol=crlf
+*.psm1 text eol=crlf
+*.psd1 text eol=crlf
+
+# Shell scripts - Always LF (Unix style)
+*.sh text eol=lf
+
+# Markdown documentation - LF (Git/GitHub standard)
+*.md text eol=lf
+
+# Configuration files - LF (cross-platform compatibility)
+*.json text eol=lf
+*.ini text eol=lf
+*.txt text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.toml text eol=lf
+
+# Git configuration files - LF
+.gitignore text eol=lf
+.gitattributes text eol=lf
+.editorconfig text eol=lf
+.flake8 text eol=lf
+
+# Docker files - LF (Linux containers)
+Dockerfile* text eol=lf
+docker-compose.yml text eol=lf
+.dockerignore text eol=lf
+
+# Makefile - LF (Unix standard)
+Makefile text eol=lf
+
+# Binary files (never convert)
+*.wav binary
+*.mp3 binary
+*.flac binary
+*.m4a binary
+*.ogg binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.tar binary
+*.gz binary
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+
+# Git LFS (if using Large File Storage in future)
+# *.wav filter=lfs diff=lfs merge=lfs -text
+# *.mp3 filter=lfs diff=lfs merge=lfs -text
