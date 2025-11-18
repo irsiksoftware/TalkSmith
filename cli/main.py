@@ -423,12 +423,12 @@ def diarize_command(args: argparse.Namespace) -> int:
     Perform speaker diarization on audio file.
 
     Demonstrates:
-    - Integration with diarize_alt.py
+    - Integration with diarization module
     - Speaker detection and labeling
     - Optional transcript alignment
     """
     # Lazy import to avoid import errors when dependencies not installed
-    from pipeline.diarize_alt import diarize_file
+    from pipeline.diarization.cli import diarize_file
 
     input_path = Path(args.input)
 
@@ -450,11 +450,11 @@ def diarize_command(args: argparse.Namespace) -> int:
             )
             return exit_code
 
-        # Set output path
+        # Set output directory
         if args.output:
-            output_path = Path(args.output)
+            output_dir = Path(args.output).parent
         else:
-            output_path = input_path.parent / f"{input_path.stem}_diarized.json"
+            output_dir = input_path.parent
 
         # Run diarization
         logger.info(
@@ -462,15 +462,18 @@ def diarize_command(args: argparse.Namespace) -> int:
             num_speakers=args.num_speakers or "auto",
         )
 
-        segments = diarize_file(
+        result = diarize_file(
             audio_path=str(input_path),
-            output_path=str(output_path),
+            output_dir=str(output_dir),
+            method="alt",
             num_speakers=args.num_speakers,
             transcript_path=args.transcript,
             window_size=args.window_size,
         )
 
-        num_speakers = len(set(seg["speaker"] for seg in segments))
+        segments = result.get("segments", result)
+        num_speakers = result.get("num_speakers", len(set(seg["speaker"] for seg in segments)))
+        output_path = output_dir / f"{input_path.stem}_diarized.json"
 
         logger.log_metrics(
             {
