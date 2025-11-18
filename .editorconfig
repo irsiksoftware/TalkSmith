@@ -1,0 +1,69 @@
+# EditorConfig - https://editorconfig.org
+root = true
+
+# Default settings for all files
+[*]
+charset = utf-8
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Python files
+[*.py]
+indent_style = space
+indent_size = 4
+max_line_length = 120
+end_of_line = lf
+
+# PowerShell scripts
+[*.ps1]
+indent_style = space
+indent_size = 4
+end_of_line = crlf
+
+# Bash scripts
+[*.sh]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+
+# Markdown documentation
+[*.md]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+trim_trailing_whitespace = false  # Markdown uses trailing spaces for line breaks
+
+# YAML configuration files
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+
+# JSON and INI configuration files
+[*.{json,ini}]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+
+# Git configuration
+[.gitignore]
+end_of_line = lf
+
+[.gitattributes]
+end_of_line = lf
+
+# Makefile (requires tabs)
+[Makefile]
+indent_style = tab
+end_of_line = lf
+
+# Docker files
+[Dockerfile*]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+
+[docker-compose.yml]
+indent_style = space
+indent_size = 2
+end_of_line = lf
