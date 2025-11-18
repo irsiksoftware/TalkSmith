@@ -1,0 +1,175 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "talksmith"
+version = "0.1.0"
+description = "Local, free, GPU-accelerated transcription and diarization pipeline for long-form multi-speaker audio"
+readme = "README.md"
+authors = [
+    {name = "Dakota Irsik", email = "dakota@irsik.com"}
+]
+license = {text = "MIT"}
+requires-python = ">=3.10,<3.12"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License",
+]
+dependencies = [
+    "numpy>=1.24.0",
+    "resemblyzer>=0.1.1",
+    "scikit-learn>=1.3.0",
+    "librosa>=0.10.0",
+]
+
+[project.optional-dependencies]
+llm = [
+    "anthropic>=0.40.0",  # Claude models
+    "openai>=1.50.0",     # GPT models
+]
+google = [
+    "google-auth>=2.23.0",
+    "google-auth-oauthlib>=1.1.0",
+    "google-auth-httplib2>=0.1.1",
+    "google-api-python-client>=2.100.0",
+]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-timeout>=2.1.0",
+    "pytest-xdist>=3.3.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "isort>=5.12.0",
+    "mypy>=1.4.0",
+    "ipython>=8.14.0",
+    "soundfile>=0.12.1",
+    "pandas>=2.0.0",
+]
+all = [
+    "talksmith[llm,google,dev]",
+]
+
+[project.urls]
+Homepage = "https://github.com/DakotaIrsik/TalkSmith"
+Documentation = "https://github.com/DakotaIrsik/TalkSmith/blob/main/README.md"
+Repository = "https://github.com/DakotaIrsik/TalkSmith.git"
+Issues = "https://github.com/DakotaIrsik/TalkSmith/issues"
+
+[project.scripts]
+talksmith = "cli.main:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["cli*", "config*", "pipeline*", "scripts*"]
+namespaces = false
+
+# ============================================================================
+# Black (code formatter)
+# ============================================================================
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311"]
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  | \.git
+  | \.venv
+  | venv
+  | build
+  | dist
+  | \.cache
+  | output
+)/
+'''
+
+# ============================================================================
+# isort (import sorting)
+# ============================================================================
+[tool.isort]
+profile = "black"
+line_length = 100
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+
+# ============================================================================
+# mypy (type checker)
+# ============================================================================
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false  # Set to true after adding type hints
+ignore_missing_imports = true
+exclude = [
+    "venv/",
+    ".venv/",
+    "output/",
+    "benchmarks/",
+]
+
+# ============================================================================
+# pytest (test framework)
+# ============================================================================
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+pythonpath = ["."]
+addopts = [
+    "--verbose",
+    "--strict-markers",
+    "--tb=short",
+    "--disable-warnings",
+]
+markers = [
+    "unit: Unit tests (fast, isolated)",
+    "integration: Integration tests (slower, may require external resources)",
+    "slow: Slow tests (long-running, optional for quick testing)",
+    "gpu: Tests requiring GPU",
+]
+
+# ============================================================================
+# Coverage (pytest-cov)
+# ============================================================================
+[tool.coverage.run]
+source = ["pipeline", "cli", "config"]
+omit = [
+    "*/tests/*",
+    "*/conftest.py",
+    "*/benchmarks/*",
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "pass",
+]
+precision = 2
+show_missing = true
+
+# ============================================================================
+# Flake8 (linter) - note: flake8 doesn't support pyproject.toml yet
+# ============================================================================
+# Keep .flake8 file for now, as flake8 doesn't support pyproject.toml
+# Current settings in .flake8:
+# - max-line-length = 100
+# - extend-ignore = E203, E402
+# - per-file-ignores for tests, scripts, cli, examples
