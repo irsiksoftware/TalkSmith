@@ -256,6 +256,31 @@ def transcribe_command(args: argparse.Namespace) -> int:
         output_dir = Path(args.output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
 
+        # Optional preprocessing
+        audio_path_for_transcription = input_path
+        if args.preprocess or args.denoise or args.loudnorm or args.trim_silence:
+            from pipeline.preprocess import preprocess_audio
+
+            logger.info(
+                "Preprocessing audio before transcription",
+                denoise=args.denoise or args.preprocess,
+                loudnorm=args.loudnorm or args.preprocess,
+                trim_silence=args.trim_silence or args.preprocess,
+            )
+
+            preprocessed_path = output_dir / f"{input_path.stem}_preprocessed.wav"
+            preprocessed_path, preprocess_metrics = preprocess_audio(
+                input_path=input_path,
+                output_path=preprocessed_path,
+                denoise=args.denoise or args.preprocess,
+                loudnorm=args.loudnorm or args.preprocess,
+                trim_silence=args.trim_silence or args.preprocess,
+            )
+
+            logger.log_metrics(preprocess_metrics)
+            logger.info(f"Preprocessing complete: {preprocessed_path}")
+            audio_path_for_transcription = preprocessed_path
+
         # Transcribe audio
         logger.info(
             f"Transcribing with {args.model} model",
@@ -264,7 +289,7 @@ def transcribe_command(args: argparse.Namespace) -> int:
         )
 
         result = transcribe_file(
-            audio_path=str(input_path),
+            audio_path=str(audio_path_for_transcription),
             output_dir=str(output_dir),
             model_size=args.model,
             device=args.device,
@@ -287,13 +312,13 @@ def transcribe_command(args: argparse.Namespace) -> int:
 
             logger.info("Running speaker diarization")
 
-            # Get transcript JSON path
+            # Get transcript JSON path (use original filename for consistency)
             transcript_json = output_dir / f"{input_path.stem}.json"
 
-            # Run diarization
+            # Run diarization (use preprocessed audio if available)
             diarized_json = output_dir / f"{input_path.stem}_diarized.json"
             diarize_file(
-                audio_path=str(input_path),
+                audio_path=str(audio_path_for_transcription),
                 output_path=str(diarized_json),
                 num_speakers=args.num_speakers,
                 transcript_path=str(transcript_json),
@@ -628,6 +653,27 @@ def main():
         "-f",
         "--formats",
         help="Comma-separated export formats: txt,srt,vtt,json (e.g., 'txt,srt')",
+    )
+    # Preprocessing options
+    transcribe_parser.add_argument(
+        "--preprocess",
+        action="store_true",
+        help="Enable audio preprocessing before transcription",
+    )
+    transcribe_parser.add_argument(
+        "--denoise",
+        action="store_true",
+        help="Enable noise reduction during preprocessing",
+    )
+    transcribe_parser.add_argument(
+        "--loudnorm",
+        action="store_true",
+        help="Enable loudness normalization during preprocessing",
+    )
+    transcribe_parser.add_argument(
+        "--trim-silence",
+        action="store_true",
+        help="Trim silence during preprocessing",
     )
 
     # Preprocess command

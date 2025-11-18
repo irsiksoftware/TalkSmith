@@ -16,6 +16,11 @@ resemblyzer>=0.1.1
 scikit-learn>=1.3.0
 librosa>=0.10.0
 
+# Audio preprocessing
+soundfile>=0.12.1       # Audio I/O
+noisereduce>=3.0.0      # Noise reduction
+scipy>=1.11.0           # Signal processing (high-pass filter)
+
 # LLM providers for plan generation (optional - install at least one)
 anthropic>=0.40.0  # For Claude models
 openai>=1.50.0     # For GPT models

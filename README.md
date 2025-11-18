@@ -50,12 +50,12 @@ TalkSmith replaces expensive cloud transcription services with a one-time setup 
 
 ## ✨ Key Features
 
-### Core Capabilities (Planned)
-- 🚀 **GPU-accelerated** transcription with faster-whisper (CTranslate2)
-- 👥 **Speaker diarization** via WhisperX + pyannote.audio OR token-free alternative
-- 🎙️ **Multi-speaker support** for meetings, interviews, podcasts
-- 📊 **Batch processing** with resume capability
-- 🔧 **Audio preprocessing** (denoise, loudnorm, silence trimming)
+### Core Capabilities
+- 🚀 **GPU-accelerated** transcription with faster-whisper (CTranslate2) - Planned
+- 👥 **Speaker diarization** via WhisperX + pyannote.audio OR token-free alternative - ✅ Implemented
+- 🎙️ **Multi-speaker support** for meetings, interviews, podcasts - ✅ Implemented
+- 📊 **Batch processing** with resume capability - Planned
+- 🔧 **Audio preprocessing** (denoise, loudnorm, silence trimming, high-pass filter) - ✅ Implemented
 - 📝 **Multiple export formats** (TXT, SRT, VTT, JSON) - ✅ Implemented
 
 ### Implemented Features
@@ -311,23 +311,31 @@ python pipeline/plan_from_transcript.py --input segments.json --google-docs --go
 
 ### CLI Interface
 
-**✅ IMPLEMENTED** - Unified CLI with export and batch processing
+**✅ IMPLEMENTED** - Unified CLI with transcribe, preprocess, diarize, export, and batch processing
 
 ```bash
-# Export segments to various formats
-python cli/main.py export --input segments.json --formats txt,srt,vtt,json --output-dir ./output
+# Transcribe audio with optional preprocessing and diarization - ✅ IMPLEMENTED
+python cli/main.py transcribe audio.wav --model base --diarize --formats txt,srt
+python cli/main.py transcribe audio.wav --preprocess --denoise --loudnorm
 
-# Batch export multiple files
-python cli/main.py batch --input-dir ./segments --formats srt,json --output-dir ./transcripts
+# Preprocess audio - ✅ IMPLEMENTED
+python cli/main.py preprocess audio.wav --denoise --loudnorm --trim
 
-# Demonstrate logging and error handling
+# Diarize audio - ✅ IMPLEMENTED
+python cli/main.py diarize audio.wav --num-speakers 2
+
+# Export segments to various formats - ✅ IMPLEMENTED
+python cli/main.py export segments.json --formats txt,srt,vtt,json --output-dir ./output
+
+# Batch export multiple files - ✅ IMPLEMENTED
+python cli/main.py batch ./segments --formats srt,json --output-dir ./transcripts
+
+# Demonstrate logging and error handling - ✅ IMPLEMENTED
 python cli/main.py demo
 ```
 
 **Planned subcommands** (coming soon):
 ```bash
-python cli/main.py transcribe --input audio.wav --diarize --export srt,json
-python cli/main.py preprocess --input audio.wav --denoise --trim
 python cli/main.py plan --segments segments.json --output plan.md
 ```
 
@@ -341,7 +349,7 @@ TalkSmith/
 │   ├── transcribe_fw.py       # faster-whisper transcription (planned)
 │   ├── diarize_whisperx.py    # ✅ WhisperX + pyannote diarization
 │   ├── diarize_alt.py         # ✅ No-token alternative diarization
-│   ├── preprocess.py          # Audio preprocessing (planned)
+│   ├── preprocess.py          # ✅ Audio preprocessing
 │   ├── postprocess_speakers.py # ✅ Speaker normalization and utterance merging
 │   ├── outline_from_segments.py # ✅ Outline generation with topic detection
 │   ├── plan_from_transcript.py # ✅ LLM-powered PRD/plan generation
@@ -409,6 +417,104 @@ TALKSMITH_MODELS_WHISPER_MODEL=medium.en python pipeline/transcribe_fw.py audio.
 ```
 
 See [docs/configuration.md](docs/configuration.md) for complete documentation.
+
+## 🔧 Audio Preprocessing
+
+**✅ IMPLEMENTED** - Clean and normalize audio before transcription
+
+TalkSmith includes audio preprocessing to improve transcription quality by removing noise, normalizing loudness, and trimming silence.
+
+### Features
+
+- **Noise reduction** - Remove background noise, static, and hum using noisereduce
+- **Loudness normalization** - Standardize audio levels with peak normalization
+- **Silence trimming** - Remove long silence gaps at start/end of recordings
+- **High-pass filter** - Optional filter to remove low-frequency noise (requires scipy)
+
+### Usage
+
+**Standalone preprocessing:**
+
+```python
+from pipeline.preprocess import preprocess_audio
+
+# Basic usage - denoise and normalize
+output_path, metrics = preprocess_audio(
+    input_path="audio.wav",
+    output_path="clean_audio.wav",
+    denoise=True,
+    loudnorm=True,
+    trim_silence=True
+)
+```
+
+**Integrated with transcription:**
+
+```bash
+# Transcribe with preprocessing
+python cli/main.py transcribe audio.wav --preprocess --model base
+
+# Selective preprocessing options
+python cli/main.py transcribe audio.wav --denoise --loudnorm --trim-silence
+
+# Transcribe with preprocessing and diarization
+python cli/main.py transcribe audio.wav --preprocess --diarize --formats txt,srt
+```
+
+### CLI Usage
+
+**Standalone preprocessing command:**
+
+```bash
+# Apply all preprocessing steps
+python cli/main.py preprocess audio.wav --denoise --loudnorm --trim
+
+# Custom output path
+python cli/main.py preprocess audio.wav --denoise --trim -o clean_audio.wav
+
+# Adjust silence threshold (default: -40 dB)
+python cli/main.py preprocess audio.wav --trim --silence-threshold -50
+
+# Enable high-pass filter to remove low frequencies
+python cli/main.py preprocess audio.wav --denoise --high-pass-filter
+```
+
+**Using the standalone script:**
+
+```bash
+# Process with all options
+python pipeline/preprocess.py audio.wav --denoise --loudnorm --trim-silence
+
+# Custom output path
+python pipeline/preprocess.py audio.wav -o clean.wav --denoise --loudnorm
+```
+
+### When to Use Preprocessing
+
+✅ **Recommended for:**
+- Recordings with background noise (cafes, offices, outdoors)
+- Multiple microphones with different gain levels
+- Audio with long silence gaps (interviews, meetings with pauses)
+- Low-quality recordings from phone or webcam
+
+⚠️ **Not needed for:**
+- Clean studio recordings
+- Professional audio with minimal noise
+- Pre-processed audio from transcription services
+
+### Installation
+
+Preprocessing requires additional dependencies:
+
+```bash
+pip install soundfile noisereduce scipy
+```
+
+Or install all dependencies:
+
+```bash
+pip install -r requirements.txt
+```
 
 ## 🎤 Speaker Post-Processing
 
@@ -860,11 +966,11 @@ See our [GitHub Issues](https://github.com/DakotaIrsik/TalkSmith/issues) for det
 - [ ] Batch processing with resume
 
 **Phase 2: Enhancement (P1)**
-- [ ] Audio preprocessing (denoise, trim)
+- [x] Audio preprocessing (denoise, loudnorm, trim, high-pass filter)
 - [ ] Multi-GPU parallelism
 - [x] Speaker post-processing (normalization, utterance merging)
 - [x] Outline generation with topic detection
-- [ ] Additional CLI subcommands (transcribe, preprocess, etc.)
+- [x] Additional CLI subcommands (transcribe, preprocess, diarize)
 
 **Phase 3: Advanced (P2)**
 - [x] Model cache management and version pinning
@@ -874,10 +980,6 @@ See our [GitHub Issues](https://github.com/DakotaIrsik/TalkSmith/issues) for det
 - [x] Alternative diarization (no HF token)
 - [x] Plan/PRD generation with LLM and Google Docs integration
 - [ ] Benchmark suite
-<<<<<<< HEAD
-- [ ] Plan/PRD generation
-=======
->>>>>>> origin/main
 
 ## 🧪 Testing
 
