@@ -57,7 +57,7 @@ TalkSmith replaces expensive cloud transcription services with a one-time setup 
 - 👥 **Speaker diarization** via WhisperX + pyannote.audio OR token-free alternative
 - 🎙️ **Multi-speaker support** for meetings, interviews, podcasts
 - 📊 **Batch processing** with resume capability
-- 🔧 **Audio preprocessing** (denoise, loudnorm, silence trimming)
+- 🔧 **Audio preprocessing** (denoise, loudnorm, silence trimming, high-pass filter) - ✅ Implemented
 - 📝 **Multiple export formats** (TXT, SRT, VTT, JSON) - ✅ Implemented
 
 ### Implemented Features
@@ -73,6 +73,7 @@ TalkSmith replaces expensive cloud transcription services with a one-time setup 
 - ✅ **Outline generation** - Timestamped outlines with auto topic detection
 - ✅ **Plan/PRD generation** - LLM-powered structured plans from transcripts with Google Docs publishing
 - ✅ **WhisperX diarization** - GPU-accelerated diarization with pyannote.audio
+- ✅ **Audio preprocessing** - Denoising, loudness normalization, silence trimming, high-pass filter integrated with transcription pipeline
 
 ### Advanced Features (Planned)
 

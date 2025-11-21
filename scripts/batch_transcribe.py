@@ -101,6 +101,15 @@ class BatchTranscriber:
         max_retries: int = 3,
         parallel: bool = False,
         workers: int = 1,
+        # Preprocessing options
+        enable_preprocessing: bool = False,
+        denoise: bool = False,
+        denoise_method: str = "noisereduce",
+        loudnorm: bool = False,
+        trim_silence: bool = False,
+        silence_threshold_db: float = -40.0,
+        high_pass_filter: bool = False,
+        hpf_cutoff: int = 80,
     ):
         """
         Initialize batch transcriber.
@@ -117,6 +126,14 @@ class BatchTranscriber:
             max_retries: Maximum retry attempts for failed files
             parallel: Enable parallel processing
             workers: Number of parallel workers (for multi-file processing)
+            enable_preprocessing: Enable audio preprocessing before transcription
+            denoise: Enable denoising
+            denoise_method: 'noisereduce' or 'ffmpeg'
+            loudnorm: Enable loudness normalization
+            trim_silence: Enable silence trimming
+            silence_threshold_db: Silence threshold in dB
+            high_pass_filter: Enable high-pass filter
+            hpf_cutoff: High-pass filter cutoff frequency (Hz)
         """
         self.input_dir = Path(input_dir)
         self.output_dir = Path(output_dir)
@@ -129,6 +146,16 @@ class BatchTranscriber:
         self.max_retries = max_retries
         self.parallel = parallel
         self.workers = workers
+
+        # Preprocessing options
+        self.enable_preprocessing = enable_preprocessing
+        self.denoise = denoise
+        self.denoise_method = denoise_method
+        self.loudnorm = loudnorm
+        self.trim_silence = trim_silence
+        self.silence_threshold_db = silence_threshold_db
+        self.high_pass_filter = high_pass_filter
+        self.hpf_cutoff = hpf_cutoff
 
         # Create output directory
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -171,7 +198,18 @@ class BatchTranscriber:
 
             # Initialize transcriber (each worker needs its own instance)
             transcriber = FasterWhisperTranscriber(
-                model_size=self.model_size, device=self.device, logger=self.logger
+                model_size=self.model_size,
+                device=self.device,
+                logger=self.logger,
+                # Preprocessing options
+                enable_preprocessing=self.enable_preprocessing,
+                denoise=self.denoise,
+                denoise_method=self.denoise_method,
+                loudnorm=self.loudnorm,
+                trim_silence=self.trim_silence,
+                silence_threshold_db=self.silence_threshold_db,
+                high_pass_filter=self.high_pass_filter,
+                hpf_cutoff=self.hpf_cutoff,
             )
 
             # Transcribe
@@ -469,6 +507,42 @@ def main():
         help="Number of parallel workers (default: 2)",
     )
 
+    # Preprocessing options
+    preproc_group = parser.add_argument_group("Audio Preprocessing")
+    preproc_group.add_argument(
+        "--preprocess",
+        action="store_true",
+        help="Enable audio preprocessing before transcription",
+    )
+    preproc_group.add_argument("--denoise", action="store_true", help="Enable denoising")
+    preproc_group.add_argument(
+        "--denoise-method",
+        choices=["noisereduce", "ffmpeg"],
+        default="noisereduce",
+        help="Denoising method (default: noisereduce)",
+    )
+    preproc_group.add_argument(
+        "--loudnorm", action="store_true", help="Enable loudness normalization"
+    )
+    preproc_group.add_argument(
+        "--trim-silence", action="store_true", help="Trim silence from audio"
+    )
+    preproc_group.add_argument(
+        "--silence-threshold",
+        type=float,
+        default=-40.0,
+        help="Silence threshold in dB (default: -40)",
+    )
+    preproc_group.add_argument(
+        "--high-pass-filter", action="store_true", help="Enable high-pass filter"
+    )
+    preproc_group.add_argument(
+        "--hpf-cutoff",
+        type=int,
+        default=80,
+        help="High-pass filter cutoff (Hz, default: 80)",
+    )
+
     args = parser.parse_args()
 
     try:
@@ -484,6 +558,15 @@ def main():
             max_retries=args.max_retries,
             parallel=args.parallel,
             workers=args.workers,
+            # Preprocessing options
+            enable_preprocessing=args.preprocess,
+            denoise=args.denoise,
+            denoise_method=args.denoise_method,
+            loudnorm=args.loudnorm,
+            trim_silence=args.trim_silence,
+            silence_threshold_db=args.silence_threshold,
+            high_pass_filter=args.high_pass_filter,
+            hpf_cutoff=args.hpf_cutoff,
         )
 
         exit_code = batch_transcriber.run()

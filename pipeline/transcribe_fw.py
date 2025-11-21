@@ -6,6 +6,7 @@ Uses faster-whisper (CTranslate2) for efficient GPU-accelerated transcription.
 
 import argparse
 import json
+import tempfile
 import time
 from pathlib import Path
 from typing import Dict, Optional
@@ -14,6 +15,7 @@ from faster_whisper import WhisperModel
 
 from pipeline.gpu_utils import get_memory_info, select_device, suggest_model_for_vram
 from pipeline.logger import get_logger
+from pipeline.preprocess import AudioPreprocessor
 
 
 class FasterWhisperTranscriber:
@@ -25,6 +27,15 @@ class FasterWhisperTranscriber:
         device: str = "cuda",
         compute_type: str = "float16",
         logger=None,
+        # Preprocessing options
+        enable_preprocessing: bool = False,
+        denoise: bool = False,
+        denoise_method: str = "noisereduce",
+        loudnorm: bool = False,
+        trim_silence: bool = False,
+        silence_threshold_db: float = -40.0,
+        high_pass_filter: bool = False,
+        hpf_cutoff: int = 80,
     ):
         """
         Initialize the transcriber.
@@ -34,8 +45,37 @@ class FasterWhisperTranscriber:
             device: Device to use (cuda, cpu, or auto)
             compute_type: Compute precision (float16, int8, etc.)
             logger: Optional logger instance
+            enable_preprocessing: Enable audio preprocessing before transcription
+            denoise: Enable denoising
+            denoise_method: 'noisereduce' or 'ffmpeg'
+            loudnorm: Enable loudness normalization
+            trim_silence: Enable silence trimming
+            silence_threshold_db: Silence threshold in dB (default: -40)
+            high_pass_filter: Enable high-pass filter
+            hpf_cutoff: High-pass filter cutoff frequency (Hz)
         """
         self.logger = logger or get_logger(__name__)
+
+        # Preprocessing configuration
+        self.enable_preprocessing = enable_preprocessing
+        self.preprocessor = None
+        if enable_preprocessing:
+            self.preprocessor = AudioPreprocessor(
+                denoise=denoise,
+                denoise_method=denoise_method,
+                loudnorm=loudnorm,
+                trim_silence=trim_silence,
+                silence_threshold_db=silence_threshold_db,
+                high_pass_filter=high_pass_filter,
+                hpf_cutoff=hpf_cutoff,
+            )
+            self.logger.info(
+                "Audio preprocessing enabled",
+                denoise=denoise,
+                loudnorm=loudnorm,
+                trim_silence=trim_silence,
+                high_pass_filter=high_pass_filter,
+            )
 
         # Auto-select device if needed
         selected_device = select_device(device, self.logger)
@@ -93,6 +133,27 @@ class FasterWhisperTranscriber:
             Dictionary with transcription results
         """
         start_time = time.time()
+        preprocessing_metrics = None
+        temp_file = None
+
+        # Apply preprocessing if enabled
+        if self.enable_preprocessing and self.preprocessor:
+            self.logger.info("Applying audio preprocessing before transcription")
+            try:
+                preprocessed_path, preprocessing_metrics = self.preprocessor.process(
+                    Path(audio_path)
+                )
+                audio_path = str(preprocessed_path)
+                temp_file = preprocessed_path
+                self.logger.info(
+                    "Preprocessing complete",
+                    steps=len(preprocessing_metrics.get("steps_applied", [])),
+                )
+            except Exception as e:
+                self.logger.warning(
+                    f"Preprocessing failed, using original audio: {e}",
+                    error=str(e),
+                )
 
         segments, info = self.model.transcribe(
             audio_path,
@@ -146,6 +207,17 @@ class FasterWhisperTranscriber:
             "device": self.device,
         }
 
+        # Add preprocessing metrics if available
+        if preprocessing_metrics:
+            result["preprocessing"] = preprocessing_metrics
+
+        # Clean up temporary preprocessed file
+        if temp_file and temp_file.exists():
+            try:
+                temp_file.unlink()
+            except Exception as e:
+                self.logger.warning(f"Failed to delete temp file {temp_file}: {e}")
+
         return result
 
 
@@ -155,6 +227,15 @@ def transcribe_file(
     model_size: str = "base",
     device: str = "cuda",
     language: Optional[str] = None,
+    # Preprocessing options
+    enable_preprocessing: bool = False,
+    denoise: bool = False,
+    denoise_method: str = "noisereduce",
+    loudnorm: bool = False,
+    trim_silence: bool = False,
+    silence_threshold_db: float = -40.0,
+    high_pass_filter: bool = False,
+    hpf_cutoff: int = 80,
 ) -> Dict:
     """
     Transcribe a single audio file and save outputs.
@@ -165,6 +246,14 @@ def transcribe_file(
         model_size: Model size to use
         device: Device to use (cuda or cpu)
         language: Language code or None for auto-detection
+        enable_preprocessing: Enable audio preprocessing
+        denoise: Enable denoising
+        denoise_method: 'noisereduce' or 'ffmpeg'
+        loudnorm: Enable loudness normalization
+        trim_silence: Enable silence trimming
+        silence_threshold_db: Silence threshold in dB
+        high_pass_filter: Enable high-pass filter
+        hpf_cutoff: High-pass filter cutoff frequency (Hz)
 
     Returns:
         Transcription results dictionary
@@ -180,8 +269,19 @@ def transcribe_file(
     else:
         output_dir = audio_path.parent
 
-    # Initialize transcriber
-    transcriber = FasterWhisperTranscriber(model_size=model_size, device=device)
+    # Initialize transcriber with preprocessing options
+    transcriber = FasterWhisperTranscriber(
+        model_size=model_size,
+        device=device,
+        enable_preprocessing=enable_preprocessing,
+        denoise=denoise,
+        denoise_method=denoise_method,
+        loudnorm=loudnorm,
+        trim_silence=trim_silence,
+        silence_threshold_db=silence_threshold_db,
+        high_pass_filter=high_pass_filter,
+        hpf_cutoff=hpf_cutoff,
+    )
 
     # Transcribe
     print(f"Transcribing {audio_path.name} with {model_size} model...")
@@ -232,6 +332,42 @@ def main():
     )
     parser.add_argument("--output-dir", help="Output directory (default: same as input file)")
 
+    # Preprocessing options
+    preproc_group = parser.add_argument_group("Audio Preprocessing")
+    preproc_group.add_argument(
+        "--preprocess",
+        action="store_true",
+        help="Enable audio preprocessing before transcription",
+    )
+    preproc_group.add_argument("--denoise", action="store_true", help="Enable denoising")
+    preproc_group.add_argument(
+        "--denoise-method",
+        choices=["noisereduce", "ffmpeg"],
+        default="noisereduce",
+        help="Denoising method (default: noisereduce)",
+    )
+    preproc_group.add_argument(
+        "--loudnorm", action="store_true", help="Enable loudness normalization"
+    )
+    preproc_group.add_argument(
+        "--trim-silence", action="store_true", help="Trim silence from audio"
+    )
+    preproc_group.add_argument(
+        "--silence-threshold",
+        type=float,
+        default=-40.0,
+        help="Silence threshold in dB (default: -40)",
+    )
+    preproc_group.add_argument(
+        "--high-pass-filter", action="store_true", help="Enable high-pass filter"
+    )
+    preproc_group.add_argument(
+        "--hpf-cutoff",
+        type=int,
+        default=80,
+        help="High-pass filter cutoff (Hz, default: 80)",
+    )
+
     args = parser.parse_args()
 
     try:
@@ -241,6 +377,15 @@ def main():
             model_size=args.model_size,
             device=args.device,
             language=args.language,
+            # Preprocessing options
+            enable_preprocessing=args.preprocess,
+            denoise=args.denoise,
+            denoise_method=args.denoise_method,
+            loudnorm=args.loudnorm,
+            trim_silence=args.trim_silence,
+            silence_threshold_db=args.silence_threshold,
+            high_pass_filter=args.high_pass_filter,
+            hpf_cutoff=args.hpf_cutoff,
         )
     except Exception as e:
         print(f"Error: {e}")

@@ -20,7 +20,7 @@ mypy>=1.4.0
 ipython>=8.14.0
 
 # Audio Processing (for tests)
-soundfile>=0.12.1
+# soundfile is now in main requirements.txt
 
 # Benchmarking
 pandas>=2.0.0
