@@ -3,6 +3,7 @@
 
 # Core dependencies
 numpy>=1.24.0
+scipy>=1.11.0  # Signal processing for audio preprocessing
 
 # Testing
 pytest>=7.4.0
@@ -11,10 +12,15 @@ pytest-cov>=4.1.0
 # Configuration (built-in to Python, but listed for clarity)
 # configparser - included in Python standard library
 
+# Audio processing and transcription
+faster-whisper>=1.0.0  # GPU-accelerated transcription with CTranslate2
+soundfile>=0.12.1      # Audio file I/O for preprocessing
+librosa>=0.10.0        # Audio analysis and processing
+noisereduce>=3.0.0     # Audio denoising for preprocessing
+
 # Alternative diarization (token-free)
 resemblyzer>=0.1.1
 scikit-learn>=1.3.0
-librosa>=0.10.0
 
 # LLM providers for plan generation (optional - install at least one)
 anthropic>=0.40.0  # For Claude models
