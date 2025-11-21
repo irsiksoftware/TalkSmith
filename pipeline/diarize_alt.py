@@ -14,11 +14,9 @@ Example:
 """
 
 import argparse
-import json
 import time
 import warnings
-from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
@@ -33,13 +31,13 @@ except ImportError as e:
         f"Missing: {e.name}"
     ) from e
 
-from pipeline.logger import get_logger
+from pipeline.diarization_base import DiarizationBase
 
 # Suppress warnings from resemblyzer and sklearn
 warnings.filterwarnings("ignore", category=UserWarning)
 
 
-class AlternativeDiarizer:
+class AlternativeDiarizer(DiarizationBase):
     """
     Token-free speaker diarization using Resemblyzer embeddings.
 
@@ -69,24 +67,28 @@ class AlternativeDiarizer:
         self.window_size = window_size
         self.overlap = overlap
         self.min_segment_duration = min_segment_duration
-        self.logger = logger or get_logger(__name__)
 
+        # Initialize base class (which calls _initialize_models)
+        super().__init__(logger=logger)
+
+    def _initialize_models(self):
+        """Initialize Resemblyzer voice encoder."""
         self.logger.info(
             "Initializing alternative diarizer",
-            window_size=window_size,
-            overlap=overlap,
-            min_segment_duration=min_segment_duration,
+            window_size=self.window_size,
+            overlap=self.overlap,
+            min_segment_duration=self.min_segment_duration,
         )
 
         # Initialize voice encoder
         self.encoder = VoiceEncoder()
 
-    def diarize(
+    def _perform_diarization(
         self,
         audio_path: str,
         num_speakers: Optional[int] = None,
         transcript_segments: Optional[List[Dict]] = None,
-    ) -> List[Dict]:
+    ) -> Dict[str, Any]:
         """
         Perform speaker diarization on audio file.
 
@@ -96,10 +98,8 @@ class AlternativeDiarizer:
             transcript_segments: Optional transcript segments to align with
 
         Returns:
-            List of segments with speaker labels
+            Dictionary with segments and metadata
         """
-        start_time = time.time()
-
         # Load and preprocess audio
         self.logger.info("Loading audio", audio_path=audio_path)
         wav = preprocess_wav(audio_path)
@@ -131,16 +131,13 @@ class AlternativeDiarizer:
         if transcript_segments:
             segments = self._align_with_transcript(segments, transcript_segments)
 
-        elapsed = time.time() - start_time
-        self.logger.info(
-            "Diarization complete",
-            duration=duration,
-            processing_time=elapsed,
-            num_segments=len(segments),
-            num_speakers=num_speakers,
-        )
-
-        return segments
+        # Return results in standard format
+        return {
+            "segments": segments,
+            "duration": duration,
+            "num_speakers": num_speakers,
+            "num_segments": len(segments),
+        }
 
     def _extract_embeddings(
         self, wav: np.ndarray, sr: int = 16000
@@ -350,6 +347,56 @@ class AlternativeDiarizer:
 
         return aligned
 
+    @classmethod
+    def _get_cli_parser(cls) -> argparse.ArgumentParser:
+        """Get CLI argument parser for alternative diarizer."""
+        parser = argparse.ArgumentParser(
+            description="Alternative speaker diarization (no HF token required)"
+        )
+        parser.add_argument("audio", help="Path to audio file")
+        parser.add_argument(
+            "--output-dir",
+            help="Output directory (default: same as input file)",
+        )
+        parser.add_argument(
+            "--num-speakers",
+            type=int,
+            help="Number of speakers (default: auto-detect)",
+        )
+        parser.add_argument(
+            "--transcript",
+            help="Path to transcript JSON for alignment with diarization",
+        )
+        parser.add_argument(
+            "--window-size",
+            type=float,
+            default=1.5,
+            help="Window size in seconds for embedding extraction (default: 1.5)",
+        )
+        return parser
+
+    @classmethod
+    def _extract_diarizer_kwargs(cls, args: argparse.Namespace) -> Dict[str, Any]:
+        """Extract constructor kwargs from parsed arguments."""
+        return {
+            "window_size": args.window_size,
+        }
+
+    @classmethod
+    def _extract_diarization_kwargs(cls, args: argparse.Namespace) -> Dict[str, Any]:
+        """Extract diarization kwargs from parsed arguments."""
+        kwargs = {
+            "num_speakers": args.num_speakers,
+        }
+
+        # Load transcript if provided
+        if args.transcript:
+            transcript_path = cls.validate_audio_file(args.transcript)
+            data = cls.load_json(transcript_path)
+            kwargs["transcript_segments"] = data.get("segments", data)
+
+        return kwargs
+
 
 def diarize_file(
     audio_path: str,
@@ -359,7 +406,9 @@ def diarize_file(
     window_size: float = 1.5,
 ) -> List[Dict]:
     """
-    Diarize audio file and save results.
+    Backward compatibility wrapper for diarize_file().
+
+    This function maintains the old API for compatibility with existing code.
 
     Args:
         audio_path: Path to audio file
@@ -371,96 +420,46 @@ def diarize_file(
     Returns:
         List of diarized segments
     """
-    audio_path = Path(audio_path)
-    if not audio_path.exists():
-        raise FileNotFoundError(f"Audio file not found: {audio_path}")
-
-    # Load transcript if provided
-    transcript_segments = None
-    if transcript_path:
-        transcript_path = Path(transcript_path)
-        if not transcript_path.exists():
-            raise FileNotFoundError(f"Transcript file not found: {transcript_path}")
-
-        with open(transcript_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            transcript_segments = data.get("segments", data)
+    from pathlib import Path
 
     # Initialize diarizer
     diarizer = AlternativeDiarizer(window_size=window_size)
 
+    # Load transcript if provided
+    transcript_segments = None
+    if transcript_path:
+        data = diarizer.load_json(Path(transcript_path))
+        transcript_segments = data.get("segments", data)
+
     # Perform diarization
-    print(f"Diarizing {audio_path.name}...")
-    segments = diarizer.diarize(
-        str(audio_path),
+    result = diarizer.diarize_with_timing(
+        audio_path,
         num_speakers=num_speakers,
         transcript_segments=transcript_segments,
     )
 
-    # Determine output path
-    if output_path is None:
-        output_path = audio_path.parent / f"{audio_path.stem}_diarized.json"
-    else:
+    # Save to output path if specified
+    if output_path:
         output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Save results
-    output_data = {
-        "audio_file": str(audio_path),
-        "num_speakers": len(set(seg["speaker"] for seg in segments)),
-        "num_segments": len(segments),
-        "segments": segments,
-    }
+        # Add audio_file to result for compatibility
+        result["audio_file"] = str(audio_path)
 
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(output_data, f, indent=2, ensure_ascii=False)
+        diarizer.save_json(result, output_path)
 
-    print("\nDiarization Results:")
-    print(f"  Speakers detected: {output_data['num_speakers']}")
-    print(f"  Segments created: {output_data['num_segments']}")
-    print(f"  Saved to: {output_path}")
+        # Print results
+        print("\nDiarization Results:")
+        print(f"  Speakers detected: {result['num_speakers']}")
+        print(f"  Segments created: {result['num_segments']}")
+        print(f"  Saved to: {output_path}")
 
-    return segments
+    return result["segments"]
 
 
 def main():
     """CLI entry point."""
-    parser = argparse.ArgumentParser(
-        description="Alternative speaker diarization (no HF token required)"
-    )
-    parser.add_argument("audio", help="Path to audio file")
-    parser.add_argument("-o", "--output", help="Output JSON path (default: <audio>_diarized.json)")
-    parser.add_argument(
-        "--num-speakers",
-        type=int,
-        help="Number of speakers (default: auto-detect)",
-    )
-    parser.add_argument(
-        "--transcript",
-        help="Path to transcript JSON for alignment with diarization",
-    )
-    parser.add_argument(
-        "--window-size",
-        type=float,
-        default=1.5,
-        help="Window size in seconds for embedding extraction (default: 1.5)",
-    )
-
-    args = parser.parse_args()
-
-    try:
-        diarize_file(
-            args.audio,
-            output_path=args.output,
-            num_speakers=args.num_speakers,
-            transcript_path=args.transcript,
-            window_size=args.window_size,
-        )
-    except Exception as e:
-        print(f"Error: {e}")
-        return 1
-
-    return 0
+    return AlternativeDiarizer.run_cli()
 
 
 if __name__ == "__main__":
