@@ -20,18 +20,22 @@
 ## ✅ Merged Features (10 PRs)
 
 ### Foundation
+
 1. **PR #24** - Configuration System (#14)
 2. **PR #26** - Repository Hygiene (#23)
 
 ### Core Features
+
 3. **PR #28** - Export Formats (#10)
 4. **PR #32** - CLI + Logging (#17, #20)
 
 ### Processing
+
 5. **PR #30** - Audio Preprocessing (#8)
 6. **PR #37** - Speaker Post-Processing (#11)
 
 ### Advanced
+
 7. **PR #29** - PII Scrubbing (#21)
 8. **PR #35** - Model Cache Management (#22)
 9. **PR #34** - Discord Notifications (#33) ✨
@@ -52,6 +56,7 @@
 ### Fully Implemented ✅
 
 **Configuration & Setup**
+
 - Centralized settings.ini with environment overrides
 - Docker CUDA support with compose configuration
 - Model cache management and prefetch utilities
@@ -59,18 +64,21 @@
 - CI/CD pipeline with GitHub Actions
 
 **Core Functionality**
+
 - Export formats: TXT, SRT, VTT, JSON
 - CLI interface (export, batch, demo commands)
 - Structured JSON logging with retry/backoff
 - Batch operation tracking and summaries
 
 **Processing Features**
+
 - Audio preprocessing (planned - utilities ready)
 - Speaker post-processing and normalization
 - Outline generation with topic detection
 - PII redaction (emails, phones, SSNs, cards, IPs)
 
 **DevOps & Automation**
+
 - Discord notifications for commits/releases
 - Docker CUDA containers
 - MIT License
@@ -82,6 +90,7 @@
 ## 📁 New Documentation
 
 Created comprehensive guides:
+
 - **docs/docker-setup.md** - Complete Docker CUDA setup guide with:
   - Prerequisites and installation steps
   - Quick start examples
@@ -96,6 +105,7 @@ Created comprehensive guides:
 ## 🚀 Quick Start (Updated)
 
 ### Option 1: Docker (Recommended for Linux + GPU)
+
 ```bash
 git clone https://github.com/DakotaIrsik/TalkSmith.git
 cd TalkSmith
@@ -104,6 +114,7 @@ docker compose run --rm talksmith python cli/main.py --help
 ```
 
 ### Option 2: Native Installation
+
 ```bash
 git clone https://github.com/DakotaIrsik/TalkSmith.git
 cd TalkSmith
@@ -144,19 +155,23 @@ d5c2cdb Add centralized configuration system with settings.ini (#24)
 ## 🔜 Next Steps
 
 ### Immediate
+
 - [x] All PRs merged and closed
 - [x] Documentation created (Docker setup)
 - [ ] Test Docker setup end-to-end (user action)
 - [ ] Consider creating v0.1.0 release
 
 ### Development Priorities
+
 Based on README roadmap:
+
 1. **Core Transcription** - Implement `pipeline/transcribe_fw.py`
 2. **Diarization** - Implement `pipeline/diarize_whisperx.py`
 3. **Batch Processing** - Complete batch scripts with resume
 4. **Multi-GPU** - Implement parallel processing with launcher scripts
 
 ### Optional Enhancements
+
 - Set up Discord webhook for notifications
 - Create additional CLI subcommands (transcribe, preprocess, plan)
 - Implement alternative diarization (no HF token)
@@ -168,6 +183,7 @@ Based on README roadmap:
 ## 💡 Testing Recommendations
 
 ### Verify Everything Works
+
 ```bash
 # 1. Test configuration system
 python -c "from config import get_config; print(get_config().to_dict())"
@@ -205,6 +221,7 @@ python pipeline/outline_from_segments.py \
 ## 📚 Resources
 
 ### Documentation
+
 - [README.md](README.md) - Project overview and features
 - [docs/configuration.md](docs/configuration.md) - Configuration guide
 - [docs/docker-setup.md](docs/docker-setup.md) - Docker CUDA setup ✨ NEW
@@ -213,6 +230,7 @@ python pipeline/outline_from_segments.py \
 - [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guide
 
 ### Project Files
+
 - [PR_MERGE_PLAN.md](PR_MERGE_PLAN.md) - Original merge strategy
 - [PR_MERGE_SUMMARY.md](PR_MERGE_SUMMARY.md) - Merge execution summary
 - [DECISIONS.md](DECISIONS.md) - Technical decisions log
@@ -222,6 +240,7 @@ python pipeline/outline_from_segments.py \
 ## 🙏 Acknowledgments
 
 Successfully consolidated work from:
+
 - 13 pull requests
 - 10 issues closed
 - 8 major features implemented
@@ -238,6 +257,7 @@ Successfully consolidated work from:
 **You're all set! The repository is now clean, organized, and ready for development.** 🚀
 
 Next actions are up to you:
+
 1. Test the Docker setup when ready
 2. Continue with core transcription implementation
 3. Create a release if desired

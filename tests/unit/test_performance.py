@@ -1,7 +1,8 @@
 """Unit tests for performance metrics and benchmarking."""
 
-import pytest
 import time
+
+import pytest
 
 
 @pytest.mark.unit

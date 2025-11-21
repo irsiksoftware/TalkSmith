@@ -1,16 +1,17 @@
 """Unit tests for GPU verification script."""
 
 import subprocess
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 import pytest
 
 from scripts.check_gpu import (
-    get_system_info,
     check_cuda_availability,
     check_nvidia_driver,
+    get_system_info,
+    main,
     print_section,
     print_status,
-    main,
 )
 
 
@@ -158,9 +159,7 @@ class TestCheckNvidiaDriver:
 
     def test_nvidia_driver_timeout(self):
         """Test timeout handling for nvidia-smi."""
-        with patch(
-            "subprocess.run", side_effect=subprocess.TimeoutExpired("nvidia-smi", 5)
-        ):
+        with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("nvidia-smi", 5)):
             version = check_nvidia_driver()
 
             assert version is None
@@ -405,9 +404,7 @@ class TestMain:
             import sys
 
             mock_torch = sys.modules["torch"]
-            mock_torch.randn.return_value.cuda.side_effect = RuntimeError(
-                "CUDA out of memory"
-            )
+            mock_torch.randn.return_value.cuda.side_effect = RuntimeError("CUDA out of memory")
 
             exit_code = main()
 

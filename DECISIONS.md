@@ -21,6 +21,7 @@ We have standardized on the following models with version pinning:
 **Provider:** OpenAI Whisper, optimized via CTranslate2 (faster-whisper library)
 
 **Recommended Models:**
+
 - **Default:** `large-v3` - Best accuracy for production use
 - **Fast:** `medium.en` - Good balance of speed and accuracy for English-only content
 - **Lightweight:** `small.en` - For resource-constrained environments
@@ -57,11 +58,13 @@ We have standardized on the following models with version pinning:
 **Version:** 3.1 (latest stable as of 2025-10-02)
 
 **Requirements:**
+
 - HuggingFace account and token
-- Acceptance of model terms at: https://huggingface.co/pyannote/speaker-diarization-3.1
+- Acceptance of model terms at: <https://huggingface.co/pyannote/speaker-diarization-3.1>
 - Size: ~100 MB
 
 **Rationale:**
+
 - State-of-the-art speaker diarization accuracy
 - Active maintenance and community support
 - Compatible with WhisperX integration
@@ -80,15 +83,18 @@ We have standardized on the following models with version pinning:
 **Cache Directory:** `.cache/` (configurable via `settings.ini`)
 
 **Environment Variables:**
+
 - `HF_HOME`: HuggingFace cache directory
 - `TRANSFORMERS_CACHE`: Transformers library cache directory
 - `TALKSMITH_PATHS_CACHE_DIR`: TalkSmith-specific cache override
 
 **Prefetch Scripts:**
+
 - Windows: `scripts/prefetch_models.ps1`
 - Linux/macOS: `scripts/prefetch_models.sh`
 
 **Features:**
+
 - Selective model download (specify sizes)
 - Optional diarization model download
 - HuggingFace token support
@@ -140,10 +146,10 @@ We have standardized on the following models with version pinning:
 
 ### References
 
-- faster-whisper: https://github.com/SYSTRAN/faster-whisper
-- OpenAI Whisper: https://github.com/openai/whisper
-- pyannote.audio: https://github.com/pyannote/pyannote-audio
-- CTranslate2: https://github.com/OpenNMT/CTranslate2
+- faster-whisper: <https://github.com/SYSTRAN/faster-whisper>
+- OpenAI Whisper: <https://github.com/openai/whisper>
+- pyannote.audio: <https://github.com/pyannote/pyannote-audio>
+- CTranslate2: <https://github.com/OpenNMT/CTranslate2>
 
 ---
 

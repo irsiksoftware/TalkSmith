@@ -15,10 +15,10 @@ import logging
 import sys
 import time
 from datetime import datetime
+from functools import wraps
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Tuple, Type
-from logging.handlers import RotatingFileHandler
-from functools import wraps
 
 from config.settings import get_config
 
@@ -127,14 +127,10 @@ class TalkSmithLogger:
         if self.log_format == "json":
             formatter = JSONFormatter()
         else:
-            formatter = logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
+            formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
         # Console handler
-        if console_output and self.config.get_bool(
-            "Logging", "console_output", fallback=True
-        ):
+        if console_output and self.config.get_bool("Logging", "console_output", fallback=True):
             console_handler = logging.StreamHandler(sys.stdout)
             console_handler.setFormatter(formatter)
             self.logger.addHandler(console_handler)
@@ -328,15 +324,11 @@ class BatchLogSummary:
             "successful": self.successful,
             "failed": self.failed,
             "success_rate": (
-                f"{(self.successful / self.total * 100):.1f}%"
-                if self.total > 0
-                else "N/A"
+                f"{(self.successful / self.total * 100):.1f}%" if self.total > 0 else "N/A"
             ),
         }
 
-        self.logger.info(
-            f"Batch complete: {self.successful}/{self.total} successful", **summary
-        )
+        self.logger.info(f"Batch complete: {self.successful}/{self.total} successful", **summary)
 
         if self.errors:
             self.logger.error(f"Failed items: {len(self.errors)}", errors=self.errors)

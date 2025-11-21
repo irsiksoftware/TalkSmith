@@ -23,9 +23,9 @@ from typing import Dict, List, Optional
 import numpy as np
 
 try:
+    import librosa
     from resemblyzer import VoiceEncoder, preprocess_wav
     from sklearn.cluster import SpectralClustering
-    import librosa
 except ImportError as e:
     raise ImportError(
         "Alternative diarization requires additional dependencies. "
@@ -117,9 +117,7 @@ class AlternativeDiarizer:
             num_speakers = self._estimate_num_speakers(embeddings)
             self.logger.info("Estimated number of speakers", num_speakers=num_speakers)
         else:
-            self.logger.info(
-                "Using specified number of speakers", num_speakers=num_speakers
-            )
+            self.logger.info("Using specified number of speakers", num_speakers=num_speakers)
 
         speaker_labels = self._cluster_embeddings(embeddings, num_speakers)
 
@@ -213,9 +211,7 @@ class AlternativeDiarizer:
 
         return best_n
 
-    def _cluster_embeddings(
-        self, embeddings: np.ndarray, num_speakers: int
-    ) -> np.ndarray:
+    def _cluster_embeddings(self, embeddings: np.ndarray, num_speakers: int) -> np.ndarray:
         """
         Cluster embeddings into speaker groups.
 
@@ -305,20 +301,13 @@ class AlternativeDiarizer:
             last = merged[-1]
 
             # Same speaker and close in time - merge
-            if (
-                segment["speaker"] == last["speaker"]
-                and segment["start"] - last["end"] < 0.5
-            ):
+            if segment["speaker"] == last["speaker"] and segment["start"] - last["end"] < 0.5:
                 last["end"] = segment["end"]
             else:
                 merged.append(segment)
 
         # Filter out very short segments
-        merged = [
-            seg
-            for seg in merged
-            if (seg["end"] - seg["start"]) >= self.min_segment_duration
-        ]
+        merged = [seg for seg in merged if (seg["end"] - seg["start"]) >= self.min_segment_duration]
 
         return merged
 
@@ -440,9 +429,7 @@ def main():
         description="Alternative speaker diarization (no HF token required)"
     )
     parser.add_argument("audio", help="Path to audio file")
-    parser.add_argument(
-        "-o", "--output", help="Output JSON path (default: <audio>_diarized.json)"
-    )
+    parser.add_argument("-o", "--output", help="Output JSON path (default: <audio>_diarized.json)")
     parser.add_argument(
         "--num-speakers",
         type=int,

@@ -8,11 +8,12 @@ This module provides functions to calculate performance metrics:
 
 import json
 import re
-from dataclasses import dataclass, asdict
-from pathlib import Path
-from typing import List, Dict, Optional
-import pandas as pd
+from dataclasses import asdict, dataclass
 from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional
+
+import pandas as pd
 
 
 @dataclass
@@ -226,9 +227,7 @@ def generate_report(results: List[BenchmarkResult], output_dir: Path) -> None:
 
             for _, row in subset.iterrows():
                 wer_str = f"{row['wer']:.2%}" if pd.notna(row["wer"]) else "N/A"
-                mem_str = (
-                    f"{row['memory_mb']:.1f}" if pd.notna(row["memory_mb"]) else "N/A"
-                )
+                mem_str = f"{row['memory_mb']:.1f}" if pd.notna(row["memory_mb"]) else "N/A"
                 diar_str = "Yes" if row["diarization"] else "No"
 
                 f.write(
@@ -249,9 +248,7 @@ def generate_report(results: List[BenchmarkResult], output_dir: Path) -> None:
 
         if df["wer"].notna().any():
             f.write("### Most Accurate (Lowest WER)\n")
-            most_accurate = df[df["wer"].notna()].nsmallest(3, "wer")[
-                ["model", "device", "wer"]
-            ]
+            most_accurate = df[df["wer"].notna()].nsmallest(3, "wer")[["model", "device", "wer"]]
             f.write(most_accurate.to_markdown(index=False))
             f.write("\n\n")
 

@@ -12,6 +12,7 @@ TalkSmith is a comprehensive solution for transcribing and diarizing hour-long+ 
 ## 🎯 What It Does
 
 TalkSmith transforms your audio recordings into:
+
 - **Accurate transcriptions** with word-level timestamps
 - **Speaker diarization** (who said what and when)
 - **Multiple export formats** (TXT, SRT, VTT, JSON)
@@ -51,6 +52,7 @@ TalkSmith replaces expensive cloud transcription services with a one-time setup 
 ## ✨ Key Features
 
 ### Core Capabilities (Planned)
+
 - 🚀 **GPU-accelerated** transcription with faster-whisper (CTranslate2)
 - 👥 **Speaker diarization** via WhisperX + pyannote.audio OR token-free alternative
 - 🎙️ **Multi-speaker support** for meetings, interviews, podcasts
@@ -59,6 +61,7 @@ TalkSmith replaces expensive cloud transcription services with a one-time setup 
 - 📝 **Multiple export formats** (TXT, SRT, VTT, JSON) - ✅ Implemented
 
 ### Implemented Features
+
 - ✅ **Structured JSON logging** with metrics tracking and retry/backoff
 - ✅ **Export formats** - TXT, SRT, VTT, JSON with validation
 - ✅ **CLI interface** - Export and batch processing commands
@@ -72,12 +75,14 @@ TalkSmith replaces expensive cloud transcription services with a one-time setup 
 - ✅ **WhisperX diarization** - GPU-accelerated diarization with pyannote.audio
 
 ### Advanced Features (Planned)
+
 - 💾 **Multi-GPU parallelism** (utilize multiple RTX 3060s concurrently)
 - ✅ **No-token diarization** alternative (no HuggingFace account required) - ✅ Implemented
 - ☁️ **Optional cloud sync** (rclone to Google Drive) - ✅ Implemented
 - 📄 **PRD/plan generation** from meeting transcripts - ✅ Implemented
 
 ### Privacy & Control
+
 - ✅ **100% local processing** - your audio never leaves your machine
 - ✅ **No API keys or subscriptions** required (except optional HF token for best diarization)
 - ✅ **Open source** - full transparency and customization
@@ -88,6 +93,7 @@ TalkSmith replaces expensive cloud transcription services with a one-time setup 
 > ⚠️ **Implementation in progress** - Installation and usage instructions below represent the planned interface. Check [Roadmap](#-roadmap) for current implementation status.
 
 ### Target Prerequisites
+
 - **GPU:** NVIDIA GPU with CUDA support (tested on dual RTX 3060s, 12GB VRAM each)
 - **OS:** Windows, Linux, or macOS (CPU-only mode on macOS)
 - **Python:** 3.10 or 3.11
@@ -220,6 +226,7 @@ If PyTorch reports CUDA is not available but you have an NVIDIA GPU:
 1. **Verify NVIDIA drivers:** Run `nvidia-smi` to check driver installation
 2. **Check CUDA version compatibility:** Ensure your driver supports the CUDA version in PyTorch
 3. **Reinstall PyTorch with correct CUDA version:**
+
    ```powershell
    # Example: Install PyTorch with CUDA 11.8
    pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu118
@@ -233,10 +240,13 @@ If the setup script reports import errors:
    - Windows: `.\venv\Scripts\Activate.ps1`
    - Linux/macOS: `source venv/bin/activate`
 2. **Reinstall dependencies:**
+
    ```bash
    pip install -r requirements.txt
    ```
+
 3. **Check Python version:** TalkSmith requires Python 3.10 or 3.11
+
    ```bash
    python --version
    ```
@@ -256,12 +266,14 @@ If virtual environment creation fails:
 Once installation is complete:
 
 1. **Verify setup:**
+
    ```bash
    python scripts/check_gpu.py
    python scripts/check_ffmpeg.py
    ```
 
 2. **Prefetch models (optional but recommended):**
+
    ```bash
    # Windows
    .\scripts\prefetch_models.ps1 -Sizes "medium.en,large-v3"
@@ -271,6 +283,7 @@ Once installation is complete:
    ```
 
 3. **Try the CLI:**
+
    ```bash
    python cli/main.py demo
    python cli/main.py export --help
@@ -280,6 +293,44 @@ Once installation is complete:
    - [Configuration Guide](docs/configuration.md)
    - [Diarization Guide](docs/diarization.md)
    - [Testing Guide](TESTING.md)
+
+### Pre-Commit Hooks (Recommended)
+
+Install pre-commit hooks to automatically check code quality before commits:
+
+```bash
+# Install pre-commit
+pip install pre-commit
+
+# Install hooks for this repo
+pre-commit install
+
+# Test hooks manually
+pre-commit run --all-files
+```
+
+**What gets checked**:
+
+- ✅ Code formatting (Black, isort)
+- ✅ Linting (flake8 with bugbear)
+- ✅ Type checking (mypy on pipeline/cli/config)
+- ✅ Security issues (Bandit)
+- ✅ File cleanup (trailing whitespace, line endings)
+- ✅ Merge conflict markers
+- ✅ Large file detection
+- ✅ YAML/JSON validation
+
+**Optional: Skip Hooks**
+
+Sometimes you need to skip hooks (e.g., WIP commits):
+
+```bash
+# Skip all hooks
+git commit --no-verify -m "WIP: work in progress"
+
+# Skip specific hook
+SKIP=flake8 git commit -m "Fix linting later"
+```
 
 ### Planned Basic Usage
 
@@ -325,6 +376,7 @@ python cli/main.py demo
 ```
 
 **Planned subcommands** (coming soon):
+
 ```bash
 python cli/main.py transcribe --input audio.wav --diarize --export srt,json
 python cli/main.py preprocess --input audio.wav --denoise --trim
@@ -404,6 +456,7 @@ log_dir = data/outputs/{slug}/logs
 ```
 
 Override via environment variables (format: `TALKSMITH_<SECTION>_<KEY>`):
+
 ```bash
 TALKSMITH_MODELS_WHISPER_MODEL=medium.en python pipeline/transcribe_fw.py audio.wav
 ```
@@ -630,6 +683,7 @@ The generated plan includes:
 ```
 
 See [examples/sample_plan.md](examples/sample_plan.md) for a complete example.
+
 ```
 
 ## 📝 Logging
@@ -701,6 +755,7 @@ TalkSmith includes utilities to prefetch Whisper and diarization models, enablin
 ### Prefetch Models
 
 **Windows (PowerShell):**
+
 ```powershell
 # Download default models (medium.en, large-v3)
 .\scripts\prefetch_models.ps1
@@ -719,6 +774,7 @@ TalkSmith includes utilities to prefetch Whisper and diarization models, enablin
 ```
 
 **Linux/macOS (Bash):**
+
 ```bash
 # Download default models
 ./scripts/prefetch_models.sh
@@ -847,6 +903,7 @@ Target benchmarks on dual RTX 3060 setup (12GB VRAM each):
 See our [GitHub Issues](https://github.com/DakotaIrsik/TalkSmith/issues) for detailed planning:
 
 **Phase 1: Foundation (P0)** - *In Progress*
+
 - [x] Repository structure and documentation
 - [x] Centralized configuration system (settings.ini)
 - [x] Comprehensive test suite and CI/CD pipeline
@@ -860,6 +917,7 @@ See our [GitHub Issues](https://github.com/DakotaIrsik/TalkSmith/issues) for det
 - [ ] Batch processing with resume
 
 **Phase 2: Enhancement (P1)**
+
 - [ ] Audio preprocessing (denoise, trim)
 - [ ] Multi-GPU parallelism
 - [x] Speaker post-processing (normalization, utterance merging)
@@ -867,6 +925,7 @@ See our [GitHub Issues](https://github.com/DakotaIrsik/TalkSmith/issues) for det
 - [ ] Additional CLI subcommands (transcribe, preprocess, etc.)
 
 **Phase 3: Advanced (P2)**
+
 - [x] Model cache management and version pinning
 - [x] PII redaction with whitelist support
 - [x] Docker (CUDA) support
@@ -877,6 +936,7 @@ See our [GitHub Issues](https://github.com/DakotaIrsik/TalkSmith/issues) for det
 <<<<<<< HEAD
 - [ ] Plan/PRD generation
 =======
+
 >>>>>>> origin/main
 
 ## 🧪 Testing
@@ -907,10 +967,13 @@ TalkSmith can automatically sync transcription outputs to Google Drive for backu
 
 1. **Install rclone** - [rclone.org/downloads](https://rclone.org/downloads/)
 2. **Configure Google Drive:**
+
    ```bash
    rclone config
    ```
+
 3. **Run sync:**
+
    ```bash
    # Linux/macOS
    ./scripts/sync_to_drive.sh
@@ -952,10 +1015,13 @@ TalkSmith can automatically sync transcription outputs to Google Drive for backu
 
 1. **Install rclone** - [rclone.org/downloads](https://rclone.org/downloads/)
 2. **Configure Google Drive:**
+
    ```bash
    rclone config
    ```
+
 3. **Run sync:**
+
    ```bash
    # Linux/macOS
    ./scripts/sync_to_drive.sh
@@ -992,6 +1058,7 @@ See [docs/google-drive-sync.md](docs/google-drive-sync.md) for complete setup gu
 We welcome contributions! Contribution guidelines coming soon.
 
 Before submitting a PR:
+
 - ✅ Run tests: `make test`
 - ✅ Check coverage: `make coverage`
 - ✅ Review [TESTING.md](TESTING.md) for testing standards
@@ -1003,6 +1070,7 @@ License TBD - Will be added in a future release.
 ## 🙏 Acknowledgments
 
 Built on the shoulders of giants:
+
 - **faster-whisper** by Guillaume Klein (CTranslate2-optimized Whisper)
 - **WhisperX** by Max Bain (alignment and diarization)
 - **pyannote.audio** by Hervé Bredin (speaker diarization)

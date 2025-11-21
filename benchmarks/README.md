@@ -34,6 +34,7 @@ Automated benchmark suite for measuring transcription performance across models 
 ## Prerequisites
 
 1. **Install dependencies**:
+
    ```bash
    pip install -r requirements-dev.txt
    ```
@@ -44,6 +45,7 @@ Automated benchmark suite for measuring transcription performance across models 
    - `sample_30min.wav` (optional, for full benchmarks)
 
 3. **Edit ground truth transcripts** in `test_audio/ground_truth.json`:
+
    ```json
    {
      "sample_1min.wav": "Your reference transcript here...",
@@ -96,6 +98,7 @@ Results are saved to `results/`:
 ## Configuration Options
 
 ### Models
+
 - `tiny` - Fastest, lowest accuracy
 - `base` - Good balance
 - `small` - Better accuracy
@@ -103,10 +106,12 @@ Results are saved to `results/`:
 - `large-v3` - Highest accuracy
 
 ### Devices
+
 - `cuda` - GPU acceleration (requires CUDA)
 - `cpu` - CPU-only processing
 
 ### Compute Types
+
 - `float16` - Fast, GPU-only
 - `int8` - Quantized, CPU/GPU compatible
 
@@ -130,6 +135,7 @@ print(f"WER: {wer:.2%}")  # 0.00%
 ## Documentation
 
 See `../docs/benchmarking.md` for complete documentation including:
+
 - Detailed usage guide
 - Understanding metrics
 - CI/CD integration

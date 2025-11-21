@@ -4,8 +4,8 @@ import tempfile
 from pathlib import Path
 from typing import Generator
 
-import pytest
 import numpy as np
+import pytest
 
 
 @pytest.fixture

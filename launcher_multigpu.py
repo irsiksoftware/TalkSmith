@@ -23,8 +23,8 @@ except ImportError:
 # Add parent directory for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
+from pipeline.logger import BatchLogSummary, get_logger
 from pipeline.transcribe_fw import FasterWhisperTranscriber
-from pipeline.logger import get_logger, BatchLogSummary
 
 
 def get_available_gpus() -> List[int]:
@@ -299,9 +299,7 @@ def run_multi_gpu(
                 )
 
             elif result["type"] == "error":
-                logger.error(
-                    f"Worker error on GPU {result['gpu_id']}", error=result["error"]
-                )
+                logger.error(f"Worker error on GPU {result['gpu_id']}", error=result["error"])
                 print(f"ERROR on GPU {result['gpu_id']}: {result['error']}")
 
         except Empty:
@@ -322,8 +320,7 @@ def run_multi_gpu(
     print(f"Failed: {batch_summary.failed}")
     print(f"Total audio duration: {total_duration:.2f}s " f"({total_duration/60:.2f}m)")
     print(
-        f"Total processing time: {total_processing_time:.2f}s "
-        f"({total_processing_time/60:.2f}m)"
+        f"Total processing time: {total_processing_time:.2f}s " f"({total_processing_time/60:.2f}m)"
     )
     print(f"Overall RTF: {overall_rtf:.3f}")
     print(f"Speedup: {speedup:.2f}x")
@@ -436,9 +433,7 @@ Examples:
 
     for gpu_id in gpus:
         if gpu_id not in available_gpus:
-            print(
-                f"ERROR: GPU {gpu_id} not available. Available GPUs: {available_gpus}"
-            )
+            print(f"ERROR: GPU {gpu_id} not available. Available GPUs: {available_gpus}")
             return 1
 
     # Resolve paths

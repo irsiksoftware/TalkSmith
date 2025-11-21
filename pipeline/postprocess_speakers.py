@@ -3,7 +3,7 @@
 import argparse
 import json
 from pathlib import Path
-from typing import List, Dict, Any, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:
     from pipeline.logger import TalkSmithLogger
@@ -38,9 +38,7 @@ def normalize_speaker_names(
 
     # Sort speakers to ensure consistent ordering
     unique_speakers.sort()
-    speaker_mapping = {
-        original: f"{prefix} {i + 1}" for i, original in enumerate(unique_speakers)
-    }
+    speaker_mapping = {original: f"{prefix} {i + 1}" for i, original in enumerate(unique_speakers)}
 
     if logger:
         logger.debug(
@@ -58,9 +56,7 @@ def normalize_speaker_names(
         normalized_segments.append(normalized_segment)
 
     if logger:
-        logger.info(
-            "Speaker normalization complete", segment_count=len(normalized_segments)
-        )
+        logger.info("Speaker normalization complete", segment_count=len(normalized_segments))
 
     return normalized_segments
 
@@ -169,9 +165,7 @@ def postprocess_speakers(
         processed = normalize_speaker_names(processed, speaker_prefix, logger)
 
     if logger:
-        logger.info(
-            "Speaker post-processing complete", final_segment_count=len(processed)
-        )
+        logger.info("Speaker post-processing complete", final_segment_count=len(processed))
 
     return processed
 

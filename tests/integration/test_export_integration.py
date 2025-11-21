@@ -1,15 +1,11 @@
 """Integration tests for export functionality with full workflow."""
 
 import json
-import pytest
 from pathlib import Path
-from pipeline.exporters import (
-    export_txt,
-    export_srt,
-    export_vtt,
-    export_json,
-    export_all,
-)
+
+import pytest
+
+from pipeline.exporters import export_all, export_json, export_srt, export_txt, export_vtt
 
 
 @pytest.mark.integration
@@ -171,9 +167,7 @@ class TestExportWorkflow:
 
         # Test all formats handle Unicode
         for fmt in ["txt", "srt", "vtt", "json"]:
-            output_files = export_all(
-                segments, temp_dir, f"multilingual-{fmt}", formats=[fmt]
-            )
+            output_files = export_all(segments, temp_dir, f"multilingual-{fmt}", formats=[fmt])
             output_file = output_files[fmt]
             content = output_file.read_text(encoding="utf-8")
 
@@ -221,9 +215,7 @@ class TestExportWorkflow:
         base_dir = temp_dir / "transcripts"
         date_dir = base_dir / "2025-01-15"
 
-        segments = [
-            {"start": 0.0, "end": 2.0, "text": "Test content", "speaker": "SPEAKER_00"}
-        ]
+        segments = [{"start": 0.0, "end": 2.0, "text": "Test content", "speaker": "SPEAKER_00"}]
 
         output_files = export_all(segments, date_dir, "meeting-001")
 
@@ -235,9 +227,7 @@ class TestExportWorkflow:
 
     def test_selective_format_export(self, temp_dir):
         """Test exporting only selected formats based on use case."""
-        segments = [
-            {"start": 0.0, "end": 2.0, "text": "Test content", "speaker": "SPEAKER_00"}
-        ]
+        segments = [{"start": 0.0, "end": 2.0, "text": "Test content", "speaker": "SPEAKER_00"}]
 
         # Video subtitles only
         video_files = export_all(
@@ -248,16 +238,12 @@ class TestExportWorkflow:
         assert "vtt" in video_files
 
         # Data export only
-        data_files = export_all(
-            segments, temp_dir / "data", "data-export", formats=["json"]
-        )
+        data_files = export_all(segments, temp_dir / "data", "data-export", formats=["json"])
         assert len(data_files) == 1
         assert "json" in data_files
 
         # Human-readable only
-        text_files = export_all(
-            segments, temp_dir / "text", "readable", formats=["txt"]
-        )
+        text_files = export_all(segments, temp_dir / "text", "readable", formats=["txt"])
         assert len(text_files) == 1
         assert "txt" in text_files
 
@@ -369,9 +355,7 @@ class TestExportCompatibility:
 
     def test_vtt_webvtt_spec_compliance(self, temp_dir):
         """Test VTT format complies with WebVTT specification."""
-        segments = [
-            {"start": 0.0, "end": 2.0, "text": "WebVTT test", "speaker": "SPEAKER_00"}
-        ]
+        segments = [{"start": 0.0, "end": 2.0, "text": "WebVTT test", "speaker": "SPEAKER_00"}]
 
         output_file = temp_dir / "webvtt.vtt"
         export_vtt(segments, output_file, include_speakers=True)

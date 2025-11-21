@@ -1,7 +1,8 @@
 """Unit tests for export formats."""
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 
 @pytest.mark.unit

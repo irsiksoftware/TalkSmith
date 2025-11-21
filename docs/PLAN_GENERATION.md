@@ -18,6 +18,7 @@ The plan generation feature transforms raw meeting or interview transcripts into
 ### Prerequisites
 
 1. Install LLM provider dependencies:
+
 ```bash
 # For Claude (recommended)
 pip install anthropic
@@ -27,6 +28,7 @@ pip install openai
 ```
 
 2. Set up API keys:
+
 ```bash
 # For Claude
 export ANTHROPIC_API_KEY="your-api-key-here"
@@ -44,6 +46,7 @@ python -m cli.main plan data/outputs/meeting_segments.json
 ```
 
 This will:
+
 1. Load the transcript segments
 2. Convert to readable format with timestamps and speakers
 3. Send to LLM for structured extraction
@@ -67,24 +70,28 @@ python -m cli.main plan [OPTIONS] INPUT_FILE
 
 ### Examples
 
-#### Basic plan generation:
+#### Basic plan generation
+
 ```bash
 python -m cli.main plan data/outputs/interview.json
 ```
 
-#### Custom output path and title:
+#### Custom output path and title
+
 ```bash
 python -m cli.main plan data/outputs/meeting.json \
   -o plans/auth_project.md \
   -t "Authentication Enhancement Project"
 ```
 
-#### Using GPT instead of Claude:
+#### Using GPT instead of Claude
+
 ```bash
 python -m cli.main plan data/outputs/brainstorm.json --model gpt
 ```
 
-#### Generate and upload to Google Docs:
+#### Generate and upload to Google Docs
+
 ```bash
 python -m cli.main plan data/outputs/strategy.json \
   --google-docs \
@@ -109,6 +116,7 @@ python -m cli.main plan data/outputs/strategy.json \
    - Download the credentials file
 
 3. **Configure TalkSmith**:
+
    ```bash
    # Copy example configuration
    cp config/google_docs.ini.example config/google_docs.ini
@@ -118,6 +126,7 @@ python -m cli.main plan data/outputs/strategy.json \
    ```
 
 4. **Edit Configuration** (`config/google_docs.ini`):
+
    ```ini
    [google_docs]
    credentials_file = config/credentials.json
@@ -139,16 +148,19 @@ python -m cli.main plan data/outputs/strategy.json \
 Configure document sharing in `config/google_docs.ini`:
 
 - **Private** (default): Only you can access
+
   ```ini
   sharing = private
   ```
 
 - **Anyone with link**: Anyone with the URL can view
+
   ```ini
   sharing = anyone
   ```
 
 - **Domain-wide**: Anyone in your organization can view
+
   ```ini
   sharing = domain
   domain = yourcompany.com
@@ -232,6 +244,7 @@ Generated plans use the following markdown structure:
 The plan generator expects transcript segments in JSON format:
 
 ### Array Format
+
 ```json
 [
   {
@@ -248,6 +261,7 @@ The plan generator expects transcript segments in JSON format:
 ```
 
 ### Object Format
+
 ```json
 {
   "segments": [
@@ -268,6 +282,7 @@ The plan generator expects transcript segments in JSON format:
 ### Complete Meeting to Plan Workflow
 
 1. **Record and transcribe meeting**:
+
    ```bash
    python -m cli.main transcribe data/inputs/meeting.mp3 \
      --diarize \
@@ -275,12 +290,14 @@ The plan generator expects transcript segments in JSON format:
    ```
 
 2. **Generate plan from transcript**:
+
    ```bash
    python -m cli.main plan data/outputs/meeting_diarized.json \
      -t "Authentication Enhancement Plan"
    ```
 
 3. **Upload to Google Docs for team collaboration**:
+
    ```bash
    python -m cli.main plan data/outputs/meeting_diarized.json \
      --google-docs \
@@ -324,6 +341,7 @@ for segments_file in Path('data/outputs').glob('*_segments.json'):
 **Problem**: `ImportError: anthropic package not installed`
 
 **Solution**: Install the required package:
+
 ```bash
 pip install anthropic
 # or
@@ -333,6 +351,7 @@ pip install openai
 **Problem**: `Authentication error: Invalid API key`
 
 **Solution**: Check your environment variable:
+
 ```bash
 # For Claude
 echo $ANTHROPIC_API_KEY
@@ -350,6 +369,7 @@ echo $OPENAI_API_KEY
 **Problem**: `Failed to create Google Doc: insufficient permissions`
 
 **Solution**:
+
 1. Ensure Google Docs API and Google Drive API are enabled
 2. Re-authenticate by deleting `config/token.json` and running the command again
 3. Grant all requested permissions during OAuth flow
@@ -357,6 +377,7 @@ echo $OPENAI_API_KEY
 **Problem**: `HttpError 403: Access Not Configured`
 
 **Solution**: Enable the required APIs in your Google Cloud project:
+
 - Google Docs API
 - Google Drive API
 
@@ -365,6 +386,7 @@ echo $OPENAI_API_KEY
 **Problem**: Plan sections say "Not specified in transcript"
 
 **Solution**:
+
 - Ensure transcript has sufficient detail and context
 - Meeting discussions should explicitly cover problems, users, goals, etc.
 - Consider using more detailed transcripts (with diarization)
@@ -372,6 +394,7 @@ echo $OPENAI_API_KEY
 **Problem**: Plan extraction is inaccurate
 
 **Solution**:
+
 - Try using a different model (`--model gpt` instead of `claude`)
 - Ensure transcript segments have proper speaker attribution
 - Review and edit the generated markdown as needed
@@ -379,6 +402,7 @@ echo $OPENAI_API_KEY
 ## Best Practices
 
 1. **Use Speaker Diarization**: Plans are more accurate when transcript includes speaker labels
+
    ```bash
    python -m cli.main transcribe audio.mp3 --diarize
    ```
@@ -402,6 +426,7 @@ echo $OPENAI_API_KEY
 - **GPT-4**: ~$30 per million input tokens, ~$60 per million output tokens
 
 Typical costs per transcript:
+
 - 30-minute meeting (~10,000 tokens): $0.03-0.30
 - 1-hour interview (~20,000 tokens): $0.06-0.60
 
@@ -449,5 +474,6 @@ folder_id =
 ## Support
 
 For issues, questions, or feature requests:
-- GitHub Issues: https://github.com/irsiksoftware/TalkSmith/issues
-- Issue #16: https://github.com/irsiksoftware/TalkSmith/issues/16
+
+- GitHub Issues: <https://github.com/irsiksoftware/TalkSmith/issues>
+- Issue #16: <https://github.com/irsiksoftware/TalkSmith/issues/16>

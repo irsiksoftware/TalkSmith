@@ -28,9 +28,11 @@ TalkSmith follows these testing principles:
 ## Test Categories
 
 ### Unit Tests (`tests/unit/`)
+
 Fast, isolated tests for individual functions and classes.
 
 **Coverage Areas:**
+
 - ✅ Configuration system (`test_config.py`) - Fully implemented
 - ✅ Logging utility (`test_logger.py`) - Fully implemented
 - ✅ Error handling (`test_error_handling.py`) - Framework ready
@@ -41,34 +43,41 @@ Fast, isolated tests for individual functions and classes.
 - 📋 GPU detection (`test_check_gpu.py`) - Placeholder for future implementation
 
 **Run Command:**
+
 ```bash
 pytest tests/unit -m unit
 ```
 
 ### Integration Tests (`tests/integration/`)
+
 Tests for workflows spanning multiple modules.
 
 **Coverage Areas:**
+
 - 📋 End-to-end pipeline (`test_full_pipeline.py`) - Placeholder for future implementation
 - 📋 CLI interface - Placeholder for future implementation
 - 📋 Batch processing - Placeholder for future implementation
 - 📋 Multi-GPU coordination - Placeholder for future implementation
 
 **Run Command:**
+
 ```bash
 pytest tests/integration -m integration
 ```
 
 ### Performance Tests
+
 Tests that measure and validate performance characteristics.
 
 **Metrics Tracked:**
+
 - Real-Time Factor (RTF)
 - Memory usage
 - GPU utilization
 - Throughput (files/hour)
 
 **Run Command:**
+
 ```bash
 pytest -m slow  # Performance tests are marked as slow
 ```
@@ -173,16 +182,19 @@ class TestFullWorkflow:
 Common fixtures are available in `tests/conftest.py`:
 
 ### File Fixtures
+
 - `temp_dir`: Temporary directory for test outputs
 - `sample_audio_path`: Path to sample audio file
 - `settings_ini`: Test configuration file
 
 ### Data Fixtures
+
 - `sample_audio_data`: Synthetic audio data (numpy array)
 - `sample_segments`: Mock transcription segments
 - `mock_whisper_result`: Mock Whisper output
 
 ### Environment Fixtures
+
 - `mock_gpu_available`: Simulates GPU available
 - `mock_no_gpu`: Simulates no GPU
 
@@ -209,6 +221,7 @@ make coverage-report
 ## Continuous Integration
 
 Tests run automatically on:
+
 - Every push to `main` or `develop`
 - Every pull request
 - Nightly builds (including slow tests)
@@ -234,6 +247,7 @@ python tests/fixtures/generate_fixtures.py
 ```
 
 This creates:
+
 - `sample_short.wav` - 5 seconds
 - `sample_medium.wav` - 1 minute
 - Expected output files for validation
@@ -241,6 +255,7 @@ This creates:
 ### Real Audio Samples
 
 For testing with real audio:
+
 1. Place files in `tests/fixtures/`
 2. Update `.gitignore` to exclude large files
 3. Use Git LFS for version control
@@ -304,6 +319,7 @@ def test_transcription_speed(benchmark):
    - Bad: `test_1`, `test_speakers`
 
 2. **Arrange-Act-Assert**: Structure tests clearly
+
    ```python
    # Arrange
    input_data = setup_test_data()
@@ -335,22 +351,26 @@ def test_transcription_speed(benchmark):
 ### Common Issues
 
 **Import Errors**
+
 ```bash
 # Ensure package is installed in development mode
 pip install -e .
 ```
 
 **Fixture Not Found**
+
 - Check `conftest.py` exists
 - Verify fixture name matches
 
 **Tests Hang**
+
 ```bash
 # Add timeout
 pytest --timeout=30
 ```
 
 **GPU Tests Fail**
+
 ```bash
 # Skip GPU tests
 pytest -m "not gpu"

@@ -149,9 +149,7 @@ class BatchTranscriber:
             audio_files.extend(self.input_dir.glob(f"*{ext}"))
         return sorted(audio_files)
 
-    def _transcribe_file(
-        self, audio_file: Path, retry_count: int = 0
-    ) -> Dict[str, any]:
+    def _transcribe_file(self, audio_file: Path, retry_count: int = 0) -> Dict[str, any]:
         """
         Transcribe a single file with retry logic.
 
@@ -177,9 +175,7 @@ class BatchTranscriber:
             )
 
             # Transcribe
-            transcription = transcriber.transcribe(
-                str(audio_file), language=self.language
-            )
+            transcription = transcriber.transcribe(str(audio_file), language=self.language)
 
             # Export to multiple formats
             output_files = export_all(
@@ -199,9 +195,7 @@ class BatchTranscriber:
                     "rtf": transcription["rtf"],
                     "language": transcription["language"],
                     "language_probability": transcription["language_probability"],
-                    "output_files": {
-                        fmt: str(path) for fmt, path in output_files.items()
-                    },
+                    "output_files": {fmt: str(path) for fmt, path in output_files.items()},
                 }
             )
 
@@ -312,9 +306,7 @@ class BatchTranscriber:
         print(f"Language: {self.language or 'auto-detect'}")
         print(f"Output formats: {', '.join(self.formats)}")
         print(f"Output directory: {self.output_dir}")
-        print(
-            f"Parallel: {self.parallel} (workers: {self.workers if self.parallel else 1})"
-        )
+        print(f"Parallel: {self.parallel} (workers: {self.workers if self.parallel else 1})")
         print(f"Resume: {self.resume}")
         print(f"Retry failed: {self.retry_failed}")
         print()
@@ -334,9 +326,7 @@ class BatchTranscriber:
             with ProcessPoolExecutor(max_workers=self.workers) as executor:
                 # Submit all tasks
                 future_to_file = {
-                    executor.submit(
-                        self._transcribe_file_worker, str(audio_file)
-                    ): audio_file
+                    executor.submit(self._transcribe_file_worker, str(audio_file)): audio_file
                     for audio_file in files_to_process
                 }
 

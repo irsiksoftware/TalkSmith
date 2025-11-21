@@ -26,11 +26,13 @@ tests/
 ## Running Tests
 
 ### Run all tests
+
 ```bash
 pytest
 ```
 
 ### Run specific test categories
+
 ```bash
 # Unit tests only
 pytest -m unit
@@ -46,11 +48,13 @@ pytest -m gpu
 ```
 
 ### Run with coverage
+
 ```bash
 pytest --cov=pipeline --cov=cli --cov-report=html
 ```
 
 ### Run tests in parallel
+
 ```bash
 pytest -n auto
 ```
@@ -66,6 +70,7 @@ pytest -n auto
 ## Writing Tests
 
 ### Unit Test Example
+
 ```python
 import pytest
 
@@ -84,6 +89,7 @@ def test_speaker_normalization(sample_segments):
 ```
 
 ### Integration Test Example
+
 ```python
 import pytest
 
@@ -136,20 +142,26 @@ Tests are designed to run in CI environments:
 ## Troubleshooting
 
 ### Tests fail with "No module named 'pipeline'"
+
 Ensure you're running from the project root and have installed dependencies:
+
 ```bash
 pip install -e .
 pip install -r requirements-dev.txt
 ```
 
 ### GPU tests fail
+
 GPU tests require CUDA-capable hardware. Skip with:
+
 ```bash
 pytest -m "not gpu"
 ```
 
 ### Slow tests timeout
+
 Increase timeout or skip slow tests:
+
 ```bash
 pytest -m "not slow"
 # or
@@ -159,6 +171,7 @@ pytest --timeout=300
 ## Contributing
 
 When adding new features:
+
 1. Write unit tests for individual functions
 2. Add integration tests for workflows
 3. Update fixtures if needed
@@ -166,6 +179,7 @@ When adding new features:
 5. Check coverage: `pytest --cov`
 
 Aim for:
+
 - Clear test names describing what is tested
 - Arrange-Act-Assert structure
 - Appropriate markers (@pytest.mark.unit, etc.)

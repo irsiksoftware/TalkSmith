@@ -44,6 +44,7 @@ Uses keyword matching to automatically categorize transcript segments into appro
 ### Action Item Extraction
 
 Identifies and extracts actionable items based on verbs like:
+
 - implement, create, build, develop, add
 - design, test, deploy, integrate, ensure
 
@@ -193,15 +194,18 @@ class CustomPlanGenerator(PlanGenerator):
 ### Common Issues
 
 **"credentials.json not found"**
+
 - Download from Google Cloud Console
 - Place in project root or set `GOOGLE_CREDENTIALS_PATH`
 
 **"No plan content extracted"**
+
 - Check segments.json format
 - Verify segments have 'text' field
 - Review keyword matching in code
 
 **"Google API error"**
+
 - Enable Google Docs API in Cloud Console
 - Check credentials.json is valid
 - Verify token hasn't expired
@@ -226,6 +230,7 @@ These are already in `.gitignore`.
 ## API Limits
 
 Google Docs API quotas:
+
 - **Read:** 300 requests/minute
 - **Write:** 60 requests/minute
 

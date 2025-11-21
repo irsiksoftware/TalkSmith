@@ -1,7 +1,8 @@
 """Tests for config module imports and public API."""
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 
 class TestConfigModuleImports:
@@ -9,7 +10,7 @@ class TestConfigModuleImports:
 
     def test_import_from_config_module(self):
         """Test importing from config module."""
-        from config import get_config, create_default_config, TalkSmithConfig
+        from config import TalkSmithConfig, create_default_config, get_config
 
         assert callable(get_config)
         assert callable(create_default_config)
@@ -47,8 +48,8 @@ class TestConfigCLIExecution:
 
     def test_settings_module_cli_creates_default_config(self, temp_dir, monkeypatch):
         """Test running settings.py as script creates config file."""
-        import sys
         import subprocess
+        import sys
 
         config_path = temp_dir / "cli_test_settings.ini"
 
@@ -65,9 +66,9 @@ class TestConfigCLIExecution:
 
     def test_settings_module_cli_default_path(self, temp_dir, monkeypatch):
         """Test running settings.py without args uses default path."""
-        import sys
-        import subprocess
         import os
+        import subprocess
+        import sys
 
         # Change to temp directory
         old_cwd = os.getcwd()
@@ -95,6 +96,7 @@ class TestConfigThreadSafety:
     def test_concurrent_config_reads(self):
         """Test multiple threads can read config simultaneously."""
         import threading
+
         from config import get_config
 
         results = []
@@ -122,6 +124,7 @@ class TestConfigThreadSafety:
     def test_concurrent_config_writes(self, temp_dir):
         """Test multiple threads writing to different config instances."""
         import threading
+
         from config.settings import TalkSmithConfig
 
         errors = []
@@ -184,8 +187,9 @@ class TestConfigPathHandling:
 
     def test_path_with_trailing_separator(self):
         """Test paths with trailing separators are handled correctly."""
-        from config.settings import TalkSmithConfig
         import os
+
+        from config.settings import TalkSmithConfig
 
         config = TalkSmithConfig()
         config.set("Paths", "test_path", "data/test/")
@@ -268,6 +272,7 @@ class TestConfigFileDiscovery:
     def test_finds_settings_in_cwd(self, temp_dir, monkeypatch):
         """Test config finder locates settings.ini in current directory."""
         import os
+
         from config.settings import TalkSmithConfig
 
         settings_path = temp_dir / "settings.ini"
@@ -284,6 +289,7 @@ class TestConfigFileDiscovery:
     def test_finds_settings_in_config_subdir(self, temp_dir, monkeypatch):
         """Test config finder locates settings.ini in config/ subdirectory."""
         import os
+
         from config.settings import TalkSmithConfig
 
         config_dir = temp_dir / "config"
@@ -305,8 +311,9 @@ class TestConfigReload:
 
     def test_reload_updates_values(self, temp_dir):
         """Test that reload=True loads updated config values."""
-        from config import get_config
         import os
+
+        from config import get_config
 
         config_path = temp_dir / "test_reload.ini"
         config_path.write_text("[Models]\nwhisper_model = small\n")

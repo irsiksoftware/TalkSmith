@@ -31,8 +31,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import json
-from pipeline.plan_from_transcript import PlanGenerator, load_segments, save_markdown
+
 from pipeline.google_docs_integration import GoogleDocsClient
+from pipeline.plan_from_transcript import PlanGenerator, load_segments, save_markdown
 
 
 def main():
@@ -53,9 +54,7 @@ def main():
         default=Path("output/example_plan.md"),
         help="Local output file (default: output/example_plan.md)",
     )
-    parser.add_argument(
-        "--title", default="TalkSmith Example Plan", help="Document title"
-    )
+    parser.add_argument("--title", default="TalkSmith Example Plan", help="Document title")
     parser.add_argument(
         "--publish",
         action="store_true",

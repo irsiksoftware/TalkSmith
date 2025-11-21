@@ -158,6 +158,7 @@ Tested on 60-minute audio with 3 speakers (2 male, 1 female):
 ### DER Breakdown
 
 **Diarization Error Rate (DER)** components:
+
 - **Speaker confusion:** Misattributing speech to wrong speaker
 - **False alarms:** Detecting speech when none exists
 - **Missed speech:** Missing actual speech segments
@@ -218,6 +219,7 @@ Both diarization methods produce compatible output formats:
 ```
 
 This format is compatible with:
+
 - `pipeline/postprocess_speakers.py` - Speaker label normalization
 - `pipeline/outline_from_segments.py` - Outline generation
 - `pipeline/exporters.py` - Export to TXT, SRT, VTT, JSON
@@ -225,7 +227,7 @@ This format is compatible with:
 
 ## Recommendations
 
-### Use Resemblyzer Alternative When:
+### Use Resemblyzer Alternative When
 
 1. You don't have a HuggingFace account or token
 2. Deploying in air-gapped or restricted environments
@@ -234,7 +236,7 @@ This format is compatible with:
 5. Privacy requirements prohibit external services
 6. Accuracy trade-off (~5-10% DER increase) is acceptable
 
-### Use WhisperX + pyannote When:
+### Use WhisperX + pyannote When
 
 1. You need maximum accuracy
 2. Working with 4+ speakers or similar-sounding voices
@@ -267,13 +269,14 @@ Potential enhancements to the alternative diarization method:
 
 ## References
 
-- **Resemblyzer:** https://github.com/resemble-ai/Resemblyzer
-- **pyannote.audio:** https://github.com/pyannote/pyannote-audio
-- **WhisperX:** https://github.com/m-bain/whisperX
+- **Resemblyzer:** <https://github.com/resemble-ai/Resemblyzer>
+- **pyannote.audio:** <https://github.com/pyannote/pyannote-audio>
+- **WhisperX:** <https://github.com/m-bain/whisperX>
 - **Spectral Clustering:** Ng, Jordan, Weiss (2002) - "On Spectral Clustering"
 
 ## Support
 
 For issues or questions:
-- Open an issue: https://github.com/irsiksoftware/TalkSmith/issues
-- Documentation: https://github.com/irsiksoftware/TalkSmith/docs
+
+- Open an issue: <https://github.com/irsiksoftware/TalkSmith/issues>
+- Documentation: <https://github.com/irsiksoftware/TalkSmith/docs>

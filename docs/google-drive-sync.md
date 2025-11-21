@@ -16,14 +16,17 @@ TalkSmith includes scripts to automatically sync your transcription outputs to G
 ### 1. Install rclone
 
 #### Linux/macOS
+
 ```bash
 curl https://rclone.org/install.sh | sudo bash
 ```
 
 #### Windows
+
 Download the installer from [rclone.org/downloads](https://rclone.org/downloads/)
 
 Verify installation:
+
 ```bash
 rclone version
 ```
@@ -31,11 +34,13 @@ rclone version
 ### 2. Configure Google Drive Remote
 
 Run the interactive configuration:
+
 ```bash
 rclone config
 ```
 
 Follow these steps:
+
 1. Choose `n` for new remote
 2. Name it `gdrive` (or your preferred name)
 3. Choose `drive` for Google Drive
@@ -43,6 +48,7 @@ Follow these steps:
 5. Choose default options for remaining prompts
 
 Test the connection:
+
 ```bash
 rclone lsd gdrive:
 ```
@@ -54,11 +60,13 @@ You should see your Google Drive folders listed.
 ### Basic Sync
 
 #### Linux/macOS
+
 ```bash
 ./scripts/sync_to_drive.sh
 ```
 
 #### Windows
+
 ```powershell
 .\scripts\sync_to_drive.ps1
 ```
@@ -70,11 +78,13 @@ This syncs `./data/outputs/` to `gdrive:TalkSmith/Transcripts/`
 Preview what will be synced without making changes:
 
 #### Linux/macOS
+
 ```bash
 ./scripts/sync_to_drive.sh --dry-run
 ```
 
 #### Windows
+
 ```powershell
 .\scripts\sync_to_drive.ps1 -DryRun
 ```
@@ -84,11 +94,13 @@ Preview what will be synced without making changes:
 Show detailed sync progress:
 
 #### Linux/macOS
+
 ```bash
 ./scripts/sync_to_drive.sh --verbose
 ```
 
 #### Windows
+
 ```powershell
 .\scripts\sync_to_drive.ps1 -Verbose
 ```
@@ -113,6 +125,7 @@ export RCLONE_REMOTE_DIR=TalkSmith/Transcripts
 ### Excluded Files
 
 The following patterns are automatically excluded from sync:
+
 - `.DS_Store` (macOS metadata)
 - `*.tmp` (temporary files)
 - `*.part` (partial downloads)
@@ -130,6 +143,7 @@ crontab -e
 ```
 
 Add this line:
+
 ```
 */30 * * * * cd /path/to/TalkSmith && ./scripts/sync_to_drive.sh >> /var/log/talksmith-sync.log 2>&1
 ```
@@ -159,13 +173,16 @@ rclone check ./data/outputs gdrive:TalkSmith/Transcripts
 ## Security Considerations
 
 ### Configuration File
+
 rclone stores credentials in:
+
 - Linux/macOS: `~/.config/rclone/rclone.conf`
 - Windows: `%APPDATA%\rclone\rclone.conf`
 
 **Keep this file secure!** It contains OAuth tokens.
 
 ### Service Accounts
+
 For automated/headless deployments, use [service accounts](https://rclone.org/drive/#service-account-support):
 
 ```bash
@@ -173,6 +190,7 @@ rclone config create gdrive drive service_account_file /path/to/service-account.
 ```
 
 ### Encryption
+
 Enable encryption for sensitive data:
 
 ```bash
@@ -180,6 +198,7 @@ rclone config create gdrive-crypt crypt remote gdrive:TalkSmith/Transcripts
 ```
 
 Then sync to the encrypted remote:
+
 ```bash
 export RCLONE_REMOTE_NAME=gdrive-crypt
 ./scripts/sync_to_drive.sh
@@ -188,23 +207,30 @@ export RCLONE_REMOTE_NAME=gdrive-crypt
 ## Troubleshooting
 
 ### "Remote not found" error
+
 - Verify remote name: `rclone listremotes`
 - Reconfigure: `rclone config`
 
 ### Authentication expired
+
 Refresh tokens:
+
 ```bash
 rclone config reconnect gdrive:
 ```
 
 ### Slow uploads
+
 Use `--transfers` flag for parallel uploads:
+
 ```bash
 rclone sync ./data/outputs gdrive:TalkSmith/Transcripts --transfers 8
 ```
 
 ### Quota exceeded
+
 Check Drive quota:
+
 ```bash
 rclone about gdrive:
 ```
@@ -214,6 +240,7 @@ rclone about gdrive:
 ### Watch Mode (Auto-sync on changes)
 
 Linux/macOS with `inotifywait`:
+
 ```bash
 while inotifywait -r -e modify,create,delete ./data/outputs; do
   ./scripts/sync_to_drive.sh
@@ -221,6 +248,7 @@ done
 ```
 
 Windows with PowerShell:
+
 ```powershell
 $watcher = New-Object System.IO.FileSystemWatcher
 $watcher.Path = ".\data\outputs"
@@ -233,7 +261,9 @@ Register-ObjectEvent $watcher "Created" -Action {
 ```
 
 ### Sync Specific Formats
+
 Only sync certain file types:
+
 ```bash
 rclone sync ./data/outputs gdrive:TalkSmith/Transcripts \
   --include "*.txt" \
@@ -242,7 +272,9 @@ rclone sync ./data/outputs gdrive:TalkSmith/Transcripts \
 ```
 
 ### Bidirectional Sync
+
 Use `bisync` for two-way synchronization:
+
 ```bash
 rclone bisync ./data/outputs gdrive:TalkSmith/Transcripts --resync
 ```
@@ -264,6 +296,6 @@ This requires OAuth2 credentials and more complex code, but eliminates the exter
 
 ## Support
 
-- rclone docs: https://rclone.org/drive/
-- Google Drive API: https://developers.google.com/drive
-- TalkSmith issues: https://github.com/irsiksoftware/TalkSmith/issues
+- rclone docs: <https://rclone.org/drive/>
+- Google Drive API: <https://developers.google.com/drive>
+- TalkSmith issues: <https://github.com/irsiksoftware/TalkSmith/issues>

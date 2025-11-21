@@ -19,14 +19,9 @@ from typing import List, Optional
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from pipeline.logger import (
-    get_logger,
-    BatchLogSummary,
-    with_retry,
-    TransientError,
-)
-from pipeline.exporters import export_all
 from config.settings import get_config
+from pipeline.exporters import export_all
+from pipeline.logger import BatchLogSummary, TransientError, get_logger, with_retry
 
 
 def create_slug_from_filename(filename: str) -> str:
@@ -63,9 +58,7 @@ def export_command(args: argparse.Namespace) -> int:
         logger.info(f"Loaded {len(segments)} segments", segment_count=len(segments))
 
         # Export to formats
-        formats = (
-            args.formats.split(",") if args.formats else ["txt", "srt", "vtt", "json"]
-        )
+        formats = args.formats.split(",") if args.formats else ["txt", "srt", "vtt", "json"]
         base_name = args.name or input_path.stem
 
         logger.info("Exporting to formats", formats=formats, base_name=base_name)
@@ -332,9 +325,7 @@ def transcribe_command(args: argparse.Namespace) -> int:
         print(f"Duration: {result['duration']:.2f}s")
         print(f"Processing time: {result['processing_time']:.2f}s")
         print(f"RTF: {result['rtf']:.3f}")
-        print(
-            f"Language: {result['language']} " f"({result['language_probability']:.2%})"
-        )
+        print(f"Language: {result['language']} " f"({result['language_probability']:.2%})")
 
         return 0
 
@@ -536,17 +527,13 @@ def demo_command(args: argparse.Namespace) -> int:
         print(f"   Attempt {attempt_count['count']}...")
 
         if attempt_count["count"] < 3:
-            raise TransientError(
-                f"Simulated transient failure (attempt {attempt_count['count']})"
-            )
+            raise TransientError(f"Simulated transient failure (attempt {attempt_count['count']})")
 
         return {"status": "success", "data": "result"}
 
     try:
         result = simulated_api_call()
-        logger.info(
-            "API call succeeded", result=result, total_attempts=attempt_count["count"]
-        )
+        logger.info("API call succeeded", result=result, total_attempts=attempt_count["count"])
         print(f"   [OK] Success after {attempt_count['count']} attempts")
     except TransientError as e:
         logger.error("API call failed after all retries", error=str(e))
@@ -562,9 +549,7 @@ def demo_command(args: argparse.Namespace) -> int:
     batch.record_failure("file5.wav", "Corrupted audio")
     batch.print_summary()
 
-    print(
-        f"   Total: {batch.total}, Success: {batch.successful}, Failed: {batch.failed}"
-    )
+    print(f"   Total: {batch.total}, Success: {batch.successful}, Failed: {batch.failed}")
     print(f"   Exit code would be: {batch.get_exit_code()}")
 
     # 5. Complete operation
@@ -586,9 +571,7 @@ def main():
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # Transcribe command
-    transcribe_parser = subparsers.add_parser(
-        "transcribe", help="Transcribe audio file"
-    )
+    transcribe_parser = subparsers.add_parser("transcribe", help="Transcribe audio file")
     transcribe_parser.add_argument("input", help="Input audio file")
     transcribe_parser.add_argument(
         "-o",
@@ -668,9 +651,7 @@ def main():
     )
 
     # Diarize command
-    diarize_parser = subparsers.add_parser(
-        "diarize", help="Perform speaker diarization"
-    )
+    diarize_parser = subparsers.add_parser("diarize", help="Perform speaker diarization")
     diarize_parser.add_argument("input", help="Input audio file")
     diarize_parser.add_argument(
         "-o",
@@ -694,9 +675,7 @@ def main():
     )
 
     # Export command
-    export_parser = subparsers.add_parser(
-        "export", help="Export segments to various formats"
-    )
+    export_parser = subparsers.add_parser("export", help="Export segments to various formats")
     export_parser.add_argument("input", help="Input JSON file with segments")
     export_parser.add_argument(
         "-o",
@@ -714,12 +693,8 @@ def main():
     )
 
     # Batch command
-    batch_parser = subparsers.add_parser(
-        "batch", help="Batch export multiple segment files"
-    )
-    batch_parser.add_argument(
-        "input_dir", help="Input directory containing JSON segment files"
-    )
+    batch_parser = subparsers.add_parser("batch", help="Batch export multiple segment files")
+    batch_parser.add_argument("input_dir", help="Input directory containing JSON segment files")
     batch_parser.add_argument(
         "-o",
         "--output-dir",
@@ -760,9 +735,7 @@ def main():
     demo_parser = subparsers.add_parser(
         "demo", help="Demonstrate logging and error handling features"
     )
-    demo_parser.add_argument(
-        "-t", "--demo-type", help="Type of demo to run (optional metadata)"
-    )
+    demo_parser.add_argument("-t", "--demo-type", help="Type of demo to run (optional metadata)")
 
     args = parser.parse_args()
 

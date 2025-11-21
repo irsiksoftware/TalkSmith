@@ -1,4 +1,5 @@
 # Documentation Drift Report
+
 **Generated:** 2025-10-02
 **Branch:** feat/configuration-system-issue-14
 
@@ -11,6 +12,7 @@ Recent commits have implemented significant features that are not properly refle
 ### 1. Configuration System (Commit 201c9b6) - ✅ IMPLEMENTED
 
 **What was implemented:**
+
 - Full `TalkSmithConfig` class in `config/settings.py`
 - `config/settings.ini` with all configuration sections
 - Environment variable override support (`TALKSMITH_SECTION_KEY` format)
@@ -18,11 +20,13 @@ Recent commits have implemented significant features that are not properly refle
 - Comprehensive unit tests in `tests/test_config.py`
 
 **Documentation drift:**
+
 - ❌ `README.md` line 151 still says "Configuration system is planned"
 - ❌ `README.md` line 172 shows incorrect env var format (`WHISPER_MODEL` instead of `TALKSMITH_MODELS_WHISPER_MODEL`)
 - ❌ `README.md` roadmap doesn't list configuration system as completed
 
 **Recommended fixes:**
+
 ```markdown
 ## 🔧 Configuration
 
@@ -32,11 +36,13 @@ All settings are managed through `config/settings.ini`:
 ```
 
 Update environment variable example:
+
 ```bash
 TALKSMITH_MODELS_WHISPER_MODEL=medium.en python pipeline/transcribe_fw.py audio.wav
 ```
 
 Add to roadmap:
+
 ```markdown
 - [x] Centralized configuration system (settings.ini)
 ```
@@ -44,6 +50,7 @@ Add to roadmap:
 ### 2. Test Suite (Commit 4d02780) - ✅ IMPLEMENTED
 
 **What was implemented:**
+
 - Comprehensive test infrastructure with pytest
 - `tests/test_config.py` - Configuration system tests
 - `tests/unit/` - Placeholder tests for future modules
@@ -55,6 +62,7 @@ Add to roadmap:
 - `tests/README.md` - Quick reference
 
 **Documentation drift:**
+
 - ❌ README.md doesn't mention the test suite at all
 - ❌ Roadmap doesn't show test suite as completed
 - ❌ No testing section in main README
@@ -62,6 +70,7 @@ Add to roadmap:
 **Recommended fixes:**
 
 Add testing section to README:
+
 ```markdown
 ## 🧪 Testing
 
@@ -79,6 +88,7 @@ See [TESTING.md](TESTING.md) for detailed documentation.
 ```
 
 Update roadmap:
+
 ```markdown
 - [x] Comprehensive test suite and CI/CD pipeline
 ```
@@ -86,6 +96,7 @@ Update roadmap:
 ### 3. Missing File: requirements-dev.txt
 
 **Issue:**
+
 - Multiple files reference `requirements-dev.txt`:
   - `Makefile` line 19: `pip install -r requirements-dev.txt`
   - `.github/workflows/tests.yml` line 39: `pip install -r requirements-dev.txt`
@@ -96,6 +107,7 @@ Update roadmap:
 **Recommended fix:**
 
 Create `requirements-dev.txt`:
+
 ```txt
 # TalkSmith Development Dependencies
 -r requirements.txt
@@ -119,10 +131,12 @@ ipython>=8.14.0
 ### 4. Test Documentation References Non-Existent Modules
 
 **Issue:**
+
 - `TESTING.md` and `tests/README.md` reference pipeline modules that don't exist yet
 - `Makefile` and `.github/workflows/tests.yml` try to run coverage on non-existent `pipeline` and `cli` modules
 
 **Files affected:**
+
 - `TESTING.md` lines 34-41 reference `test_transcribe_fw.py`, `test_diarize_whisperx.py`, etc.
 - `Makefile` line 38: `--cov=pipeline --cov=cli`
 - `.github/workflows/tests.yml` lines 43, 47: `--cov=pipeline --cov=cli`
@@ -130,6 +144,7 @@ ipython>=8.14.0
 **Recommended fixes:**
 
 Update TESTING.md to clarify implementation status:
+
 ```markdown
 ### Unit Tests (`tests/unit/`)
 
@@ -143,12 +158,14 @@ Update TESTING.md to clarify implementation status:
 ```
 
 Update Makefile:
+
 ```makefile
 coverage:
-	pytest --cov=config --cov-report=html --cov-report=term-missing
+ pytest --cov=config --cov-report=html --cov-report=term-missing
 ```
 
 Update `.github/workflows/tests.yml`:
+
 ```yaml
 pytest tests/unit tests/test_config.py -m "unit and not gpu" --cov=config
 ```
@@ -156,12 +173,14 @@ pytest tests/unit tests/test_config.py -m "unit and not gpu" --cov=config
 ### 5. Test File Names Don't Match Documentation
 
 **Actual files:**
+
 - `tests/unit/test_transcribe.py` (not `test_transcribe_fw.py`)
 - `tests/unit/test_diarization.py` (not `test_diarize_whisperx.py`)
 - `tests/unit/test_exports.py` (not `test_export.py`)
 - `tests/integration/test_full_pipeline.py` (not `test_pipeline_e2e.py`)
 
 **Documentation references wrong names:**
+
 - `TESTING.md` lines 34-41
 - `tests/README.md` lines 11-18
 

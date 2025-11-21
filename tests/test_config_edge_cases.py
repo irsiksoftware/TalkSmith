@@ -3,6 +3,7 @@
 import os
 import tempfile
 from pathlib import Path
+
 import pytest
 
 from config.settings import TalkSmithConfig
@@ -15,9 +16,7 @@ class TestConfigFinderEdgeCases:
         """Test explicit config_path has highest priority."""
         with tempfile.NamedTemporaryFile(
             mode="w", suffix=".ini", delete=False
-        ) as f1, tempfile.NamedTemporaryFile(
-            mode="w", suffix=".ini", delete=False
-        ) as f2:
+        ) as f1, tempfile.NamedTemporaryFile(mode="w", suffix=".ini", delete=False) as f2:
             f1.write("[Models]\nwhisper_model = explicit\n")
             f2.write("[Models]\nwhisper_model = env-var\n")
             explicit_path = f1.name
@@ -223,9 +222,7 @@ class TestConfigurationDefaults:
         ]
 
         for section in expected_sections:
-            assert config.parser.has_section(
-                section
-            ), f"Missing default section: {section}"
+            assert config.parser.has_section(section), f"Missing default section: {section}"
 
     def test_default_models_section(self):
         """Test default Models section values."""

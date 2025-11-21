@@ -5,15 +5,16 @@ Tests the PlanGenerator class and LLM-based plan extraction.
 """
 
 import json
-import pytest
-from pathlib import Path
 import sys
-from unittest.mock import Mock, patch, MagicMock
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 # Add pipeline directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from pipeline.plan_from_transcript import PlanGenerator, PLAN_TEMPLATE
+from pipeline.plan_from_transcript import PLAN_TEMPLATE, PlanGenerator
 
 
 class TestPlanGenerator:
@@ -134,10 +135,7 @@ class TestPlanGenerator:
             text = generator.segments_to_text(sample_segments)
 
             assert "[00:15] Alice: We have a problem with user authentication" in text
-            assert (
-                "[01:30] Bob: Our main users are developers and product managers"
-                in text
-            )
+            assert "[01:30] Bob: Our main users are developers and product managers" in text
             assert "[02:45] Alice: The goal is to reduce login time by 50%" in text
 
     @patch("pipeline.plan_from_transcript.anthropic")
@@ -164,9 +162,7 @@ class TestPlanGenerator:
         # Mock OpenAI API response
         mock_client = Mock()
         mock_response = Mock()
-        mock_response.choices = [
-            Mock(message=Mock(content=json.dumps(mock_llm_response)))
-        ]
+        mock_response.choices = [Mock(message=Mock(content=json.dumps(mock_llm_response)))]
         mock_client.chat.completions.create.return_value = mock_response
         mock_openai.OpenAI.return_value = mock_client
 
@@ -178,9 +174,7 @@ class TestPlanGenerator:
         mock_client.chat.completions.create.assert_called_once()
 
     @patch("pipeline.plan_from_transcript.anthropic")
-    def test_generate_plan(
-        self, mock_anthropic, sample_segments_file, mock_llm_response, tmp_path
-    ):
+    def test_generate_plan(self, mock_anthropic, sample_segments_file, mock_llm_response, tmp_path):
         """Test complete plan generation workflow."""
         # Mock Claude API
         mock_client = Mock()

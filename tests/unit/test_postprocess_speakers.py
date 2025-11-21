@@ -1,9 +1,10 @@
 """Tests for speaker post-processing functionality."""
 
 import pytest
+
 from pipeline.postprocess_speakers import (
-    normalize_speaker_names,
     merge_short_utterances,
+    normalize_speaker_names,
     postprocess_speakers,
 )
 
@@ -123,9 +124,7 @@ class TestMergeShortUtterances:
 
     def test_merge_short_same_speaker(self, segments_with_short_utterances):
         """Test merging short utterances from same speaker."""
-        result = merge_short_utterances(
-            segments_with_short_utterances, min_duration_ms=1000
-        )
+        result = merge_short_utterances(segments_with_short_utterances, min_duration_ms=1000)
 
         # Should merge first 3 segments (all from SPEAKER_00)
         assert len(result) < len(segments_with_short_utterances)
@@ -137,9 +136,7 @@ class TestMergeShortUtterances:
 
     def test_merge_preserves_timestamps(self, segments_with_short_utterances):
         """Test that merging preserves start of first and end of last segment."""
-        result = merge_short_utterances(
-            segments_with_short_utterances, min_duration_ms=1000
-        )
+        result = merge_short_utterances(segments_with_short_utterances, min_duration_ms=1000)
 
         # First segment should start at original time
         assert result[0]["start"] == 0.0
@@ -161,9 +158,7 @@ class TestMergeShortUtterances:
 
     def test_merge_zero_threshold(self, segments_with_short_utterances):
         """Test with zero threshold (no merging)."""
-        result = merge_short_utterances(
-            segments_with_short_utterances, min_duration_ms=0
-        )
+        result = merge_short_utterances(segments_with_short_utterances, min_duration_ms=0)
 
         # Should return original segments unchanged
         assert len(result) == len(segments_with_short_utterances)

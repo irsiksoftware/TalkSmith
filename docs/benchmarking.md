@@ -5,6 +5,7 @@ This document describes how to use the TalkSmith benchmark suite to measure tran
 ## Overview
 
 The benchmark suite measures two key metrics:
+
 - **RTF (Real-Time Factor)**: Speed of transcription (lower is better)
   - RTF < 1.0 = faster than real-time
   - RTF = 1.0 = real-time processing
@@ -24,6 +25,7 @@ The benchmark suite measures two key metrics:
    - `sample_30min.wav` - 30-minute sample (optional, for full benchmarks)
 
 2. **Ground Truth Transcripts**: Edit `benchmarks/test_audio/ground_truth.json` with reference transcripts:
+
    ```json
    {
      "sample_1min.wav": "The actual spoken words in the audio file...",
@@ -99,12 +101,14 @@ After running benchmarks, results are saved to `benchmarks/results/`:
 ### 1. `report.md` - Human-Readable Summary
 
 Markdown report with:
+
 - Summary statistics
 - Detailed results by audio file
 - Best configurations (fastest, most accurate)
 - Speed vs accuracy trade-off analysis
 
 Example:
+
 ```markdown
 # TalkSmith Benchmark Report
 
@@ -127,6 +131,7 @@ Example:
 ### 2. `report.csv` - Machine-Readable Results
 
 CSV file with all metrics for further analysis:
+
 ```csv
 model,device,compute_type,diarization,audio_file,audio_duration,process_time,rtf,wer,memory_mb,timestamp
 tiny,cuda,float16,False,sample_1min.wav,60.0,3.2,0.053,0.12,2048,2025-10-16T...
@@ -135,6 +140,7 @@ tiny,cuda,float16,False,sample_1min.wav,60.0,3.2,0.053,0.12,2048,2025-10-16T...
 ### 3. `report.json` - Detailed Metrics
 
 JSON file with complete benchmark data:
+
 ```json
 [
   {
@@ -158,6 +164,7 @@ JSON file with complete benchmark data:
 The benchmark suite tests these configurations:
 
 ### Models
+
 - `tiny` - Fastest, lowest accuracy
 - `base` - Good balance for quick transcription
 - `small` - Better accuracy, moderate speed
@@ -165,14 +172,17 @@ The benchmark suite tests these configurations:
 - `large-v3` - Highest accuracy, slowest
 
 ### Devices
+
 - `cuda` - GPU acceleration (requires CUDA-compatible GPU)
 - `cpu` - CPU-only processing
 
 ### Compute Types
+
 - `float16` - Fast, GPU-only (CUDA)
 - `int8` - Quantized, works on CPU and GPU
 
 ### Diarization
+
 - With diarization (`--diarize`) - Speaker identification enabled
 - Without diarization - Transcription only
 
@@ -187,6 +197,7 @@ RTF = Processing Time / Audio Duration
 ```
 
 Examples:
+
 - RTF = 0.05: Processes 1 minute of audio in 3 seconds (20x faster than real-time)
 - RTF = 0.50: Processes 1 minute of audio in 30 seconds (2x faster than real-time)
 - RTF = 1.00: Processes 1 minute of audio in 60 seconds (real-time)
@@ -201,6 +212,7 @@ WER = (Substitutions + Deletions + Insertions) / Total Words
 ```
 
 Examples:
+
 - WER = 0.00 (0%): Perfect transcription
 - WER = 0.05 (5%): Excellent quality, 5 errors per 100 words
 - WER = 0.10 (10%): Good quality, 10 errors per 100 words
@@ -277,6 +289,7 @@ jobs:
 ### Issue: "Test file not found"
 
 **Solution**: Add audio files to `benchmarks/test_audio/`:
+
 ```bash
 ls benchmarks/test_audio/
 # Should show: sample_1min.wav, sample_5min.wav, etc.
@@ -285,6 +298,7 @@ ls benchmarks/test_audio/
 ### Issue: "WER calculation failed"
 
 **Solution**: Ensure `ground_truth.json` has entries for your audio files:
+
 ```json
 {
   "sample_1min.wav": "Your reference transcript here..."
@@ -294,6 +308,7 @@ ls benchmarks/test_audio/
 ### Issue: "CUDA out of memory"
 
 **Solution**:
+
 1. Use smaller models: `--models tiny,base,small`
 2. Use CPU: `--devices cpu`
 3. Test smaller audio files first
@@ -301,6 +316,7 @@ ls benchmarks/test_audio/
 ### Issue: "Benchmark script not executable"
 
 **Solution** (Linux/Mac):
+
 ```bash
 chmod +x benchmarks/run_benchmarks.sh
 ```
@@ -390,5 +406,6 @@ print(f"WER: {wer:.2%}")  # 10.00%
 ## Support
 
 For issues or questions:
-- GitHub Issues: https://github.com/irsiksoftware/TalkSmith/issues
+
+- GitHub Issues: <https://github.com/irsiksoftware/TalkSmith/issues>
 - Documentation: See `README.md` for general setup

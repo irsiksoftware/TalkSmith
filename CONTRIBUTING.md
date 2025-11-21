@@ -28,12 +28,14 @@ By participating in this project, you agree to maintain a respectful and inclusi
 ### Setting Up Development Environment
 
 1. **Fork and clone the repository:**
+
    ```bash
    git clone https://github.com/YOUR_USERNAME/TalkSmith.git
    cd TalkSmith
    ```
 
 2. **Create a virtual environment:**
+
    ```bash
    python -m venv venv
 
@@ -45,12 +47,14 @@ By participating in this project, you agree to maintain a respectful and inclusi
    ```
 
 3. **Install dependencies:**
+
    ```bash
    pip install -r requirements.txt
    pip install -r requirements-dev.txt  # Development dependencies
    ```
 
 4. **Run tests to verify setup:**
+
    ```bash
    pytest
    ```
@@ -72,6 +76,7 @@ By participating in this project, you agree to maintain a respectful and inclusi
    - For new features, open an issue for discussion first
 
 2. **Create a feature branch:**
+
    ```bash
    git checkout main
    git pull origin main
@@ -85,6 +90,7 @@ By participating in this project, you agree to maintain a respectful and inclusi
    - Update documentation as needed
 
 4. **Test your changes:**
+
    ```bash
    # Run tests
    pytest
@@ -97,6 +103,7 @@ By participating in this project, you agree to maintain a respectful and inclusi
    ```
 
 5. **Commit your changes:**
+
    ```bash
    git add .
    git commit -m "feat: Add feature description (#issue-number)"
@@ -113,6 +120,7 @@ By participating in this project, you agree to maintain a respectful and inclusi
 ## Pull Request Process
 
 1. **Push your branch:**
+
    ```bash
    git push origin feat/<issue-number>-description
    ```
@@ -264,6 +272,7 @@ pytest --cov=. --cov-report=html
 ## Recognition
 
 Contributors will be recognized in:
+
 - README acknowledgments
 - Release notes
 - Git commit history
