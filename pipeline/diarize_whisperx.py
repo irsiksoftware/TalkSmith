@@ -6,20 +6,18 @@ Requires HuggingFace token for pyannote models.
 """
 
 import argparse
-import json
 import os
 import time
 import warnings
-from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import torch
 import whisperx
 
-from pipeline.logger import get_logger
+from pipeline.diarization_base import DiarizationBase
 
 
-class WhisperXDiarizer:
+class WhisperXDiarizer(DiarizationBase):
     """Diarizer using WhisperX + pyannote.audio for speaker diarization."""
 
     def __init__(
@@ -50,7 +48,6 @@ class WhisperXDiarizer:
         self.hf_token = hf_token or os.getenv("HF_TOKEN")
         self.vad_onset = vad_onset
         self.vad_offset = vad_offset
-        self.logger = logger or get_logger(__name__)
 
         if not self.hf_token:
             raise ValueError(
@@ -59,33 +56,38 @@ class WhisperXDiarizer:
                 "Get token at: https://huggingface.co/settings/tokens"
             )
 
-        self.logger.info(
-            "Initializing WhisperX diarizer",
-            model_size=model_size,
-            device=device,
-            compute_type=compute_type,
-            vad_onset=vad_onset,
-            vad_offset=vad_offset,
-        )
-
         # Suppress WhisperX warnings
         warnings.filterwarnings("ignore", category=UserWarning)
 
-        # Load Whisper model
-        self.logger.info("Loading Whisper model", model=model_size)
-        self.model = whisperx.load_model(
-            model_size,
-            device=device,
-            compute_type=compute_type,
+        # Initialize base class (which calls _initialize_models)
+        super().__init__(logger=logger)
+
+    def _initialize_models(self):
+        """Initialize WhisperX models."""
+        self.logger.info(
+            "Initializing WhisperX diarizer",
+            model_size=self.model_size,
+            device=self.device,
+            compute_type=self.compute_type,
+            vad_onset=self.vad_onset,
+            vad_offset=self.vad_offset,
         )
 
-    def diarize(
+        # Load Whisper model
+        self.logger.info("Loading Whisper model", model=self.model_size)
+        self.model = whisperx.load_model(
+            self.model_size,
+            device=self.device,
+            compute_type=self.compute_type,
+        )
+
+    def _perform_diarization(
         self,
         audio_path: str,
         language: Optional[str] = None,
         min_speakers: Optional[int] = None,
         max_speakers: Optional[int] = None,
-    ) -> Dict:
+    ) -> Dict[str, Any]:
         """
         Transcribe and diarize audio file.
 
@@ -257,189 +259,121 @@ class WhisperXDiarizer:
 
         return formatted
 
-
-def diarize_file(
-    audio_path: str,
-    output_dir: Optional[str] = None,
-    model_size: str = "base",
-    device: str = "cuda",
-    language: Optional[str] = None,
-    hf_token: Optional[str] = None,
-    min_speakers: Optional[int] = None,
-    max_speakers: Optional[int] = None,
-    vad_onset: float = 0.5,
-    vad_offset: float = 0.363,
-) -> Dict:
-    """
-    Diarize a single audio file and save outputs.
-
-    Args:
-        audio_path: Path to audio file
-        output_dir: Directory for outputs (default: same as input)
-        model_size: Whisper model size
-        device: Device to use (cuda or cpu)
-        language: Language code or None for auto-detection
-        hf_token: HuggingFace token for pyannote models
-        min_speakers: Minimum number of speakers
-        max_speakers: Maximum number of speakers
-        vad_onset: VAD onset threshold
-        vad_offset: VAD offset threshold
-
-    Returns:
-        Diarization results dictionary
-    """
-    audio_path = Path(audio_path)
-    if not audio_path.exists():
-        raise FileNotFoundError(f"Audio file not found: {audio_path}")
-
-    # Set output directory
-    if output_dir:
-        output_dir = Path(output_dir)
-        output_dir.mkdir(parents=True, exist_ok=True)
-    else:
-        output_dir = audio_path.parent
-
-    # Initialize diarizer with CPU fallback on OOM
-    try:
-        diarizer = WhisperXDiarizer(
-            model_size=model_size,
-            device=device,
-            hf_token=hf_token,
-            vad_onset=vad_onset,
-            vad_offset=vad_offset,
+    @classmethod
+    def _get_cli_parser(cls) -> argparse.ArgumentParser:
+        """Get CLI argument parser for WhisperX diarizer."""
+        parser = argparse.ArgumentParser(
+            description="Diarize audio using WhisperX + pyannote.audio"
         )
-    except RuntimeError as e:
-        if "out of memory" in str(e).lower() and device == "cuda":
-            print(f"GPU OOM error: {e}")
-            print("Falling back to CPU...")
-            torch.cuda.empty_cache()
-            device = "cpu"
-            diarizer = WhisperXDiarizer(
-                model_size=model_size,
-                device=device,
-                hf_token=hf_token,
-                vad_onset=vad_onset,
-                vad_offset=vad_offset,
-            )
-        else:
-            raise
+        parser.add_argument("audio", help="Path to audio file")
+        parser.add_argument(
+            "--model-size",
+            default="base",
+            choices=["tiny", "base", "small", "medium", "medium.en", "large-v3"],
+            help="Whisper model size (default: base)",
+        )
+        parser.add_argument(
+            "--device",
+            default="cuda",
+            choices=["cuda", "cpu"],
+            help="Device to use (default: cuda)",
+        )
+        parser.add_argument(
+            "--language",
+            help="Language code (e.g., 'en'). Auto-detect if not specified.",
+        )
+        parser.add_argument(
+            "--output-dir",
+            help="Output directory (default: same as input file)",
+        )
+        parser.add_argument(
+            "--hf-token",
+            help="HuggingFace token (or set HF_TOKEN env var)",
+        )
+        parser.add_argument(
+            "--min-speakers",
+            type=int,
+            help="Minimum number of speakers",
+        )
+        parser.add_argument(
+            "--max-speakers",
+            type=int,
+            help="Maximum number of speakers",
+        )
+        parser.add_argument(
+            "--vad-onset",
+            type=float,
+            default=0.5,
+            help="VAD onset threshold (0.0-1.0, default: 0.5)",
+        )
+        parser.add_argument(
+            "--vad-offset",
+            type=float,
+            default=0.363,
+            help="VAD offset threshold (0.0-1.0, default: 0.363)",
+        )
+        return parser
 
-    # Diarize
-    print(f"Diarizing {audio_path.name} with {model_size} model...")
-    result = diarizer.diarize(
-        str(audio_path),
-        language=language,
-        min_speakers=min_speakers,
-        max_speakers=max_speakers,
-    )
+    @classmethod
+    def _extract_diarizer_kwargs(cls, args: argparse.Namespace) -> Dict[str, Any]:
+        """Extract constructor kwargs from parsed arguments."""
+        return {
+            "model_size": args.model_size,
+            "device": args.device,
+            "hf_token": args.hf_token,
+            "vad_onset": args.vad_onset,
+            "vad_offset": args.vad_offset,
+        }
 
-    # Print stats
-    print(f"Duration: {result['duration']:.2f}s")
-    print(f"Processing time: {result['processing_time']:.2f}s")
-    print(f"RTF: {result['rtf']:.3f}")
-    print(f"Language: {result['language']}")
-    print(f"Segments: {len(result['segments'])}")
+    @classmethod
+    def _extract_diarization_kwargs(cls, args: argparse.Namespace) -> Dict[str, Any]:
+        """Extract diarization kwargs from parsed arguments."""
+        return {
+            "language": args.language,
+            "min_speakers": args.min_speakers,
+            "max_speakers": args.max_speakers,
+        }
 
-    # Count speakers
-    speakers = set()
-    for segment in result["segments"]:
-        if "speaker" in segment:
-            speakers.add(segment["speaker"])
-    if speakers:
-        print(f"Speakers detected: {len(speakers)}")
+    @classmethod
+    def diarize_file_with_oom_fallback(
+        cls,
+        audio_path: str,
+        output_dir: Optional[str] = None,
+        model_size: str = "base",
+        device: str = "cuda",
+        **kwargs,
+    ) -> Dict[str, Any]:
+        """
+        Diarize a file with automatic CPU fallback on GPU OOM errors.
 
-    # Save outputs
-    base_name = audio_path.stem
+        Args:
+            audio_path: Path to audio file
+            output_dir: Output directory
+            model_size: Whisper model size
+            device: Device to use (cuda or cpu)
+            **kwargs: Additional diarization parameters
 
-    # Save JSON with all data
-    json_path = output_dir / f"{base_name}_diarized.json"
-    with open(json_path, "w", encoding="utf-8") as f:
-        json.dump(result, f, indent=2, ensure_ascii=False)
-    print(f"Saved JSON to {json_path}")
+        Returns:
+            Diarization results
+        """
+        try:
+            diarizer = cls(model_size=model_size, device=device, **kwargs)
+        except RuntimeError as e:
+            if "out of memory" in str(e).lower() and device == "cuda":
+                print(f"GPU OOM error: {e}")
+                print("Falling back to CPU...")
+                torch.cuda.empty_cache()
+                device = "cpu"
+                diarizer = cls(model_size=model_size, device=device, **kwargs)
+            else:
+                raise
 
-    # Save text with speaker labels
-    txt_path = output_dir / f"{base_name}_diarized.txt"
-    with open(txt_path, "w", encoding="utf-8") as f:
-        for segment in result["segments"]:
-            speaker = segment.get("speaker", "UNKNOWN")
-            text = segment["text"]
-            f.write(f"[{speaker}] {text}\n")
-    print(f"Saved text to {txt_path}")
-
-    return result
+        return diarizer.diarize_file(audio_path, output_dir=output_dir)
 
 
 def main():
     """CLI entry point."""
-    parser = argparse.ArgumentParser(description="Diarize audio using WhisperX + pyannote.audio")
-    parser.add_argument("audio", help="Path to audio file")
-    parser.add_argument(
-        "--model-size",
-        default="base",
-        choices=["tiny", "base", "small", "medium", "medium.en", "large-v3"],
-        help="Whisper model size (default: base)",
-    )
-    parser.add_argument(
-        "--device",
-        default="cuda",
-        choices=["cuda", "cpu"],
-        help="Device to use (default: cuda)",
-    )
-    parser.add_argument(
-        "--language",
-        help="Language code (e.g., 'en'). Auto-detect if not specified.",
-    )
-    parser.add_argument(
-        "--output-dir",
-        help="Output directory (default: same as input file)",
-    )
-    parser.add_argument(
-        "--hf-token",
-        help="HuggingFace token (or set HF_TOKEN env var)",
-    )
-    parser.add_argument(
-        "--min-speakers",
-        type=int,
-        help="Minimum number of speakers",
-    )
-    parser.add_argument(
-        "--max-speakers",
-        type=int,
-        help="Maximum number of speakers",
-    )
-    parser.add_argument(
-        "--vad-onset",
-        type=float,
-        default=0.5,
-        help="VAD onset threshold (0.0-1.0, default: 0.5)",
-    )
-    parser.add_argument(
-        "--vad-offset",
-        type=float,
-        default=0.363,
-        help="VAD offset threshold (0.0-1.0, default: 0.363)",
-    )
-
-    args = parser.parse_args()
-
-    try:
-        diarize_file(
-            args.audio,
-            output_dir=args.output_dir,
-            model_size=args.model_size,
-            device=args.device,
-            language=args.language,
-            hf_token=args.hf_token,
-            min_speakers=args.min_speakers,
-            max_speakers=args.max_speakers,
-            vad_onset=args.vad_onset,
-            vad_offset=args.vad_offset,
-        )
-    except Exception as e:
-        print(f"Error: {e}")
-        return 1
-
-    return 0
+    return WhisperXDiarizer.run_cli()
 
 
 if __name__ == "__main__":
