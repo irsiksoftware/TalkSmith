@@ -1,5 +1,135 @@
 # TalkSmith - Project Configuration
-# Tool configurations for Black, isort, mypy, and Bandit
+# Modern Python packaging with PEP 517/518 and tool configurations
+
+# ============================================================================
+# Build System (PEP 517/518)
+# ============================================================================
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+# ============================================================================
+# Project Metadata (PEP 621)
+# ============================================================================
+[project]
+name = "talksmith"
+version = "0.1.0"
+description = "Local, free, GPU-accelerated transcription and diarization pipeline for long-form multi-speaker audio"
+readme = "README.md"
+requires-python = ">=3.10,<3.12"
+license = {text = "MIT"}
+authors = [
+    {name = "Dakota Irsik", email = "dakota@example.com"}
+]
+maintainers = [
+    {name = "Dakota Irsik", email = "dakota@example.com"}
+]
+keywords = [
+    "transcription",
+    "diarization",
+    "whisper",
+    "speech-to-text",
+    "audio-processing",
+    "gpu-accelerated",
+    "speaker-diarization",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Multimedia :: Sound/Audio :: Analysis",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+# Core dependencies
+dependencies = [
+    "numpy>=1.24.0",
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    # Alternative diarization (token-free)
+    "resemblyzer>=0.1.1",
+    "scikit-learn>=1.3.0",
+    "librosa>=0.10.0",
+    # LLM providers for plan generation (optional but included in base)
+    "anthropic>=0.40.0",
+    "openai>=1.50.0",
+    # Google Docs integration (optional but included in base)
+    "google-auth>=2.23.0",
+    "google-auth-oauthlib>=1.1.0",
+    "google-auth-httplib2>=0.1.1",
+    "google-api-python-client>=2.100.0",
+]
+
+# Optional dependencies for different use cases
+[project.optional-dependencies]
+dev = [
+    # Testing
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-timeout>=2.1.0",
+    "pytest-xdist>=3.3.0",
+    # Code Quality
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "isort>=5.12.0",
+    "mypy>=1.4.0",
+    # Development Tools
+    "ipython>=8.14.0",
+    # Audio Processing (for tests)
+    "soundfile>=0.12.1",
+    # Benchmarking
+    "pandas>=2.0.0",
+    # Pre-commit hooks
+    "pre-commit>=3.0.0",
+]
+
+llm = [
+    "anthropic>=0.40.0",
+    "openai>=1.50.0",
+]
+
+google-docs = [
+    "google-auth>=2.23.0",
+    "google-auth-oauthlib>=1.1.0",
+    "google-auth-httplib2>=0.1.1",
+    "google-api-python-client>=2.100.0",
+]
+
+# All optional dependencies combined
+all = [
+    "talksmith[dev,llm,google-docs]",
+]
+
+# CLI entry points
+[project.scripts]
+talksmith = "cli.main:main"
+
+# Project URLs
+[project.urls]
+Homepage = "https://github.com/DakotaIrsik/TalkSmith"
+Repository = "https://github.com/DakotaIrsik/TalkSmith"
+"Bug Tracker" = "https://github.com/DakotaIrsik/TalkSmith/issues"
+Documentation = "https://github.com/DakotaIrsik/TalkSmith#readme"
+Changelog = "https://github.com/DakotaIrsik/TalkSmith/blob/main/CHANGELOG.md"
+
+# ============================================================================
+# Setuptools Configuration
+# ============================================================================
+[tool.setuptools]
+packages = ["cli", "config", "pipeline"]
+
+[tool.setuptools.package-data]
+config = ["*.ini"]
+
+# ============================================================================
+# Tool Configurations
+# ============================================================================
 
 # ============================================================================
 # Black (code formatter)
