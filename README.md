@@ -933,11 +933,6 @@ See our [GitHub Issues](https://github.com/DakotaIrsik/TalkSmith/issues) for det
 - [x] Alternative diarization (no HF token)
 - [x] Plan/PRD generation with LLM and Google Docs integration
 - [ ] Benchmark suite
-<<<<<<< HEAD
-- [ ] Plan/PRD generation
-=======
-
->>>>>>> origin/main
 
 ## 🧪 Testing
 
@@ -956,54 +951,6 @@ pytest -m integration   # Integration tests only
 ```
 
 See [TESTING.md](TESTING.md) for detailed testing documentation and [tests/README.md](tests/README.md) for quick reference.
-
-## ☁️ Cloud Sync (Google Drive)
-
-**✅ IMPLEMENTED** - Sync transcripts to Google Drive using rclone
-
-TalkSmith can automatically sync transcription outputs to Google Drive for backup, mobile access, or team collaboration.
-
-### Quick Start
-
-1. **Install rclone** - [rclone.org/downloads](https://rclone.org/downloads/)
-2. **Configure Google Drive:**
-
-   ```bash
-   rclone config
-   ```
-
-3. **Run sync:**
-
-   ```bash
-   # Linux/macOS
-   ./scripts/sync_to_drive.sh
-
-   # Windows
-   .\scripts\sync_to_drive.ps1
-   ```
-
-### Features
-
-- **Dry-run mode** - Preview changes before syncing (`--dry-run` / `-DryRun`)
-- **Automatic exclusions** - Skip temp files, cache, and system files
-- **Environment configuration** - Customize remote name, paths via env vars
-- **Cross-platform** - Bash script for Linux/macOS, PowerShell for Windows
-
-### Usage Examples
-
-```bash
-# Preview sync without making changes
-./scripts/sync_to_drive.sh --dry-run
-
-# Sync with custom remote name
-export RCLONE_REMOTE_NAME=my-drive
-./scripts/sync_to_drive.sh
-
-# Automated sync (cron)
-*/30 * * * * cd /path/to/TalkSmith && ./scripts/sync_to_drive.sh
-```
-
-See [docs/google-drive-sync.md](docs/google-drive-sync.md) for complete setup guide, automation options, and security considerations.
 
 ## ☁️ Cloud Sync (Google Drive)
 
