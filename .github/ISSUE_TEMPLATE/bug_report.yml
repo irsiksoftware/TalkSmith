@@ -1,0 +1,102 @@
+name: Bug Report
+description: File a bug report to help us improve TalkSmith
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please fill out the sections below.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of the bug
+      placeholder: When I try to..., the system...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Detailed steps to reproduce the behavior
+      placeholder: |
+        1. Run command `python pipeline/diarize_whisperx.py test.wav`
+        2. Observe error: '...'
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What you expected to happen
+      placeholder: The transcription should complete successfully
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Logs
+      description: Paste relevant error messages or logs
+      render: shell
+      placeholder: |
+        Paste full error traceback here
+
+  - type: input
+    id: version
+    attributes:
+      label: TalkSmith Version
+      description: Run `git rev-parse HEAD` in the TalkSmith directory
+      placeholder: v0.1.0 or commit hash
+    validations:
+      required: true
+
+  - type: dropdown
+    id: python-version
+    attributes:
+      label: Python Version
+      description: Run `python --version`
+      options:
+        - Python 3.10
+        - Python 3.11
+        - Python 3.12
+        - Other (please specify in description)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      options:
+        - Windows
+        - Linux
+        - macOS
+        - Other (please specify)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: gpu
+    attributes:
+      label: GPU Setup
+      options:
+        - NVIDIA GPU (CUDA)
+        - CPU only
+        - Other (please specify)
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any other context about the problem
+      placeholder: |
+        - FFmpeg version: ...
+        - Audio file format: ...
+        - Model size: ...
