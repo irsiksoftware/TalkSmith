@@ -409,7 +409,7 @@ TalkSmith/
 │   ├── prefetch_models.ps1    # ✅ Model cache management (Windows)
 │   ├── prefetch_models.sh     # ✅ Model cache management (Linux/macOS)
 │   ├── make_env.ps1           # Environment setup (Windows)
-│   └── check_gpu.py           # GPU verification (planned)
+│   └── check_gpu.py           # ✅ GPU verification
 ├── cli/                # ✅ Unified CLI interface
 │   └── main.py                # CLI with export, batch, demo commands
 ├── config/             # ✅ Configuration system
