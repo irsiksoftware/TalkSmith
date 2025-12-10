@@ -336,7 +336,7 @@ SKIP=flake8 git commit -m "Fix linting later"
 ### Planned Basic Usage
 
 ```bash
-# Transcribe a single file (not yet implemented)
+# Transcribe a single file - ✅ IMPLEMENTED
 python pipeline/transcribe_fw.py path/to/audio.wav --model-size medium.en
 
 # Transcribe with diarization - WhisperX - ✅ IMPLEMENTED
