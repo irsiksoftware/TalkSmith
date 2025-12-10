@@ -424,7 +424,7 @@ TalkSmith/
 │   ├── diarization.md         # ✅ Diarization comparison guide
 │   ├── consent_template.md    # Recording consent template
 │   └── google_docs_setup.md   # ✅ Google Docs integration setup guide
-├── benchmarks/         # Performance benchmarks (planned)
+├── benchmarks/         # ✅ Performance benchmarks
 └── tests/              # ✅ Comprehensive test suite
 ```
 
@@ -933,7 +933,7 @@ See our [GitHub Issues](https://github.com/DakotaIrsik/TalkSmith/issues) for det
 - [x] Google Drive sync (rclone)
 - [x] Alternative diarization (no HF token)
 - [x] Plan/PRD generation with LLM and Google Docs integration
-- [ ] Benchmark suite
+- [x] Benchmark suite
 
 ## 🧪 Testing
 
