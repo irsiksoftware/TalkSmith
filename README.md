@@ -77,7 +77,7 @@ TalkSmith replaces expensive cloud transcription services with a one-time setup 
 
 ### Advanced Features (Planned)
 
-- 💾 **Multi-GPU parallelism** (utilize multiple RTX 3060s concurrently)
+- ✅ **Multi-GPU parallelism** (utilize multiple RTX 3060s concurrently)
 - ✅ **No-token diarization** alternative (no HuggingFace account required) - ✅ Implemented
 - ☁️ **Optional cloud sync** (rclone to Google Drive) - ✅ Implemented
 - 📄 **PRD/plan generation** from meeting transcripts - ✅ Implemented
@@ -391,10 +391,10 @@ python cli/main.py plan --segments segments.json --output plan.md
 ```
 TalkSmith/
 ├── pipeline/           # Core processing modules
-│   ├── transcribe_fw.py       # faster-whisper transcription (planned)
+│   ├── transcribe_fw.py       # ✅ faster-whisper transcription
 │   ├── diarize_whisperx.py    # ✅ WhisperX + pyannote diarization
 │   ├── diarize_alt.py         # ✅ No-token alternative diarization
-│   ├── preprocess.py          # Audio preprocessing (planned)
+│   ├── preprocess.py          # ✅ Audio preprocessing
 │   ├── postprocess_speakers.py # ✅ Speaker normalization and utterance merging
 │   ├── outline_from_segments.py # ✅ Outline generation with topic detection
 │   ├── plan_from_transcript.py # ✅ LLM-powered PRD/plan generation
@@ -405,7 +405,7 @@ TalkSmith/
 ├── scripts/            # Automation and utilities
 │   ├── batch_transcribe.py    # ✅ Batch processing with resume
 │   ├── batch_transcribe.sh    # Batch processing (planned)
-│   ├── launcher.ps1/sh        # Multi-GPU job scheduler (planned)
+│   ├── launcher.ps1/sh        # ✅ Multi-GPU job scheduler
 │   ├── prefetch_models.ps1    # ✅ Model cache management (Windows)
 │   ├── prefetch_models.sh     # ✅ Model cache management (Linux/macOS)
 │   ├── make_env.ps1           # Environment setup (Windows)
@@ -424,7 +424,7 @@ TalkSmith/
 │   ├── diarization.md         # ✅ Diarization comparison guide
 │   ├── consent_template.md    # Recording consent template
 │   └── google_docs_setup.md   # ✅ Google Docs integration setup guide
-├── benchmarks/         # Performance benchmarks (planned)
+├── benchmarks/         # ✅ Performance benchmarks
 └── tests/              # ✅ Comprehensive test suite
 ```
 
@@ -914,13 +914,13 @@ See our [GitHub Issues](https://github.com/DakotaIrsik/TalkSmith/issues) for det
 - [x] Diarization (WhisperX + pyannote)
 - [x] GPU and CUDA verification
 - [x] Python environment setup (make_env.ps1/sh with verification)
-- [ ] Core transcription pipeline (faster-whisper)
+- [x] Core transcription pipeline (faster-whisper)
 - [x] Batch processing with resume
 
 **Phase 2: Enhancement (P1)**
 
 - [ ] Audio preprocessing (denoise, trim)
-- [ ] Multi-GPU parallelism
+- [x] Multi-GPU parallelism
 - [x] Speaker post-processing (normalization, utterance merging)
 - [x] Outline generation with topic detection
 - [ ] Additional CLI subcommands (transcribe, preprocess, etc.)
@@ -933,7 +933,7 @@ See our [GitHub Issues](https://github.com/DakotaIrsik/TalkSmith/issues) for det
 - [x] Google Drive sync (rclone)
 - [x] Alternative diarization (no HF token)
 - [x] Plan/PRD generation with LLM and Google Docs integration
-- [ ] Benchmark suite
+- [x] Benchmark suite
 
 ## 🧪 Testing
 
