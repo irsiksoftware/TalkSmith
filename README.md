@@ -56,7 +56,7 @@ TalkSmith replaces expensive cloud transcription services with a one-time setup 
 - 🚀 **GPU-accelerated** transcription with faster-whisper (CTranslate2)
 - 👥 **Speaker diarization** via WhisperX + pyannote.audio OR token-free alternative
 - 🎙️ **Multi-speaker support** for meetings, interviews, podcasts
-- 📊 **Batch processing** with resume capability
+- 📊 **Batch processing** with resume capability - ✅ Implemented
 - 🔧 **Audio preprocessing** (denoise, loudnorm, silence trimming, high-pass filter) - ✅ Implemented
 - 📝 **Multiple export formats** (TXT, SRT, VTT, JSON) - ✅ Implemented
 
@@ -345,8 +345,8 @@ python pipeline/diarize_whisperx.py path/to/audio.wav --hf-token YOUR_HF_TOKEN
 # Transcribe with token-free diarization - ✅ IMPLEMENTED
 python pipeline/diarize_alt.py path/to/audio.wav -o segments.json
 
-# Batch process a directory (not yet implemented)
-.\scripts\batch_transcribe.ps1 --model-size large-v3 --diarization whisperx
+# Batch process a directory with resume - ✅ IMPLEMENTED
+python scripts/batch_transcribe.py --model large-v3 --formats txt srt json
 
 # Post-process speaker labels - ✅ IMPLEMENTED
 python pipeline/postprocess_speakers.py segments.json --min-utterance-ms 1000
@@ -403,7 +403,7 @@ TalkSmith/
 │   ├── redact_pii.py          # ✅ PII redaction
 │   └── logger.py              # ✅ Structured JSON logging
 ├── scripts/            # Automation and utilities
-│   ├── batch_transcribe.ps1   # Batch processing (planned)
+│   ├── batch_transcribe.py    # ✅ Batch processing with resume
 │   ├── batch_transcribe.sh    # Batch processing (planned)
 │   ├── launcher.ps1/sh        # Multi-GPU job scheduler (planned)
 │   ├── prefetch_models.ps1    # ✅ Model cache management (Windows)
@@ -915,7 +915,7 @@ See our [GitHub Issues](https://github.com/DakotaIrsik/TalkSmith/issues) for det
 - [x] GPU and CUDA verification
 - [x] Python environment setup (make_env.ps1/sh with verification)
 - [ ] Core transcription pipeline (faster-whisper)
-- [ ] Batch processing with resume
+- [x] Batch processing with resume
 
 **Phase 2: Enhancement (P1)**
 
