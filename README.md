@@ -394,7 +394,7 @@ TalkSmith/
 │   ├── transcribe_fw.py       # ✅ faster-whisper transcription
 │   ├── diarize_whisperx.py    # ✅ WhisperX + pyannote diarization
 │   ├── diarize_alt.py         # ✅ No-token alternative diarization
-│   ├── preprocess.py          # Audio preprocessing (planned)
+│   ├── preprocess.py          # ✅ Audio preprocessing
 │   ├── postprocess_speakers.py # ✅ Speaker normalization and utterance merging
 │   ├── outline_from_segments.py # ✅ Outline generation with topic detection
 │   ├── plan_from_transcript.py # ✅ LLM-powered PRD/plan generation
