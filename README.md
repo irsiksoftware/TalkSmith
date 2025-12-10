@@ -77,7 +77,7 @@ TalkSmith replaces expensive cloud transcription services with a one-time setup 
 
 ### Advanced Features (Planned)
 
-- 💾 **Multi-GPU parallelism** (utilize multiple RTX 3060s concurrently)
+- ✅ **Multi-GPU parallelism** (utilize multiple RTX 3060s concurrently)
 - ✅ **No-token diarization** alternative (no HuggingFace account required) - ✅ Implemented
 - ☁️ **Optional cloud sync** (rclone to Google Drive) - ✅ Implemented
 - 📄 **PRD/plan generation** from meeting transcripts - ✅ Implemented
@@ -405,7 +405,7 @@ TalkSmith/
 ├── scripts/            # Automation and utilities
 │   ├── batch_transcribe.ps1   # Batch processing (planned)
 │   ├── batch_transcribe.sh    # Batch processing (planned)
-│   ├── launcher.ps1/sh        # Multi-GPU job scheduler (planned)
+│   ├── launcher.ps1/sh        # ✅ Multi-GPU job scheduler
 │   ├── prefetch_models.ps1    # ✅ Model cache management (Windows)
 │   ├── prefetch_models.sh     # ✅ Model cache management (Linux/macOS)
 │   ├── make_env.ps1           # Environment setup (Windows)
@@ -920,7 +920,7 @@ See our [GitHub Issues](https://github.com/DakotaIrsik/TalkSmith/issues) for det
 **Phase 2: Enhancement (P1)**
 
 - [ ] Audio preprocessing (denoise, trim)
-- [ ] Multi-GPU parallelism
+- [x] Multi-GPU parallelism
 - [x] Speaker post-processing (normalization, utterance merging)
 - [x] Outline generation with topic detection
 - [ ] Additional CLI subcommands (transcribe, preprocess, etc.)
