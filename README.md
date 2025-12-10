@@ -391,7 +391,7 @@ python cli/main.py plan --segments segments.json --output plan.md
 ```
 TalkSmith/
 ├── pipeline/           # Core processing modules
-│   ├── transcribe_fw.py       # faster-whisper transcription (planned)
+│   ├── transcribe_fw.py       # ✅ faster-whisper transcription
 │   ├── diarize_whisperx.py    # ✅ WhisperX + pyannote diarization
 │   ├── diarize_alt.py         # ✅ No-token alternative diarization
 │   ├── preprocess.py          # Audio preprocessing (planned)
@@ -914,7 +914,7 @@ See our [GitHub Issues](https://github.com/DakotaIrsik/TalkSmith/issues) for det
 - [x] Diarization (WhisperX + pyannote)
 - [x] GPU and CUDA verification
 - [x] Python environment setup (make_env.ps1/sh with verification)
-- [ ] Core transcription pipeline (faster-whisper)
+- [x] Core transcription pipeline (faster-whisper)
 - [ ] Batch processing with resume
 
 **Phase 2: Enhancement (P1)**
