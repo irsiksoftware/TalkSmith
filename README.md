@@ -919,7 +919,7 @@ See our [GitHub Issues](https://github.com/DakotaIrsik/TalkSmith/issues) for det
 
 **Phase 2: Enhancement (P1)**
 
-- [ ] Audio preprocessing (denoise, trim)
+- [x] Audio preprocessing (denoise, trim)
 - [x] Multi-GPU parallelism
 - [x] Speaker post-processing (normalization, utterance merging)
 - [x] Outline generation with topic detection
